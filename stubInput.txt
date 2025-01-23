@@ -1,0 +1,628 @@
+DEBUG_LEVEL > 0:
+//Making the File System.
+//Disk = 3000000, Block = 1024, Inode = 128, Inode Block = 32 blocks...
+//M
+
+-> Allocating Boot Block, Super Block, 32 Inode Blocks, and Root (Inode 2)...
+** Expected Result: 3 Inodes allocated in the Inode Map
+** Expected Result: 35 Blocks allocated in the Aloc/Free Map
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Print 128 contiguous Inodes from Inode Map starting at Inode (0).
+//P:0
+
+=======================================================================
+INODE MAP
+00011111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+0        8        16       24       32       40       48       56       
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+64       72       80       88       96       104      112      120      
+
+=======================================================================
+
+//Print 128 contiguous Sectors from Free/Aloc Map starting at Sector (0).
+=======================================================================
+FREE MAP
+00000000 00000000 00000000 00000000 00011111 11111111 11111111 11111111 
+0        8        16       24       32       40       48       56       
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+64       72       80       88       96       104      112      120      
+
+ALLOCATED MAP
+11111111 11111111 11111111 11111111 11100000 00000000 00000000 00000000 
+0        8        16       24       32       40       48       56       
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 
+64       72       80       88       96       104      112      120      
+=======================================================================
+
+DEBUG_LEVEL > 0:
+//Create a directory in Folder (Inode 2)
+//C:D:2
+
+-> Used (Inode 3) to create a Directory.
+** Expected Result: 1 Inode allocated in the Inode Map
+** Expected Result: 1 Block allocated in the Aloc/Free Map
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Create a directory in Folder (Inode 3)
+//C:D:3
+
+-> Used (Inode 4) to create a Directory.
+** Expected Result: 1 Inode allocated in the Inode Map
+** Expected Result: 1 Block allocated in the Aloc/Free Map
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Create a directory in Folder (Inode 4)
+//C:D:4
+
+-> Used (Inode 5) to create a Directory.
+** Expected Result: 1 Inode allocated in the Inode Map
+** Expected Result: 1 Block allocated in the Aloc/Free Map
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Create a directory in Folder (Inode 5)
+//C:D:5
+
+-> Used (Inode 6) to create a Directory.
+** Expected Result: 1 Inode allocated in the Inode Map
+** Expected Result: 1 Block allocated in the Aloc/Free Map
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Create a file in Folder (Inode 2)
+//C:F:2
+
+-> Used (Inode 7) to create a File.
+** Expected Result: 1 Inode allocated in the Inode Map
+** Expected Result: 0 Blocks allocated in the Aloc/Free Map
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Print 128 contiguous Inodes from Inode Map starting at Inode (0).
+//P:0
+
+=======================================================================
+INODE MAP
+00000000 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+0        8        16       24       32       40       48       56       
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+64       72       80       88       96       104      112      120      
+
+=======================================================================
+
+//Print 128 contiguous Sectors from Free/Aloc Map starting at Sector (0).
+=======================================================================
+FREE MAP
+00000000 00000000 00000000 00000000 00000001 11111111 11111111 11111111 
+0        8        16       24       32       40       48       56       
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+64       72       80       88       96       104      112      120      
+
+ALLOCATED MAP
+11111111 11111111 11111111 11111111 11111110 00000000 00000000 00000000 
+0        8        16       24       32       40       48       56       
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 
+64       72       80       88       96       104      112      120      
+=======================================================================
+
+DEBUG_LEVEL > 0:
+//Listing contents of Directory (Inode 2)
+//L:2
+
+
+-> Tuple name is: "."
+-> Inode number is 2
+
+-> Tuple name is: ".."
+-> Inode number is -1
+
+-> Tuple name is: "my name"
+-> Inode number is 3
+
+-> Tuple name is: "my name"
+-> Inode number is 7
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Listing contents of Directory (Inode 3)
+//L:3
+
+
+-> Tuple name is: "."
+-> Inode number is 3
+
+-> Tuple name is: ".."
+-> Inode number is 2
+
+-> Tuple name is: "my name"
+-> Inode number is 4
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Listing contents of Directory (Inode 4)
+//L:4
+
+
+-> Tuple name is: "."
+-> Inode number is 4
+
+-> Tuple name is: ".."
+-> Inode number is 3
+
+-> Tuple name is: "my name"
+-> Inode number is 5
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Listing contents of Directory (Inode 5)
+//L:5
+
+
+-> Tuple name is: "."
+-> Inode number is 5
+
+-> Tuple name is: ".."
+-> Inode number is 4
+
+-> Tuple name is: "my name"
+-> Inode number is 6
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Listing contents of Directory (Inode 6)
+//L:6
+
+
+-> Tuple name is: "."
+-> Inode number is 6
+
+-> Tuple name is: ".."
+-> Inode number is 5
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Print 128 contiguous Inodes from Inode Map starting at Inode (0).
+//P:0
+
+=======================================================================
+INODE MAP
+00000000 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+0        8        16       24       32       40       48       56       
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+64       72       80       88       96       104      112      120      
+
+=======================================================================
+
+//Print 128 contiguous Sectors from Free/Aloc Map starting at Sector (0).
+=======================================================================
+FREE MAP
+00000000 00000000 00000000 00000000 00000001 11111111 11111111 11111111 
+0        8        16       24       32       40       48       56       
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+64       72       80       88       96       104      112      120      
+
+ALLOCATED MAP
+11111111 11111111 11111111 11111111 11111110 00000000 00000000 00000000 
+0        8        16       24       32       40       48       56       
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 
+64       72       80       88       96       104      112      120      
+=======================================================================
+
+DEBUG_LEVEL > 0:
+//Display Info of File (Inode 2)
+//I:2
+
+-> fileType = 2
+-> fileSize = 1024
+-> permissions = 0
+-> linkCount = 1
+-> dataBlocks = 1
+-> owner = 0
+-> status = 0
+
+-> directPtr[0] = 34
+-> directPtr[1] = -1
+-> directPtr[2] = -1
+-> directPtr[3] = -1
+-> directPtr[4] = -1
+-> directPtr[5] = -1
+-> directPtr[6] = -1
+-> directPtr[7] = -1
+-> directPtr[8] = -1
+-> directPtr[9] = -1
+
+-> sIndirect = -1
+-> dIndirect = -1
+-> tIndirect = -1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+DEBUG_LEVEL > 0:
+//Writing 273412 bytes to File (Inode 7)
+//W:7:273412
+
+-> Wrote 273412 bytes to File (Inode 7)
+** Expected Result: 0 Inodes allocated in the Inode Map
+** Expected Result: 267 Blocks allocated in the Aloc/Free Map
+** Note: value of WRITE buffer at byte (272608) = 113
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+DEBUG_LEVEL > 0:
+//Reading 273412 bytes from file at Inode 7
+//R:7:273412
+
+-> Read 273412 bytes from File (Inode 7)
+** Expected Result: 0 Inodes allocated in the Inode Map
+** Expected Result: 0 Blocks allocated in the Aloc/Free Map
+** Note: value of READ buffer at byte (272608) = 113
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Print 128 contiguous Inodes from Inode Map starting at Inode (0).
+//P:0
+
+=======================================================================
+INODE MAP
+00000000 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+0        8        16       24       32       40       48       56       
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+64       72       80       88       96       104      112      120      
+
+=======================================================================
+
+//Print 128 contiguous Sectors from Free/Aloc Map starting at Sector (256).
+=======================================================================
+FREE MAP
+00000000 00000000 00000000 00000000 00000000 00000000 00000011 11111111 
+256      264      272      280      288      296      304      312      
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+320      328      336      344      352      360      368      376      
+
+ALLOCATED MAP
+11111111 11111111 11111111 11111111 11111111 11111111 11111100 00000000 
+256      264      272      280      288      296      304      312      
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 
+320      328      336      344      352      360      368      376      
+=======================================================================
+
+
+DEBUG_LEVEL > 0:
+//Renaming File (Inode 7), in Folder (Inode 2), to "NEW_NAME"
+//N:7:2:NEW_NAME
+
+-> Renamed File (Inode 7) to 'NEW_NAME'
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Listing contents of Directory (Inode 2)
+//L:2
+
+
+-> Tuple name is: "."
+-> Inode number is 2
+
+-> Tuple name is: ".."
+-> Inode number is -1
+
+-> Tuple name is: "my name"
+-> Inode number is 3
+
+-> Tuple name is: "NEW_NAME"
+-> Inode number is 7
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Display Info of File (Inode 7)
+//I:7
+
+-> fileType = 1
+-> fileSize = 273412
+-> permissions = 0
+-> linkCount = 0
+-> dataBlocks = 267
+-> owner = 0
+-> status = 0
+
+-> directPtr[0] = 39
+-> directPtr[1] = 40
+-> directPtr[2] = 41
+-> directPtr[3] = 42
+-> directPtr[4] = 43
+-> directPtr[5] = 44
+-> directPtr[6] = 45
+-> directPtr[7] = 46
+-> directPtr[8] = 47
+-> directPtr[9] = 48
+
+-> sIndirect = 49
+-> dIndirect = 306
+-> tIndirect = -1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Print 128 contiguous Inodes from Inode Map starting at Inode (0).
+//P:0
+
+=======================================================================
+INODE MAP
+00000000 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+0        8        16       24       32       40       48       56       
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+64       72       80       88       96       104      112      120      
+
+=======================================================================
+
+//Print 128 contiguous Sectors from Free/Aloc Map starting at Sector (256).
+=======================================================================
+FREE MAP
+00000000 00000000 00000000 00000000 00000000 00000000 00000011 11111111 
+256      264      272      280      288      296      304      312      
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+320      328      336      344      352      360      368      376      
+
+ALLOCATED MAP
+11111111 11111111 11111111 11111111 11111111 11111111 11111100 00000000 
+256      264      272      280      288      296      304      312      
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 
+320      328      336      344      352      360      368      376      
+=======================================================================
+
+
+DEBUG_LEVEL > 0:
+//Removing File (Inode 7) from Folder (Inode 2)
+//V:7:2
+
+-> Removed File (Inode 7) from Folder (Inode 2).
+** Expected Result: 1 Inode deallocated in the Inode Map
+** Expected Result: 267 Blocks deallocated in the Aloc/Free Map
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Listing contents of Directory (Inode 2)
+//L:2
+
+
+-> Tuple name is: "."
+-> Inode number is 2
+
+-> Tuple name is: ".."
+-> Inode number is -1
+
+-> Tuple name is: "my name"
+-> Inode number is 3
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Listing contents of Directory (Inode 3)
+//L:3
+
+
+-> Tuple name is: "."
+-> Inode number is 3
+
+-> Tuple name is: ".."
+-> Inode number is 2
+
+-> Tuple name is: "my name"
+-> Inode number is 4
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Listing contents of Directory (Inode 4)
+//L:4
+
+
+-> Tuple name is: "."
+-> Inode number is 4
+
+-> Tuple name is: ".."
+-> Inode number is 3
+
+-> Tuple name is: "my name"
+-> Inode number is 5
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Listing contents of Directory (Inode 5)
+//L:5
+
+
+-> Tuple name is: "."
+-> Inode number is 5
+
+-> Tuple name is: ".."
+-> Inode number is 4
+
+-> Tuple name is: "my name"
+-> Inode number is 6
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Listing contents of Directory (Inode 6)
+//L:6
+
+
+-> Tuple name is: "."
+-> Inode number is 6
+
+-> Tuple name is: ".."
+-> Inode number is 5
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Print 128 contiguous Inodes from Inode Map starting at Inode (0).
+//P:0
+
+=======================================================================
+INODE MAP
+00000001 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+0        8        16       24       32       40       48       56       
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+64       72       80       88       96       104      112      120      
+
+=======================================================================
+
+//Print 128 contiguous Sectors from Free/Aloc Map starting at Sector (0).
+=======================================================================
+FREE MAP
+00000000 00000000 00000000 00000000 00000001 11111111 11111111 11111111 
+0        8        16       24       32       40       48       56       
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+64       72       80       88       96       104      112      120      
+
+ALLOCATED MAP
+11111111 11111111 11111111 11111111 11111110 00000000 00000000 00000000 
+0        8        16       24       32       40       48       56       
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 
+64       72       80       88       96       104      112      120      
+=======================================================================
+
+
+DEBUG_LEVEL > 0:
+//Removing File (Inode 4) from Folder (Inode 3)
+//V:4:3
+
+-> Removed File (Inode 4) from Folder (Inode 3).
+** Expected Result: Recursively removing all Files in Folder (Inode 3)
+** Expected Result: 1 Inode deallocated in the Inode Map
+** Expected Result: 1 Blocks deallocated in the Aloc/Free Map
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Listing contents of Directory (Inode 2)
+//L:2
+
+
+-> Tuple name is: "."
+-> Inode number is 2
+
+-> Tuple name is: ".."
+-> Inode number is -1
+
+-> Tuple name is: "my name"
+-> Inode number is 3
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Listing contents of Directory (Inode 3)
+//L:3
+
+
+-> Tuple name is: "."
+-> Inode number is 3
+
+-> Tuple name is: ".."
+-> Inode number is 2
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Print 128 contiguous Inodes from Inode Map starting at Inode (0).
+//P:0
+
+=======================================================================
+INODE MAP
+00001111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+0        8        16       24       32       40       48       56       
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+64       72       80       88       96       104      112      120      
+
+=======================================================================
+
+//Print 128 contiguous Sectors from Free/Aloc Map starting at Sector (0).
+=======================================================================
+FREE MAP
+00000000 00000000 00000000 00000000 00001111 11111111 11111111 11111111 
+0        8        16       24       32       40       48       56       
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+64       72       80       88       96       104      112      120      
+
+ALLOCATED MAP
+11111111 11111111 11111111 11111111 11110000 00000000 00000000 00000000 
+0        8        16       24       32       40       48       56       
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 
+64       72       80       88       96       104      112      120      
+=======================================================================
+
+
+DEBUG_LEVEL > 0:
+//TESTING: Writing File-Tuple (Inode 25) into Double Indirect 
+//Data Block of Folder (Inode 3)
+//T:3
+
+Opened Folder (Inode 3)
+Allocating required data Blocks:
+
+Double indirect Ptr --> 36
+Double indirect Ptr --> Double Indirect Block --> 37
+Double indirect Ptr --> Double Indirect Block --> Single Indirect Block -> 38
+Added File-Tuple (Inode 25) to data block at sector 38
+TRY: rmFileFromDir(fsm,25,3);
+
+Returned TRUE
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+DEBUG_LEVEL > 0:
+//Print 128 contiguous Inodes from Inode Map starting at Inode (0).
+//P:0
+
+=======================================================================
+INODE MAP
+00001111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+0        8        16       24       32       40       48       56       
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+64       72       80       88       96       104      112      120      
+
+=======================================================================
+
+//Print 128 contiguous Sectors from Free/Aloc Map starting at Sector (0).
+=======================================================================
+FREE MAP
+00000000 00000000 00000000 00000000 00001111 11111111 11111111 11111111 
+0        8        16       24       32       40       48       56       
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111 
+64       72       80       88       96       104      112      120      
+
+ALLOCATED MAP
+11111111 11111111 11111111 11111111 11110000 00000000 00000000 00000000 
+0        8        16       24       32       40       48       56       
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000 
+64       72       80       88       96       104      112      120      
+=======================================================================
+
+DEBUG_LEVEL > 0:
+//Display Info of File (Inode 3)
+//I:3
+
+-> fileType = 2
+-> fileSize = 1024
+-> permissions = 0
+-> linkCount = 0
+-> dataBlocks = 0
+-> owner = 0
+-> status = 0
+
+-> directPtr[0] = 35
+-> directPtr[1] = -1
+-> directPtr[2] = -1
+-> directPtr[3] = -1
+-> directPtr[4] = -1
+-> directPtr[5] = -1
+-> directPtr[6] = -1
+-> directPtr[7] = -1
+-> directPtr[8] = -1
+-> directPtr[9] = -1
+
+-> sIndirect = -1
+-> dIndirect = -1
+-> tIndirect = -1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+END
