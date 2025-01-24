@@ -1,10 +1,10 @@
 # Make file for File Sector Manager
 
-fsm : fsm.o
-	gcc -g -W -Wall -o fsm -lm fsm.o
+fsm : main.o
+	gcc -g -W -Wall -o fsm -lm main.o
 
-fsm.o : fsm.c fileSectorMgr.h fsmDefinitions.h iNode.h sectorSpaceMgr.h ssmDefinitions.h gDefinitions.h
-	gcc -g -W -Wall -c fsm.c
+main.o : main.c fileSectorMgr.h fsmDefinitions.h iNode.h sectorSpaceMgr.h ssmDefinitions.h gDefinitions.h
+	gcc -g -W -Wall -c main.c
 
 clean:
-	rm -f fsm fsm.o
+	rm -f fsm main.o

@@ -1,0 +1,5 @@
+{
+    "editor.formatOnSave": true,
+    "C_Cpp.clang_format_style": "Google", // Options: Google, LLVM, Microsoft, Mozilla, WebKit
+    "C_Cpp.default.formatting": "clangFormat"
+}
