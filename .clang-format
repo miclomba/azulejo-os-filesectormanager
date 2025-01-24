@@ -1,0 +1,5 @@
+BasedOnStyle: Google
+MaxEmptyLinesToKeep: 1
+BreakBeforeBraces: Attach
+ColumnLimit: 100
+IndentWidth: 4

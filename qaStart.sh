@@ -10,10 +10,10 @@ touch aMap fMap iMap hardDisk qaOutput.txt
 make clean
 make
 
-rm fsm.o
-#Use program output
+rm main.o
+#Use input file
 ./fsm 1 > qaOutput.txt
 
-#Use perfect output
+#Use stub input file
 #./fsm 1 1 > qaOutput.txt
 

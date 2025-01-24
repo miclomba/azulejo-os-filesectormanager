@@ -1,6 +1,18 @@
 # azulejo-os-filesectormanager
 
-Linux File Sector Manager which can be used for creating local file systems or custom binary formats.
+Linux File Sector Manager which can be used for creating local Linux file systems or custom binary formats based on file systems.
+
+## Testing
+
+Compile and run the driver application (`fsm`) by running `qaStart.sh`. The driver application loads `qaInput.txt` which will create a populated file system in the file called `hardDisk` and dump logs to `qaOutput.txt`.
+
+## Building
+
+Run `make`.
+
+## Cleaning
+
+Run `make clean`.
 
 ## Introduction
 
@@ -67,3 +79,82 @@ The deliverables for an OS are the system calls (fd (file descriptor) is a numbe
 - status = rename(oldname, newname)
 - status = mkdir(dirname, etc.)
 - status = rmdir(dirname, etc.)
+
+## Sample Input
+
+```
+//Make the file system
+//Disk = 3000000, Block = 1024, Inode = 128, Inode Block = 32 blocks,
+//Inodes per Block = 256
+M:3000000:1024:128:32:256
+//List contents of Folder (Inode 2)
+L:2:ROOT_DIR
+//Print 128 contiguous Inodes/Sectors from Inode Map and
+//Aloc/Free Map starting at (Sector 0).
+P:0
+//Create a Directory ('DirL1-01') in Folder (Inode 2)
+C:D:2:DirL1-01
+//Create a Directory ('DirL1-01') in Folder (Inode 3)
+C:D:3:DirL2-01
+//Create a Directory ('DirL1-01') in Folder (Inode 4)
+C:D:4:DirL3-01
+//Create a Directory ('DirL1-01') in Folder (Inode 5)
+C:D:5:DirL4-01
+//Create a File ('Fi_L2-01') in Folder (Inode 2)
+C:F:2:Fi_L2-01
+//Print 128 contiguous Inodes/Sectors from Inode Map and
+//Aloc/Free Map starting at (Sector 0).
+P:0
+//List contents of Folder (Inode 2)
+L:2:ROOT_DIR
+//List contents of Folder (Inode 3)
+L:3:DirL1-01
+//List contents of Folder (Inode 4)
+L:4:DirL2-01
+//List contents of Folder (Inode 5)
+L:5:DirL3-01
+//List contents of Folder (Inode 6)
+L:6:DirL4-01
+//Displaying Information of File (Inode 2)
+I:2
+//Write 273412 bytes to File (Inode 7)
+W:7:273412
+//Read 273412 bytes from File (Inode 7)
+R:7:273412
+//Displaying Information of File (Inode 7)
+I:7
+//Print 128 contiguous Inodes/Sectors from Inode Map and
+//Aloc/Free Map starting at (Sector 256).
+P:32
+//Renaming File (Inode 7) in Folder (Inode 2) to "NEW_NAME"
+N:7:2:NEW_NAME
+//List contents of Folder (Inode 2)
+L:2:ROOT_DIR
+//Print 128 contiguous Inodes/Sectors from Inode Map and
+//Aloc/Free Map starting at (Sector 256).
+P:32
+//Removing File (Inode 7) from Folder (Inode 2)
+V:7:2
+//List contents of Folder (Inode 2)
+L:2:ROOT_DIR
+//Print 128 contiguous Inodes/Sectors from Inode Map and
+//Aloc/Free Map starting at (Sector 0).
+P:0
+//Removing File (Inode 4) from Folder (Inode 3)
+V:4:3
+//List contents of Folder (Inode 3)
+L:3:DirL1-01
+//Print 128 contiguous Inodes/Sectors from Inode Map and
+//Aloc/Free Map starting at (Sector 0).
+P:0
+////Writing File-Tuple (Inode 25) into Double Indirect
+//Data Block of Folder (Inode 3)
+T:3
+//Print 128 contiguous Inodes/Sectors from Inode Map and
+//Aloc/Free Map starting at (Sector 0).
+P:0
+//Displaying Information of File (Inode 3)
+I:3
+//End of input.
+E
+```
