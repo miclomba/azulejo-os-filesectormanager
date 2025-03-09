@@ -5,6 +5,7 @@ fsm
 hardDisk
 iMap
 qaOutput.txt
+.DS_Store
 
 # Prerequisites
 *.d

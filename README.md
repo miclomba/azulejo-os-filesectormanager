@@ -1,6 +1,6 @@
 # azulejo-os-filesectormanager
 
-Linux File Sector Manager which can be used for creating local Linux file systems or custom binary formats based on file systems.
+A file sector manager that can be used to implement a Linux Filesystem in User Space (FUSE).
 
 ## Testing
 
