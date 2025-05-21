@@ -1,6 +1,6 @@
-# azulejo-os-filesectormanager
+# azulejo-os-filesystem
 
-A file sector manager that can be used to implement a Linux Filesystem in User Space (FUSE).
+A Linux Filesystem implementing a File Sector Manager and Sector Space Manager in the user space.
 
 ## Testing
 
