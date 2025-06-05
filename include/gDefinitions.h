@@ -2,8 +2,10 @@
  * File Sector Manager (FSM)
  * Author: Michael Lombardi
  *******************************************************************************/
+#ifndef G_DEFINITIONS_H
+#define G_DEFINITIONS_H
 
-#define _GNU_SOURCE
+#include "config.h"
 
 #ifndef BOOL
 #define BOOL
@@ -23,3 +25,5 @@ typedef int Bool;
 #ifndef DEBUG_LEVEL
 #define DEBUG_LEVEL (2)
 #endif
+
+#endif  // G_DEFINITIONS

@@ -4,7 +4,7 @@ A Linux Filesystem implementing a File Sector Manager and Sector Space Manager i
 
 ## Testing
 
-Compile and run the driver application (`fsm`) by running `qaStart.sh`. The driver application loads `qaInput.txt` which will create a populated file system in the file called `hardDisk` and dump logs to `qaOutput.txt`.
+Compile and run the driver application (`fsm`) by running `qaStart.sh`. The driver application loads `test/qaInput.txt` which will create a populated file system in the file called `fs/hardDisk` and dump logs to `test/qaOutput.txt`.
 
 ## Building
 

@@ -2,8 +2,10 @@
  * Sector Space Manager (SSM)
  * Author: Michael Lombardi
  *******************************************************************************/
+#ifndef SSM_DEFINITIONS_H
+#define SSM_DEFINITIONS_H
 
-#define _GNU_SOURCE
+#include "config.h"
 
 #ifndef SECTOR_BYTES
 #define SECTOR_BYTES (700)
@@ -12,3 +14,5 @@
 #ifndef NUM_SECTORS
 #define NUM_SECTORS (8 * SECTOR_BYTES)
 #endif
+
+#endif  // SSM_DEFINITIONS_H

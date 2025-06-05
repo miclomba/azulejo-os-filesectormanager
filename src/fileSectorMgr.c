@@ -2,93 +2,18 @@
  * File Sector Manager (FSM)
  * Author: Michael Lombardi
  *******************************************************************************/
-#define _GNU_SOURCE
+#include "fileSectorMgr.h"
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "config.h"
 #include "fsmDefinitions.h"
 #include "gDefinitions.h"
 #include "iNode.h"
 #include "sectorSpaceMgr.h"
-
-//======================== FSM TYPE DEFINITION ==============================//
-typedef struct {
-    // pointer to SSM
-    SecSpaceMgr ssm[1];
-    // pointers used for disk access
-    FILE *iMapHandle;
-    FILE *diskHandle;
-    unsigned int diskOffset;
-    unsigned int sampleCount;
-    unsigned char iMap[MAX_INODE_BLOCKS];
-    Inode inode;
-    unsigned int inodeNum;
-    unsigned int contInodes;
-    unsigned int index[2];
-    unsigned int badInode[MAX_INPUT][2];
-} FileSectorMgr;
-
-//======================== FSM FUNCTION PROTOTYPES ==========================//
-void initFileSectorMgr(FileSectorMgr *_fsm, int _initSsmMaps);
-void initFsmMaps(FileSectorMgr *_fsm);
-void mkfs(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE,
-          unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT,
-          int _initSsmMaps);
-Bool allocateInode(FileSectorMgr *_fsm);
-Bool deallocateInode(FileSectorMgr *_fsm);
-Bool getInode(int _n, FileSectorMgr *_fsm);
-unsigned int createFile(FileSectorMgr *_fsm, int _isDirectory, unsigned int *_name,
-                        unsigned int _inodeNumD);
-Bool openFile(FileSectorMgr *_fsm, unsigned int _inodeNum);
-void closeFile(FileSectorMgr *_fsm);
-Bool addFileToDir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                  unsigned int _inodeNumD);
-Bool addFileTo_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                          unsigned int _sIndirectOffset, Bool _allocate);
-Bool addFileTo_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                          unsigned int _dIndirectOffset, Bool _allocate);
-Bool addFileTo_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                          unsigned int _tIndirectOffset, Bool _allocate);
-Bool rmFileFromDir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int _inodeNumD);
-Bool rmFileFrom_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-                           unsigned int _dIndirectOffset, unsigned int _sIndirectOffset);
-Bool rmFileFrom_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-                           unsigned int _tIndirectOffset, unsigned int _dIndirectOffset);
-Bool rmFileFrom_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-                           unsigned int _tIndirectOffset);
-unsigned int aloc_S_Indirect(FileSectorMgr *_fsm, long long int _blockCount);
-unsigned int aloc_D_Indirect(FileSectorMgr *_fsm, long long int _blockCount);
-unsigned int aloc_T_Indirect(FileSectorMgr *_fsm, long long int _blockCount);
-Bool writeToFile(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer,
-                 long long int _fileSize);
-void writeTo_S_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, void *_buffer,
-                              unsigned int _sIndirectPtrs);
-void writeTo_D_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, void *_buffer,
-                              unsigned int _dIndirectPtrs);
-void writeTo_T_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, void *_buffer,
-                              unsigned int _tIndirectPtrs);
-Bool readFromFile(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer);
-void readFrom_S_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer, unsigned int _diskOffset);
-void readFrom_D_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer, unsigned int _diskOffset);
-void readFrom_T_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer, unsigned int _diskOffset);
-Bool rmFile(FileSectorMgr *_fsm, unsigned int _inodeNum, unsigned int _inodeNumD);
-void rmFile_S_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType, unsigned int _inodeNumD,
-                             unsigned int _diskOffset);
-void rmFile_D_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType, unsigned int _inodeNumD,
-                             unsigned int _diskOffset);
-void rmFile_T_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType, unsigned int _inodeNumD,
-                             unsigned int _diskOffset);
-Bool renameFile(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                unsigned int _inodeNumD);
-Bool renameFileIn_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                             unsigned int _sIndirectOffset);
-Bool renameFileIn_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                             unsigned int _dIndirectOffset);
-Bool renameFileIn_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                             unsigned int _tIndirectOffset);
-void fsmPrint(FileSectorMgr *_fsm, int _case, unsigned int _startByte);
 
 //========================= FSM FUNCTION DEFINITIONS =======================//
 /************************* def beg initFileSectorMgr *************************
@@ -152,7 +77,7 @@ void initFileSectorMgr(FileSectorMgr *_fsm, int _initSsmMaps) {
     _fsm->inodeNum = (unsigned int)-1;
     _fsm->iMapHandle = Null;
     // Open file stream for iMap
-    sprintf(dbfile, "./iMap");
+    sprintf(dbfile, "./fs/iMap");
     _fsm->iMapHandle = fopen(dbfile, "r+");
     // Read in INODE_BLOCKS number of items from iMap to iMapHandle
     _fsm->sampleCount = fread(_fsm->iMap, 1, INODE_BLOCKS, _fsm->iMapHandle);
@@ -160,7 +85,7 @@ void initFileSectorMgr(FileSectorMgr *_fsm, int _initSsmMaps) {
     fclose(_fsm->iMapHandle);
     // Open file stream for the disk
     _fsm->diskHandle = Null;
-    sprintf(dbfile, "./hardDisk");
+    sprintf(dbfile, "./fs/hardDisk");
     // Open binary form of file for reading and writing
     _fsm->diskHandle = fopen(dbfile, "rb+");
 }
@@ -202,7 +127,7 @@ void initFsmMaps(FileSectorMgr *_fsm) {
     unsigned char disk[DISK_SIZE];
     _fsm->iMapHandle = Null;
     // Load iMap from file and place in iMapHandle
-    sprintf(dbfile, "./iMap");
+    sprintf(dbfile, "./fs/iMap");
     _fsm->iMapHandle = fopen(dbfile, "r+");
     // Initialize all map elements to 255
     for (i = 0; i < INODE_BLOCKS; i++) {
@@ -213,7 +138,7 @@ void initFsmMaps(FileSectorMgr *_fsm) {
     // close the file
     fclose(_fsm->iMapHandle);
     _fsm->diskHandle = Null;
-    sprintf(dbfile, "./hardDisk");
+    sprintf(dbfile, "./fs/hardDisk");
     _fsm->diskHandle = fopen(dbfile, "rb+");
     // Initialize all disk elements to 0
     for (i = 0; i < DISK_SIZE; i++) {
@@ -3253,7 +3178,7 @@ Bool allocateInode(FileSectorMgr *_fsm) {
     // Write the newly allocated inode to the iMapHandler
     char dbfile[256];
     _fsm->iMapHandle = Null;
-    sprintf(dbfile, "./iMap");
+    sprintf(dbfile, "./fs/iMap");
     _fsm->iMapHandle = fopen(dbfile, "r+");
     _fsm->sampleCount = fwrite(_fsm->iMap, 1, INODE_BLOCKS, _fsm->iMapHandle);
     fclose(_fsm->iMapHandle);
@@ -3320,7 +3245,7 @@ Bool deallocateInode(FileSectorMgr *_fsm) {
     // Write iMap to its Handler
     char dbfile[256];
     _fsm->iMapHandle = Null;
-    sprintf(dbfile, "./iMap");
+    sprintf(dbfile, "./fs/iMap");
     _fsm->iMapHandle = fopen(dbfile, "r+");
     _fsm->sampleCount = fwrite(_fsm->iMap, 1, INODE_BLOCKS, _fsm->iMapHandle);
     fclose(_fsm->iMapHandle);

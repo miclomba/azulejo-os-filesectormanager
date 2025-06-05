@@ -1,10 +1,13 @@
 /******************************************************************************
- * File Sector Manager (FSM)
+ * Test Application
  * Author: Michael Lombardi
  ******************************************************************************/
 #include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
+#include "config.h"
 #include "fileSectorMgr.h"
 /********************************* def beg main *******************************
 
@@ -171,7 +174,7 @@ int main(int _argc, char *_argv[]) {
             fsmPrint(fsm, 18, 0);
         }  // end if(DEBUG_LEVEL > 0)
         // write the stub input location into buffer
-        sprintf(dbfile, "./qaInputStub.txt");
+        sprintf(dbfile, "./test/qaInputStub.txt");
         // open the stub input file, file should already exist
         driverHandle = fopen(dbfile, "r+");
         // read the driverHandle
@@ -199,7 +202,7 @@ int main(int _argc, char *_argv[]) {
     // if DEBUG_LEVEL is not set to read stub input, read legitimate input
     else {
         // write the qa input location into buffer
-        sprintf(dbfile, "./qaInput.txt");
+        sprintf(dbfile, "./test/qaInput.txt");
         // open the qa input file, file should already exist
         driverHandle = fopen(dbfile, "r+");
         // read the driverHandle

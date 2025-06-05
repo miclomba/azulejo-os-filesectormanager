@@ -4,16 +4,13 @@
 # *	Author: Michael Lombardi
 # **********************************/
 
-rm aMap fMap iMap hardDisk qaOutput.txt
-touch aMap fMap iMap hardDisk qaOutput.txt
-
+make touch_data
 make clean
 make
 
-rm main.o
 #Use input file
-./fsm 1 > qaOutput.txt
+./test/fsm 1 > test/qaOutput.txt
 
 #Use stub input file
-#./fsm 1 1 > qaOutput.txt
+#./test/fsm 1 1 > test/qaOutput.txt
 

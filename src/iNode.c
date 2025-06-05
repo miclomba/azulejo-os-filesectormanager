@@ -2,25 +2,13 @@
  *   File Sector Manager (FSM)
  *   Author: Michael Lombardi
  ******************************************************************************/
-#include "gDefinitions.h"
-typedef struct {
-    unsigned int fileType;
-    unsigned int fileSize;
-    unsigned int permissions;
-    unsigned int linkCount;
-    unsigned int dataBlocks;
-    unsigned int owner;
-    unsigned int status;
-    unsigned int directPtr[10];
-    unsigned int sIndirect;
-    unsigned int dIndirect;
-    unsigned int tIndirect;
-} Inode;
+#include "iNode.h"
 
-/************************** FUNCTION PROTOTYPES ******************************/
-void makeInodes(unsigned int _count, FILE *_fileStream, unsigned int _diskOffset);
-void readInode(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream);
-void writeInode(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream);
+#include <stdio.h>
+
+#include "config.h"
+#include "fsmDefinitions.h"
+#include "gDefinitions.h"
 
 /************************** FUNCTION DEFINITIONS *****************************/
 /****************************** def beg makeInodes ****************************
