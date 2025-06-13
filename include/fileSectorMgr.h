@@ -35,6 +35,7 @@ void initFsmMaps(FileSectorMgr *_fsm);
 void mkfs(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE,
           unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT,
           int _initSsmMaps);
+void rmfs(FileSectorMgr *_fsm);
 Bool allocateInode(FileSectorMgr *_fsm);
 Bool deallocateInode(FileSectorMgr *_fsm);
 Bool getInode(int _n, FileSectorMgr *_fsm);

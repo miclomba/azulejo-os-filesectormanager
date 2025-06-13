@@ -3122,6 +3122,26 @@ void mkfs(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE
     createFile(_fsm, 1, name, (unsigned int)(-1));
 }
 
+/*********************** def beg rmfs ***************************************
+
+   void rmfs(FileSectorMgr *_fsm)
+
+        Function:
+                        closes the file system:
+
+        void rmfs
+           = returns void for all calls to this function
+
+        Change Record: 6/13/25 first implemented
+
+*************************** def end rmfs ******************************/
+void rmfs(FileSectorMgr *_fsm) {
+    if (_fsm->diskHandle) {
+        fclose(_fsm->diskHandle);
+        _fsm->diskHandle = Null;
+    }
+}
+
 /**************************** def beg allocateInode *************************
 
         Bool allocateInode (FileSectorMgr *_fsm)
