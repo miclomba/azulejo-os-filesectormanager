@@ -10,6 +10,16 @@
 #include "config.h"
 #include "fileSectorMgr.h"
 #include "logger.h"
+
+// Helper function to advance an index through a buffer
+int advance_to_char(char *buffer, char c, int i) {
+    char *p = strchr(&buffer[i], c);
+    if (p != NULL) {
+        i = p - buffer;  // i now points to the '\n'
+    }
+    return i;
+}
+
 /********************************* def beg main *******************************
 
    int main(int _argc, char *_argv[])
@@ -185,19 +195,11 @@ int main(int _argc, char *_argv[]) {
         // print all lines of the driver buffer
         for (i = 0; i < MAX_INPUT; i++) {
             // look for the end of the input file, start with character 'E'
-            if (driver[i] == 'E') {
-                //'N' must succeed 'E'
-                if (driver[i + 1] == 'N') {
-                    //'D' must succeed 'N'
-                    if (driver[i + 2] == 'D') {
-                        // if the 'END' has been read, call to logFSM
-                        // to print do so
-                        logFSM(fsm, 14, 0);
-                        // no need to continue reading input
-                        break;
-                    }  // end if (driver[i+2] == 'D')
-                }  // end if (driver[i+1] == 'N')
-            }  // end if (driver[i] == 'E')
+            if (i <= 253 && strncmp(&driver[i], "END", 3) == 0) {
+                logFSM(fsm, 14, 0);
+                // no need to continue reading input
+                break;
+            }  // end if 'END'
             // print the input read from the buffer
             printf("%c", driver[i]);
         }  // end for (i = 0; i < MAX_INPUT; i++)
@@ -244,10 +246,7 @@ int main(int _argc, char *_argv[]) {
                         closeFile(fsm);
                     }  // end if (digit > 0)
                     // find the next line of input
-                    while (driver[i] != '\n') {
-                        // proceed through input buffer
-                        i++;
-                    }  // end while (driver[i] != '\n')
+                    i = advance_to_char(driver, '\n', i);
                     break;
                 // case 'N' renames a file
                 case 'N':
@@ -260,10 +259,7 @@ int main(int _argc, char *_argv[]) {
                         // convert the character to a digit
                         inodeNumF = atoi(&driver[i]);
                         // find next input
-                        while (driver[i] != ':') {
-                            // proceed through the input buffer
-                            i++;
-                        }  // end while (driver[i] != ':')
+                        i = advance_to_char(driver, ':', i);
                         // move to after semi-colon
                         i += 1;
                         // ensure that the character is a digit
@@ -273,10 +269,7 @@ int main(int _argc, char *_argv[]) {
                             // convert the character to a digit
                             inodeNumD = atoi(&driver[i]);
                             // find next input
-                            while (driver[i] != ':') {
-                                // proceed through the input buffer
-                                i++;
-                            }  // end while (driver[i] != ':')
+                            i = advance_to_char(driver, ':', i);
                             // move to after semi-colon
                             i += 1;
                             // read the characters for the new file name
@@ -305,10 +298,7 @@ int main(int _argc, char *_argv[]) {
                         }  // end if (digit > 0)
                     }  // end if (digit > 0)
                     // find the next line of input
-                    while (driver[i] != '\n') {
-                        // proceed through the buffer
-                        i++;
-                    }  // end while (driver[i] != '\n')
+                    i = advance_to_char(driver, '\n', i);
                     break;
                 // case 'W' will write data to a file
                 case 'W':
@@ -321,10 +311,7 @@ int main(int _argc, char *_argv[]) {
                         // convert the character to a digit
                         inodeNumF = atoi(&driver[i]);
                         // find next input
-                        while (driver[i] != ':') {
-                            // proceed through input buffer
-                            i++;
-                        }  // end while (driver[i] != ':')
+                        i = advance_to_char(driver, ':', i);
                         // move to after semi-colon
                         i += 1;
                         // ensure that the character is a digit
@@ -364,10 +351,7 @@ int main(int _argc, char *_argv[]) {
                         printf("- - - - - - - - - - - -\n\n");
                     }  // end if (digit > 0)
                     // find next line of input
-                    while (driver[i] != '\n') {
-                        // proceed through input buffer
-                        i++;
-                    }  /// end while (driver[i] != '\n')
+                    i = advance_to_char(driver, '\n', i);
                     break;
                 // case 'R' will read a file
                 case 'R':
@@ -380,10 +364,7 @@ int main(int _argc, char *_argv[]) {
                         // convert the character to a number
                         inodeNumF = atoi(&driver[i]);
                         // find the next input
-                        while (driver[i] != ':') {
-                            // proceed through the input buffer
-                            i++;
-                        }  // end while (driver[i] != ':')
+                        i = advance_to_char(driver, ':', i);
                         // move to after the semi-colon, size of bytes to be read
                         i += 1;
                         // check to see if character is a digit
@@ -414,10 +395,7 @@ int main(int _argc, char *_argv[]) {
                         printf("- - - - - - - - - - - -\n\n\n");
                     }  // end if (digit > 0)
                     // discard input until new line
-                    while (driver[i] != '\n') {
-                        // move forward in buffer
-                        i++;
-                    }  // end while (driver[i] != '\n')
+                    i = advance_to_char(driver, '\n', i);
                     break;
                 // case 'V' removes a file from a folder
                 case 'V':
@@ -430,10 +408,7 @@ int main(int _argc, char *_argv[]) {
                         // convert the character to a digit
                         inodeNumF = atoi(&driver[i]);
                         // find next input
-                        while (driver[i] != ':') {
-                            // proceed through input buffer
-                            i++;
-                        }  // end while (driver[i] != ':')
+                        i = advance_to_char(driver, ':', i);
                         // move to after semi-colon, folder's iNode number
                         i += 1;
                         // check to see that the character is a digit
@@ -475,10 +450,7 @@ int main(int _argc, char *_argv[]) {
                         printf("- - - - - - - - - - - -\n\n");
                     }  // end if (digit > 0)
                     // find the next line of input
-                    while (driver[i] != '\n') {
-                        // proceed through input buffer
-                        i++;
-                    }  // end while (driver[i] != '\n')
+                    i = advance_to_char(driver, '\n', i);
                     break;
                 // case 'T' tests the removal of a file or directory
                 case 'T':
@@ -615,10 +587,7 @@ int main(int _argc, char *_argv[]) {
                         printf("- - - - - - - - - - - -\n\n\n");
                     }  // end if (digit > 0)
                     // find the next line of input
-                    while (driver[i] != '\n') {
-                        // proceed through input buffer
-                        i++;
-                    }  // end while (driver[i] != '\n')
+                    i = advance_to_char(driver, '\n', i);
                     break;
                 // case 'L' lists the contents of a directory
                 case 'L':
@@ -631,10 +600,7 @@ int main(int _argc, char *_argv[]) {
                         // convert the character into a digit
                         inodeNumF = atoi(&driver[i]);
                         // find next input
-                        while (driver[i] != ':') {
-                            // proceed through input buffer
-                            i++;
-                        }  // end while (driver[i] != ':')
+                        i = advance_to_char(driver, ':', i);
                         // move to after semi-colon
                         i += 1;
                         // store value in buffer
@@ -678,10 +644,7 @@ int main(int _argc, char *_argv[]) {
                         printf("- - - - - - - - - - - -\n\n\n");
                     }  // end if (digit > 0)
                     // find next line of input
-                    while (driver[i] != '\n') {
-                        // proceed through input buffer
-                        i++;
-                    }  // end while (driver[i] != '\n')
+                    i = advance_to_char(driver, '\n', i);
                     break;
                 // case 'C' should create either a file or directory
                 case 'C':
@@ -690,10 +653,7 @@ int main(int _argc, char *_argv[]) {
                     // store character value
                     c = driver[i];
                     // find next input
-                    while (driver[i] != ':') {
-                        // proceed through input buffer
-                        i++;
-                    }  // end while (driver[i] != ':')
+                    i = advance_to_char(driver, ':', i);
                     // move to after semi-colon
                     i += 1;
                     // check to see that the character is a digit
@@ -715,10 +675,7 @@ int main(int _argc, char *_argv[]) {
                             inodeNumF = createFile(fsm, 1, name, inodeNumD);
                         }  // end if (c == 'D')
                         // find next input
-                        while (driver[i] != ':') {
-                            // proceed through input buffer
-                            i++;
-                        }  // end while (driver[i] != ':')
+                        i = advance_to_char(driver, ':', i);
                         // move to after the semi-colon
                         i += 1;
                         // get the name for the new file or directory
@@ -766,10 +723,7 @@ int main(int _argc, char *_argv[]) {
                     printf("- - - - - - - - - - - - - - - - - - - - - - - - - -");
                     printf(" - - - - - - - - - -\n\n\n");
                     // find next line of input
-                    while (driver[i] != '\n') {
-                        // proceed through input buffer
-                        i++;
-                    }  // end while (driver[i] != '\n')
+                    i = advance_to_char(driver, '\n', i);
                     break;
                 // case 'M' creates the filesystem
                 case 'M':
@@ -788,10 +742,7 @@ int main(int _argc, char *_argv[]) {
                         _DISK_SIZE = atoi(&driver[i]);
                     }  // end if (digit > 0)
                     // find next input
-                    while (driver[i] != ':') {
-                        // proceed through input buffer
-                        i++;
-                    }  // end while (driver[i] != ':')
+                    i = advance_to_char(driver, ':', i);
                     // move to retrieve block size
                     i += 1;
                     // check to see that the character is a digit
@@ -802,10 +753,7 @@ int main(int _argc, char *_argv[]) {
                         _BLOCK_SIZE = atoi(&driver[i]);
                     }  // end if digit (digit > 0)
                     // find next input
-                    while (driver[i] != ':') {
-                        // proceed through input buffer
-                        i++;
-                    }  // end while (driver[i] != ':')
+                    i = advance_to_char(driver, ':', i);
                     // move to retrieve iNode size
                     i += 1;
                     // check to see that the character is a digit
@@ -816,10 +764,7 @@ int main(int _argc, char *_argv[]) {
                         _INODE_SIZE = atoi(&driver[i]);
                     }  // end if (digit > 0)
                     // find next input
-                    while (driver[i] != ':') {
-                        // proceed through input buffer
-                        i++;
-                    }  // end while (driver[i] != ':')
+                    i = advance_to_char(driver, ':', i);
                     // move to retrieve number of iNode blocks
                     i += 1;
                     // check to see that the character is a digit
@@ -830,10 +775,7 @@ int main(int _argc, char *_argv[]) {
                         _INODE_BLOCKS = atoi(&driver[i]);
                     }  // end if (digit > 0)
                     // find next input
-                    while (driver[i] != ':') {
-                        // proceed through input buffer
-                        i++;
-                    }  // end while (driver[i] != ':')
+                    i = advance_to_char(driver, ':', i);
                     // move to retrieve iNodes per block
                     i += 1;
                     // check to see that the character is a digit
@@ -855,10 +797,7 @@ int main(int _argc, char *_argv[]) {
                              0);
                     }  // end else
                     // find next line of input
-                    while (driver[i] != '\n') {
-                        // proceed through input buffer
-                        i++;
-                    }  // end while (driver[i] != '\n')
+                    i = advance_to_char(driver, '\n', i);
                     break;
                 // case 'P' should print the maps
                 case 'P':
@@ -877,18 +816,12 @@ int main(int _argc, char *_argv[]) {
                         }  // end if (DEBUG_LEVEL > 0)
                     }  // end if (digit > 0)
                     // discard input until new line
-                    while (driver[i] != '\n') {
-                        // move forward in buffer
-                        i++;
-                    }  // end while (driver[i] != '\n')
+                    i = advance_to_char(driver, '\n', i);
                     break;
                 // case '/' should ignore all lines with comments
                 case '/':
                     // discard input until new line
-                    while (driver[i] != '\n') {
-                        // move forward in buffer
-                        i++;
-                    }  // end while (driver[i] != '\n')
+                    i = advance_to_char(driver, '\n', i);
                     break;
                 // case '\n' should ignore blank lines with new lines
                 case '\n':
@@ -907,10 +840,7 @@ int main(int _argc, char *_argv[]) {
                 // default case should ignore any other form of input
                 default:
                     // discard input until new line
-                    while (driver[i] != '\n') {
-                        // move forward in buffer
-                        i++;
-                    }  // end while (driver[i] != '\n')
+                    i = advance_to_char(driver, '\n', i);
                     // if debug, print bad input
                     if (DEBUG_LEVEL > 0) {
                         // call to logFSM, print bad input
