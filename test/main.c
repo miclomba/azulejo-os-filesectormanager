@@ -181,6 +181,7 @@ int main(int _argc, char *_argv[]) {
         // read the driverHandle
         fread(driver, sizeof(char), MAX_INPUT, driverHandle);
         fclose(driverHandle);
+        driverHandle = Null;
         // print all lines of the driver buffer
         for (i = 0; i < MAX_INPUT; i++) {
             // look for the end of the input file, start with character 'E'
@@ -210,6 +211,7 @@ int main(int _argc, char *_argv[]) {
         // read the driverHandle
         fread(driver, sizeof(char), MAX_INPUT, driverHandle);
         fclose(driverHandle);
+        driverHandle = Null;
         // placeholder in the buffer array should start at the beginning
         i = 0;
         // set loop to true to ensure that all input is read
