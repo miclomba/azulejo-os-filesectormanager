@@ -32,7 +32,6 @@ Bool deallocateSectors(SecSpaceMgr *_ssm);
 Bool getSector(int _n, SecSpaceMgr *_ssm);
 Bool checkIntegrity(SecSpaceMgr *_ssm);
 void isFragmented(SecSpaceMgr *_ssm);
-void ssmPrint(SecSpaceMgr *_ssm, int _case, int _startByte);
 void setAlocSector(SecSpaceMgr *_ssm, int _byte, int _bit);
 void setFreeSector(SecSpaceMgr *_ssm, int _byte, int _bit);
 

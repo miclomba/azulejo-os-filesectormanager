@@ -9,6 +9,7 @@
 
 #include "config.h"
 #include "fileSectorMgr.h"
+#include "logger.h"
 /********************************* def beg main *******************************
 
    int main(int _argc, char *_argv[])
@@ -863,12 +864,12 @@ int main(int _argc, char *_argv[]) {
                     digit = isdigit(driver[i]);
                     // if the character is a digit, print both FSM and SSM maps
                     if (digit > 0) {
-                        // if debug, print the call to both fsmPrint and ssmPrint
+                        // if debug, print the call to both fsmPrint and logSSM
                         if (DEBUG_LEVEL > 0) {
                             // call to fsmPrint
                             fsmPrint(fsm, 1, 0);
-                            // call to ssmPrint
-                            ssmPrint(fsm->ssm, 1, atoi(&driver[i]));
+                            // call to logSSM
+                            logSSM(fsm->ssm, 1, atoi(&driver[i]));
                         }  // end if (DEBUG_LEVEL > 0)
                     }  // end if (digit > 0)
                     // discard input until new line
