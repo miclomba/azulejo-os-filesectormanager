@@ -171,8 +171,8 @@ int main(int _argc, char *_argv[]) {
     if (_argc > 2 && atoi(_argv[2]) == 1) {
         // if the debug level is greater than 0, generate stub output
         if (DEBUG_LEVEL > 0) {
-            // call fsmPrint to print that stub output is being created
-            fsmPrint(fsm, 18, 0);
+            // call logFSM to print that stub output is being created
+            logFSM(fsm, 18, 0);
         }  // end if(DEBUG_LEVEL > 0)
         // write the stub input location into buffer
         sprintf(dbfile, "./test/qaInputStub.txt");
@@ -188,9 +188,9 @@ int main(int _argc, char *_argv[]) {
                 if (driver[i + 1] == 'N') {
                     //'D' must succeed 'N'
                     if (driver[i + 2] == 'D') {
-                        // if the 'END' has been read, call to fsmPrint
+                        // if the 'END' has been read, call to logFSM
                         // to print do so
-                        fsmPrint(fsm, 14, 0);
+                        logFSM(fsm, 14, 0);
                         // no need to continue reading input
                         break;
                     }  // end if (driver[i+2] == 'D')
@@ -233,8 +233,8 @@ int main(int _argc, char *_argv[]) {
                         // if the iNode was successfully opened, print the
                         // appropriate message
                         if (success == True) {
-                            // call to fsmPrint, print the iNode information
-                            fsmPrint(fsm, 29, 0);
+                            // call to logFSM, print the iNode information
+                            logFSM(fsm, 29, 0);
                         }  // if (success == True)
                         // close the iNode by flushing the iNode buffer inside FSM
                         closeFile(fsm);
@@ -771,8 +771,8 @@ int main(int _argc, char *_argv[]) {
                 case 'M':
                     // if debug, print the creation of the file system
                     if (DEBUG_LEVEL > 0) {
-                        // call to fsmPrint, print creation of the file system
-                        fsmPrint(fsm, 21, 0);
+                        // call to logFSM, print creation of the file system
+                        logFSM(fsm, 21, 0);
                     }  // end if (DEBUG_LEVEL > 0)
                     // move to retrieve disk size
                     i += 2;
@@ -864,10 +864,10 @@ int main(int _argc, char *_argv[]) {
                     digit = isdigit(driver[i]);
                     // if the character is a digit, print both FSM and SSM maps
                     if (digit > 0) {
-                        // if debug, print the call to both fsmPrint and logSSM
+                        // if debug, print the call to both logFSM and logSSM
                         if (DEBUG_LEVEL > 0) {
-                            // call to fsmPrint
-                            fsmPrint(fsm, 1, 0);
+                            // call to logFSM
+                            logFSM(fsm, 1, 0);
                             // call to logSSM
                             logSSM(fsm->ssm, 1, atoi(&driver[i]));
                         }  // end if (DEBUG_LEVEL > 0)
@@ -893,8 +893,8 @@ int main(int _argc, char *_argv[]) {
                 case 'E':
                     // if debug, print the end has been reached
                     if (DEBUG_LEVEL > 0) {
-                        // call to fsmPrint, print the end has been reached
-                        fsmPrint(fsm, 14, 0);
+                        // call to logFSM, print the end has been reached
+                        logFSM(fsm, 14, 0);
                     }  // end if (DEBUG_LEVEL > 0)
                     // no more input, stop reading loop
                     loop = False;
@@ -908,8 +908,8 @@ int main(int _argc, char *_argv[]) {
                     }  // end while (driver[i] != '\n')
                     // if debug, print bad input
                     if (DEBUG_LEVEL > 0) {
-                        // call to fsmPrint, print bad input
-                        fsmPrint(fsm, 15, 0);
+                        // call to logFSM, print bad input
+                        logFSM(fsm, 15, 0);
                     }  // end if (DEBUG_LEVEL > 0)
                     break;
             }  // end switch (action)

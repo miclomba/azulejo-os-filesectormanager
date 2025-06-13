@@ -87,6 +87,5 @@ Bool renameFileIn_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsig
                              unsigned int _dIndirectOffset);
 Bool renameFileIn_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
                              unsigned int _tIndirectOffset);
-void fsmPrint(FileSectorMgr *_fsm, int _case, unsigned int _startByte);
 
 #endif  // FILE_SECTOR_MGR
