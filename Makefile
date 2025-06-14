@@ -31,7 +31,7 @@ src/logger.o: src/logger.c include/logger.h include/gDefinitions.h include/ssmDe
 	$(CC) $(CFLAGS) -c src/logger.c -o $@
 
 clean:
-	rm -f test/fsm *.o src/*.o test/*.o test/qaOutput.txt
+	rm -f test/fsm *.o src/*.o test/*.o test/src/*.o test/qaOutput.txt
 
 touch_data:
 	mkdir -p fs
