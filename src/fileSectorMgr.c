@@ -61,33 +61,14 @@ static Bool renameFileIn_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF
                                     unsigned int *_name, unsigned int _tIndirectOffset);
 
 //========================= FSM FUNCTION DEFINITIONS =======================//
-/************************* def beg initFileSectorMgr *************************
-
-        void initFileSectorMgr(FileSectorMgr *_fsm, int _initSsmMaps)
-
-        Function
-                Initializes the File Sector Manager
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                        int _initSsmMaps
-                        := variable that tells program whether to initialize
-                        the SSM maps
-
-                Local Variables
-                        int i, j
-                        := loop variables
-
-        initFileSectorMgr
-                = returns void for all calls to this function
-
-
-        Change Record: 4/1/10 first implementation
-
-************************* def end initFileSectorMgr ************************/
+/**
+ * @brief Initializes the File Sector Manager.
+ * Sets up the File Sector Manager and optionally initializes the SSM maps.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
+ * @param[in] _initSsmMaps Flag indicating whether to initialize the SSM maps.
+ * @return void
+ * @date 2010-04-01 First implementation.
+ */
 static void initFileSectorMgr(FileSectorMgr *_fsm, int _initSsmMaps) {
     int i, j;
     // Initialize SSM Maps
@@ -134,36 +115,13 @@ static void initFileSectorMgr(FileSectorMgr *_fsm, int _initSsmMaps) {
     _fsm->diskHandle = fopen(dbfile, "rb+");
 }
 
-/**************************** def beg initFsmMaps *************************
-
-        void initFsmMaps(FileSectorMgr *_fsm)
-
-        Function
-                Initializes the File Sector Manager Maps
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                Local Variables
-                        int i
-                        := loop variables
-
-                        char dbfile
-                        := character array to hold data
-
-                        char map[]
-                        := array to store FSM maps
-
-                        char disk[]
-                        := map to hold free and allocated disk sectors
-        initFsmMaps
-                = returns void for all calls to this function
-
-        Change Record: 4/1/10 first implementation
-
-***************************** def end initFsmMaps **********************/
+/**
+ * @brief Initializes the File Sector Manager maps.
+ * Sets up internal maps within the File Sector Manager.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
+ * @return void
+ * @date 2010-04-01 First implementation.
+ */
 static void initFsmMaps(FileSectorMgr *_fsm) {
     unsigned int i;
     char dbfile[256];
@@ -193,32 +151,16 @@ static void initFsmMaps(FileSectorMgr *_fsm) {
     _fsm->diskHandle = Null;
 }
 
-/**************************** def beg createFile *************************
-
-        Bool createFile(FileSectorMgr *_fsm, int _isDirectory)
-
-        Function
-                Creates a file or directory
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                        int _isDirectory
-                        := variable that determines if the file is a directory
-
-                Local Variables
-                        int i, j
-                        := loop variables
-
-        createFile
-                = Returns true if successful, false otherwise
-
-
-        Change Record: 4/1/10 first implementation
-
-***************************** def end createFile ************************/
+/**
+ * @brief Creates a file or directory.
+ * This function creates a new file or directory in the file sector manager.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
+ * @param[in] _isDirectory Non-zero if the new file is a directory, 0 otherwise.
+ * @param[out] _name Pointer to where the generated name will be stored.
+ * @param[in] _inodeNumD Inode number of the directory in which to create the file.
+ * @return Non-zero (true) if successful, 0 (false) otherwise.
+ * @date 2010-04-01 First implementation.
+ */
 unsigned int createFile(FileSectorMgr *_fsm, int _isDirectory, unsigned int *_name,
                         unsigned int _inodeNumD) {
     getInode(1, _fsm);
@@ -264,32 +206,14 @@ unsigned int createFile(FileSectorMgr *_fsm, int _isDirectory, unsigned int *_na
     return inodeNum;
 }
 
-/*********************** def beg openFile ******************************
-
-        Bool openFile(FileSectorMgr *_fsm, unsigned int _inodeNum)
-
-        Function
-                Opens a file
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                        int _inodeNum
-                        := inode to open file from
-
-                Local Variables
-                        int i, j
-                        := loop variables
-
-        openFile
-                = returns True if file is opened, false otherwise
-
-
-        Change Record: 4/1/10 first implementation
-
-************************* def end openFile ****************************/
+/**
+ * @brief Opens a file.
+ * Opens a file identified by the given inode number within the File Sector Manager.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
+ * @param[in] _inodeNum Inode number of the file to open.
+ * @return True if the file was successfully opened, false otherwise.
+ * @date 2010-04-01 First implementation.
+ */
 Bool openFile(FileSectorMgr *_fsm, unsigned int _inodeNum) {
     int i, j;
     if (_inodeNum == (unsigned int)(-1)) {
@@ -324,29 +248,13 @@ Bool openFile(FileSectorMgr *_fsm, unsigned int _inodeNum) {
     }  // end else (_fsm->inode.fileType > 0)
 }
 
-/************************ def beg closeFile *****************************
-
-        void closeFile(FileSectorMgr *_fsm)
-
-        Function
-                Closes the currently opened file
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                Local Variables
-                        int i, j
-                        := loop variables
-
-        closeFile
-                = returns void for all calls to this function
-
-
-        Change Record: 4/1/10 first implementation
-
-************************* def end closeFile ****************************/
+/**
+ * @brief Closes the currently opened file.
+ * Closes the file currently open in the File Sector Manager.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
+ * @return void
+ * @date 2010-04-01 First implementation.
+ */
 void closeFile(FileSectorMgr *_fsm) {
     int i, j;
     // Reset all FSM->Inode variables to defaults
@@ -368,36 +276,16 @@ void closeFile(FileSectorMgr *_fsm) {
     _fsm->inode.tIndirect = (unsigned int)(-1);
 }
 
-/**************************** def beg readFromFile *************************
-
-        Bool readFromFile(FileSectorMgr *_fsm, unsigned int _inodeNum,
-                                         void *_buffer)
-
-        Function
-                Reads a file
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                        int _inodeNum
-                        := the inode to read from
-
-                        void *_buffer
-                        := a buffer to place read values
-
-                Local Variables
-                        Bool success
-                        := Holds whether the read was successful or failed
-
-        readFromFile
-                = Returns true if file read correctly, false otherwise
-
-
-        Change Record: 4/1/10 first implementation
-
-***************************** def end readFromFile ************************/
+/**
+ * @brief Reads a file.
+ * Reads the contents of the file associated with the given inode number
+ * into the provided buffer.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
+ * @param[in] _inodeNum Inode number of the file to read.
+ * @param[out] _buffer Pointer to a buffer where the file contents will be stored.
+ * @return True if the file was read successfully, false otherwise.
+ * @date 2010-04-01 First implementation.
+ */
 Bool readFromFile(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer) {
     // Open file at Inode _inodeNum for reading
     Bool success;
@@ -437,34 +325,16 @@ Bool readFromFile(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer) {
     return True;
 }
 
-/**************************** def beg writeToFile *************************
-
-        Bool writeToFile(FileSectorMgr *_fsm, unsigned int _inodeNum,
-                                         void *_buffer, long long int _fileSize)
-
-        Function
-                Writes
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                        int _initSsmMaps
-                        := variable that tells program whether to initialize
-                        the SSM maps
-
-                Local Variables
-                        int i, j
-                        := loop variables
-
-        writeToFile
-                = returns void for all calls to this function
-
-
-        Change Record: 4/1/10 first implementation
-
-***************************** def end writeToFile ************************/
+/**
+ * @brief Writes data to a file.
+ * Writes the contents of the provided buffer to the file identified by the given inode number.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
+ * @param[in] _inodeNum Inode number of the file to write to.
+ * @param[in] _buffer Pointer to the data to be written.
+ * @param[in] _fileSize Size of the data to write, in bytes.
+ * @return True if the write was successful, false otherwise.
+ * @date 2010-04-01 First implementation.
+ */
 Bool writeToFile(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer,
                  long long int _fileSize) {
     Bool success;
@@ -599,51 +469,16 @@ Bool writeToFile(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer,
     return True;
 }
 
-/**************************** def beg addFileToDir *************************
-
-        Bool addFileToDir(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-                                          unsigned int *_name, unsigned int _inodeNumD)
-
-        Function
-                Adds a file to directory
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                        int _inodeNumF
-                        := Inode number of file
-
-                        int *_name
-                        := Pointer to file's name
-
-                        int _inodeNumD
-                        := Inode number of directory
-
-                Local Variables
-                        int i, j
-                        := loop variables
-
-                        bool success
-                        := Holds whether execution was successful
-
-                        int diskOffset
-                        := The offset for blocks
-
-                        int buffer
-                        := Stores the file read from disk
-
-                        int buffer2
-                        := Stores the directory from disk
-
-        addFileToDir
-                = Returns true if file added successfully
-
-
-        Change Record: 4/1/10 first implementation
-
-***************************** def end addFileToDir ************************/
+/**
+ * @brief Adds a file to a directory.
+ * Inserts a file into the specified directory within the File Sector Manager.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
+ * @param[in] _inodeNumF Inode number of the file to be added.
+ * @param[in] _name Pointer to the name of the file.
+ * @param[in] _inodeNumD Inode number of the target directory.
+ * @return True if the file was added successfully, false otherwise.
+ * @date 2010-04-01 First implementation.
+ */
 static Bool addFileToDir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
                          unsigned int _inodeNumD) {
     Bool success;
@@ -880,49 +715,18 @@ static Bool addFileToDir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned 
     return False;
 }
 
-/********************** def beg addFileTo_T_Indirect *************************
-
-        Bool addFileTo_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-
-                 unsigned int *_name, unsigned int _tIndirectOffset, Bool _allocate)
-
-        Function
-                Adds a file to a triple indirect pointer
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                        int _inodeNumF
-                        := inode number of file
-
-                        int *_name
-                        := Pointer to file's name
-
-                        int _tIndirectOffset
-                        := Offset to triple indirect
-
-                        Bool _allocate
-                        := Tells if blocks need to be allocated
-
-                Local Variables
-                        int indirectBlock
-                        := Stores information read from disk
-
-                        int diskOffset
-                        := holds the triple indirect disk offset
-
-                        Bool success
-                        := Holds whether operations were successful
-
-        addFileTo_T_Indirect
-                = Returns true if file is added, false otherwise
-
-
-        Change Record: 4/1/10 first implementation
-
-************************** def end addFileTo_T_Indirect *******************/
+/**
+ * @brief Adds a file to a triple indirect pointer.
+ * Inserts a file into the structure at the specified triple indirect offset,
+ * optionally allocating necessary blocks.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
+ * @param[in] _inodeNumF Inode number of the file to be added.
+ * @param[in] _name Pointer to the name of the file.
+ * @param[in] _tIndirectOffset Offset within the triple indirect block.
+ * @param[in] _allocate If true, allocate blocks as needed.
+ * @return True if the file was added successfully, false otherwise.
+ * @date 2010-04-01 First implementation.
+ */
 static Bool addFileTo_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
                                  unsigned int _tIndirectOffset, Bool _allocate) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
@@ -974,49 +778,18 @@ static Bool addFileTo_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, u
     return False;
 }
 
-/*********************** def beg addFileTo_D_Indirect *************************
-
-        Bool addFileTo_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-
-                 unsigned int *_name, unsigned int _dIndirectOffset, Bool _allocate)
-
-        Function
-                Adds a file to a double indirect pointer
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                        int _inodeNumF
-                        := Inode number of the file
-
-                        int *_name
-                        := Pointer to file's name
-
-                        int _dIndirectOffset
-                        := Offset for double indirect pointer
-
-                        Bool _allocate
-                        := Tells whether more space should be allocated
-
-                Local Variables
-                        int indirectBlock
-                        :=
-
-                        int diskOffset
-                        := Offset of the disk
-
-                        Bool success
-                        := Holds whether operations are successful
-
-        addFileTo_D_Indirect
-                = Returns true if file successfully added, false otherwise
-
-
-        Change Record: 4/1/10 first implementation
-
-************************ def end addFileTo_D_Indirect ************************/
+/**
+ * @brief Adds a file to a double indirect pointer.
+ * Inserts a file into the structure at the specified double indirect offset,
+ * optionally allocating space as needed.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
+ * @param[in] _inodeNumF Inode number of the file to be added.
+ * @param[in] _name Pointer to the name of the file.
+ * @param[in] _dIndirectOffset Offset within the double indirect block.
+ * @param[in] _allocate If true, allocate additional space as needed.
+ * @return True if the file was added successfully, false otherwise.
+ * @date 2010-04-01 First implementation.
+ */
 static Bool addFileTo_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
                                  unsigned int _dIndirectOffset, Bool _allocate) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
@@ -1068,49 +841,17 @@ static Bool addFileTo_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, u
     return False;
 }
 
-/************************ def beg addFileTo_S_Indirect ************************
-
-        Bool addFileTo_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-
-                 unsigned int *_name, unsigned int _sIndirectOffset, Bool _allocate)
-
-        Function
-                Adds a file to a single indirect pointer
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                        int _inodeNumF
-                        := Inode number of the file
-
-                        int *_name
-                        := Pointer to file's name
-
-                        int _sIndirectOffset
-                        := Single indirect offset
-
-                        Bool _allocate
-                        := Holds whether to allocate
-
-                Local Variables
-                        int indirectBlock
-                        := Holds the indirect block
-
-                        int diskOffset
-                        := Offset of disk
-
-                        int buffer
-                        := buffer to hold file
-
-        addFileTo_S_Indirect
-                = returns void for all calls to this function
-
-
-        Change Record: 4/1/10 first implementation
-
-************************ def end addFileTo_S_Indirect ***********************/
+/**
+ * @brief Adds a file to a single indirect pointer.
+ * Inserts a file at the specified single indirect offset, optionally allocating space if required.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
+ * @param[in] _inodeNumF Inode number of the file to be added.
+ * @param[in] _name Pointer to the name of the file.
+ * @param[in] _sIndirectOffset Offset within the single indirect block.
+ * @param[in] _allocate If true, allocate space as needed.
+ * @return True if the file was added successfully, false otherwise.
+ * @date 2010-04-01 First implementation.
+ */
 static Bool addFileTo_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
                                  unsigned int _sIndirectOffset, Bool _allocate) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
@@ -1183,43 +924,15 @@ static Bool addFileTo_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, u
     return False;
 }
 
-/************************ def beg rmFileFromDir ************************
-
-        rmFileFromDir(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-                                   unsigned int _inodeNumD) {
-
-        Function
-                removes a file from a directory
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                        int _inodeNumF
-                        := Inode number of the file
-
-                        Unsigned int inodeNumD
-                        := Inode number of the directory
-
-                Local Variables
-                        unsigned int i,j,k
-                        := temp variables used for looping
-
-                        unsigned int diskOffset
-                        := Offset from disk to block in question
-
-                        unsigned int buffer[]
-                        := buffer used to store pointers in the block
-
-        rmFileFromDir
-                        = returns true on successful file removal, false if file could
-                          be accessed
-
-
-        Change Record: 4/1/10 first implementation
-
-************************ def end rmFileFromDir ***********************/
+/**
+ * @brief Removes a file from a directory.
+ * Removes the file identified by `_inodeNumF` from the directory specified by `_inodeNumD`.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
+ * @param[in] _inodeNumF Inode number of the file to be removed.
+ * @param[in] _inodeNumD Inode number of the directory containing the file.
+ * @return True if the file was successfully removed, false if the file could not be accessed.
+ * @date 2010-04-01 First implementation.
+ */
 Bool rmFileFromDir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int _inodeNumD) {
     Bool success;
     unsigned int i, j, k;
@@ -1309,49 +1022,16 @@ Bool rmFileFromDir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int _i
     return False;
 }
 
-/*********************** def beg rmFileFrom_T_Indirect ************************
-
-        Bool rmFileFrom_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-
-                                                   unsigned int _dIndirectOffset)
-
-        Function
-                removes a file from a directory's T_Indirect pointer,
-                calls rmFileFrom_D_Indirect
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                        int _inodeNumF
-                        := Inode number of the file to be removed
-
-                        Unsigned int _tIndirectOffset
-                        := Offset to the triple indirect block containing the file to be
-                           removed
-
-                Local Variables
-                        unsigned int i,j,k
-                        := temp variables used for looping
-
-                        unsigned int diskOffset
-                        := Offset from disk to block in question
-
-                        unsigned int buffer[]
-                        := buffer used to store pointers in the block
-
-                        unsigned int indirectBlock[]
-                        := block filled with pointers to be searched through
-
-        rmFileFrom_T_Indirect
-                        = returns true on successful file removal, false if file could
-                          be accessed
-
-
-        Change Record: 4/1/10 first implementation
-
-************************ def end rmFileFrom_T_Indirect ***********************/
+/**
+ * @brief Removes a file from a triple indirect pointer.
+ * Removes the file identified by `_inodeNumF` from the triple indirect block at the specified
+ * offset. Internally calls `rmFileFrom_D_Indirect` to complete the operation.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
+ * @param[in] _inodeNumF Inode number of the file to be removed.
+ * @param[in] _tIndirectOffset Offset to the triple indirect block containing the file.
+ * @return True if the file was successfully removed, false if the file could not be accessed.
+ * @date 2010-04-01 First implementation.
+ */
 static Bool rmFileFrom_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
                                   unsigned int _tIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
@@ -1392,49 +1072,17 @@ static Bool rmFileFrom_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
     return False;
 }
 
-/*********************** def beg rmFileFrom_D_Indirect ************************
-
-        Bool rmFileFrom_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-
-                                                   unsigned int _dIndirectOffset)
-
-        Function
-                removes a file from a directory's D_Indirect pointer,
-                calls rmFileFrom_D_Indirect
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                        int _inodeNumF
-                        := Inode number of the file to be removed
-
-                        Unsigned int _dIndirectOffset
-                        := Offset to the double indirect block containing the file to be
-                           removed
-
-                Local Variables
-                        unsigned int i,j,k
-                        := temp variables used for looping
-
-                        unsigned int diskOffset
-                        := Offset from disk to block in question
-
-                        unsigned int buffer[]
-                        := buffer used to store pointers in the block
-
-                        unsigned int indirectBlock[]
-                        := block filled with pointers to be searched through
-
-        rmFileFrom_D_Indirect
-                        = returns true on successful file removal, false if file could
-                          be accessed
-
-
-        Change Record: 4/1/10 first implementation
-
-************************ def end rmFileFrom_D_Indirect ***********************/
+/**
+ * @brief Removes a file from a double indirect pointer.
+ * Removes the file identified by `_inodeNumF` from the double indirect block at the specified
+ * offset. Typically called by higher-level triple indirect removal logic.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
+ * @param[in] _inodeNumF Inode number of the file to be removed.
+ * @param[in] _tIndirectOffset Offset to the parent triple indirect block.
+ * @param[in] _dIndirectOffset Offset to the double indirect block containing the file.
+ * @return True if the file was successfully removed, false if the file could not be accessed.
+ * @date 2010-04-01 First implementation.
+ */
 static Bool rmFileFrom_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
                                   unsigned int _tIndirectOffset, unsigned int _dIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
@@ -1489,47 +1137,17 @@ static Bool rmFileFrom_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
     return False;
 }
 
-/*********************** def beg rmFileFrom_S_Indirect ************************
-
-        Bool rmFileFrom_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-         unsigned int _dIndirectOffset, unsigned int _sIndirectOffset) {
-
-        Function
-                removes a file from a directory's S_Indirect
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                        int _inodeNumF
-                        := Inode number of the file to be removed
-
-                        Unsigned int _sIndirectOffset
-                        := Offset to the single indirect block containing the file to be
-                           removed
-
-                Local Variables
-                        unsigned int i,j,k
-                        := temp variables used for looping
-
-                        unsigned int diskOffset
-                        := Offset from disk to block in question
-
-                        unsigned int buffer[]
-                        := buffer used to store pointers in the block
-
-                        unsigned int indirectBlock[]
-                        := block filled with pointers to be searched through
-
-        rmFileFrom_S_Indirect
-                        = returns true on successful file removal, false if file could
-                          be accessed
-
-
-        Change Record: 4/1/10 first implementation
-
-************************ def end rmFileFrom_S_Indirect ***********************/
+/**
+ * @brief Removes a file from a single indirect pointer.
+ * Removes the file identified by `_inodeNumF` from the single indirect block located
+ * via the specified double and single indirect offsets.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
+ * @param[in] _inodeNumF Inode number of the file to be removed.
+ * @param[in] _dIndirectOffset Offset to the parent double indirect block.
+ * @param[in] _sIndirectOffset Offset to the single indirect block containing the file.
+ * @return True if the file was successfully removed, false if the file could not be accessed.
+ * @date 2010-04-01 First implementation.
+ */
 static Bool rmFileFrom_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
                                   unsigned int _dIndirectOffset, unsigned int _sIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
@@ -1615,56 +1233,16 @@ static Bool rmFileFrom_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
     return False;
 }
 
-/********************* def beg readFrom_T_IndirectBlocks **********************
-
-   void readFrom_T_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer,
-                                                                  unsigned int _diskOffset)
-
-        Function:
-                        fills buffer with all pointers from a specified tindirect
-                        one block a block at a time.
-                        Calls readFrom_D_IndirectBlocks
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-
-                        void *_buffer
-                        := pointer to the buffer used to store the value as it's written
-
-                        unsigned int _diskOffset
-                        := offset to first usable block on disk
-
-                Local Variables
-                        unsigned int indirectBlock[BLOCK_SIZE / 4]
-                        := array to store the new block that will be written
-
-                         unsigned int diskOffset
-                        := offset to first usable sector on disk
-
-                        void* buffer
-                        := pointer to data yet to be read
-
-                        unsigned int i
-                        := variable used for looping
-
-                Struct Variables (from FileSectorMgr struct)
-                        FILE *diskHandle
-                        := pointer to the hard disk
-
-                        unsigned int diskOffset
-                        := offset from inode area to data area of disk
-
-                        unsigned int sampleCount
-                        := value used to keep track of the number of samples
-
-        void readFrom_T_IndirectBlocks
-           = returns void for all calls to this function
-
-        Change Record: 4/12/10 first implemented
-
-************************def end readFrom_T_IndirectBlocks ********************/
+/**
+ * @brief Reads pointers from a triple indirect block into a buffer.
+ * Fills the provided buffer with all pointers from a specified triple indirect block,
+ * one block at a time. Internally calls `readFrom_D_IndirectBlocks`.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[out] _buffer Pointer to the buffer where the read data will be stored.
+ * @param[in] _diskOffset Offset to the first usable block on disk.
+ * @return void
+ * @date 2010-04-12 First implementation.
+ */
 static void readFrom_T_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer,
                                       unsigned int _diskOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
@@ -1684,55 +1262,16 @@ static void readFrom_T_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer,
     }  // end for (i = 0; i < BLOCK_SIZE/4; i++)
 }
 
-/*****************def beg readFrom_D_IndirectBlocks **************************
-   void readFrom_D_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer,
-                                                                  unsigned int _diskOffset)
-
-        Function:
-                        fills buffer with all pointers from a specified dindirect block
-                        one block at a time.
-                        Calls readFrom_S_IndirectBlocks
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-
-                        void *_buffer
-                        := pointer to the buffer used to store the value as it's written
-
-                        unsigned int _diskOffset
-                        := offset to first usable block on disk
-
-                Local Variables
-                        unsigned int indirectBlock[BLOCK_SIZE / 4]
-                        := array to store the new block that will be written
-
-                         unsigned int diskOffset
-                        := offset to first usable sector on disk
-
-                        void* buffer
-                        := pointer to data yet to be read
-
-                        unsigned int i
-                        := variable used for looping
-
-                Struct Variables (from FileSectorMgr struct)
-                        FILE *diskHandle
-                        := pointer to the hard disk
-
-                        unsigned int diskOffset
-                        := offset from inode area to data area of disk
-
-                        unsigned int sampleCount
-                        := value used to keep track of the number of samples
-
-        void readFrom_D_IndirectBlocks
-           = returns void for all calls to this function
-
-        Change Record: 4/12/10 first implemented
-
-*****************def end readFrom_D_IndirectBlocks **************************/
+/**
+ * @brief Reads pointers from a double indirect block into a buffer.
+ * Fills the provided buffer with all pointers from a specified double indirect block,
+ * one block at a time. Internally calls `readFrom_S_IndirectBlocks`.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[out] _buffer Pointer to the buffer where the read data will be stored.
+ * @param[in] _diskOffset Offset to the first usable block on disk.
+ * @return void
+ * @date 2010-04-12 First implementation.
+ */
 static void readFrom_D_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer,
                                       unsigned int _diskOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
@@ -1752,57 +1291,16 @@ static void readFrom_D_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer,
     }  // end for (i = 0; i < BLOCK_SIZE/4; i++)
 }
 
-/********************* def beg readFrom_S_IndirectBlocks **********************
-
-          void readFrom_S_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer,
-
-                                                                         unsigned int _diskOffset)
-
-        Function:
-                        fills buffer with all pointers from a specified dindirect block
-                        one block at a time.
-                        Calls readFrom_S_IndirectBlocks
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-
-                        void *_buffer
-                        := pointer to the buffer used to store the value as it's written
-
-                        unsigned int _diskOffset
-                        := offset to first usable block on disk
-
-                Local Variables
-                        unsigned int indirectBlock[BLOCK_SIZE / 4]
-                        := array to store the new block that will be written
-
-                         unsigned int diskOffset
-                        := offset to first usable sector on disk
-
-                        void* buffer
-                        := pointer to data yet to be read
-
-                        unsigned int i
-                        := variable used for looping
-
-                Struct Variables (from FileSectorMgr struct)
-                        FILE *diskHandle
-                        := pointer to the hard disk
-
-                        unsigned int diskOffset
-                        := offset from inode area to data area of disk
-
-                        unsigned int sampleCount
-                        := value used to keep track of the number of samples
-
-        void readFrom_S_IndirectBlocks
-           = returns void for all calls to this function
-
-        Change Record: 4/12/10 first implemented
-
-******************def end readFrom_S_IndirectBlocks **************************/
+/**
+ * @brief Reads pointers from a single indirect block into a buffer.
+ * Fills the provided buffer with all pointers from a specified single indirect block,
+ * one block at a time.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[out] _buffer Pointer to the buffer where the read data will be stored.
+ * @param[in] _diskOffset Offset to the first usable block on disk.
+ * @return void
+ * @date 2010-04-12 First implementation.
+ */
 static void readFrom_S_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer,
                                       unsigned int _diskOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
@@ -1823,63 +1321,16 @@ static void readFrom_S_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer,
     }  // end for (i = 0; i < BLOCK_SIZE/4; i++)
 }
 
-/************************** def beg aloc_T_Indirect **************************
-
-        unsigned int aloc_T_Indirect(FileSectorMgr *_fsm,
-                                                                 long long int _blockCount)
-
-        Function:
-                        aloc_T_Indirect gets a sector from the SSM, fills it with pointers
-                        to other sectors which get filled with pointers to more sectors
-                        which are filled with pointers to yet more sectors,
-                        then returns the address for the Tindirect pointer
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-                        long long int _blockCount
-                        := the number of blocks to be allocated
-
-                Local Variables
-                        unsigned int baseAddress
-                        := address to newly allocated sindirect to be filled with pointers
-
-                        unsigned int address
-                        := used to fill the sindirect block with pointers
-
-                        unsigned int diskOffset
-                        := offset to first sector allocated
-
-                        unsigned int i
-                        := variable used for looping
-
-                Struct Variables (from FileSectorMgr struct)
-                        SecSpaceMgr ssm[1]
-                        := SSM used to manage disk blocks
-
-                        FILE *iMapHandle
-                        := pointer to the inode map
-
-                        FILE *diskHandle
-                        := pointer to the hard disk
-
-                        unsigned int diskOffset
-                        := offset from inode area to data area of disk
-
-                        unsigned int sampleCount
-                        := used to keep track of the number of samples
-
-                        unsigned int index[2]
-                        := used to access bit and byte offset to blocks
-
-        unsigned int aloc_T_Indirect
-           = returns the address of the Tindirect block in an
-                 unsigned int on success, returns -1 on failure
-
-
-        Change Record: 4/12/10 first implemented
-************************** def end aloc_T_Indirect **************************/
+/**
+ * @brief Allocates a triple indirect block and all underlying levels of pointers.
+ * Allocates sectors via the SSM to form a triple indirect structure:
+ * a block pointing to blocks of pointers, which in turn point to more pointer blocks.
+ * Returns the address of the top-level triple indirect block.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[in] _blockCount Number of blocks to allocate.
+ * @return The address of the triple indirect block on success, or -1 on failure.
+ * @date 2010-04-12 First implementation.
+ */
 static unsigned int aloc_T_Indirect(FileSectorMgr *_fsm, long long int _blockCount) {
     unsigned int baseAddress;
     unsigned int address;
@@ -1921,64 +1372,16 @@ static unsigned int aloc_T_Indirect(FileSectorMgr *_fsm, long long int _blockCou
     }  // end else
 }
 
-/************************** def beg aloc_D_Indirect **************************
-
-        unsigned int aloc_D_Indirect(FileSectorMgr *_fsm,
-                                                                 long long int _blockCount)
-
-        Function:
-                        aloc_D_Indirect gets a sector from the SSM, fills it with pointers
-                        to other sectors which get filled with pointers to more sectors,
-
-                        then returns the address for the Dindirect pointer
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-                        long long int _blockCount
-                        := the number of blocks to be allocated
-
-                Local Variables
-                        unsigned int baseAddress
-                        := address to newly allocated sindirect to be filled with pointers
-
-                        unsigned int address
-                        := used to fill the sindirect block with pointers
-
-                        unsigned int diskOffset
-                        := offset to first sector allocated
-
-                        unsigned int i
-                        := variable used for looping
-
-                Struct Variables (from FileSectorMgr struct)
-                        SecSpaceMgr ssm[1]
-                        := SSM used to manage disk blocks
-
-                        FILE *iMapHandle
-                        := pointer to the inode map
-
-                        FILE *diskHandle
-                        := pointer to the hard disk
-
-                        unsigned int diskOffset
-                        := offset from inode area to data area of disk
-
-                        unsigned int sampleCount
-                        := used to keep track of the number of samples
-
-                        unsigned int index[2]
-                        := used to access bit and byte offset to blocks
-
-        unsigned int aloc_D_Indirect
-           = returns the address of the Dindirect block in an
-                 unsigned int on success, returns -1 on failure
-
-
-        Change Record: 4/12/10 first implemented
-
-************************** def end aloc_D_Indirect **************************/
+/**
+ * @brief Allocates a double indirect block and its underlying pointer blocks.
+ * Allocates sectors via the SSM to form a double indirect structure:
+ * a block pointing to blocks of pointers, which in turn point to data blocks.
+ * Returns the address of the top-level double indirect block.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[in] _blockCount Number of blocks to allocate.
+ * @return The address of the double indirect block on success, or -1 on failure.
+ * @date 2010-04-12 First implementation.
+ */
 static unsigned int aloc_D_Indirect(FileSectorMgr *_fsm, long long int _blockCount) {
     unsigned int baseAddress;
     unsigned int address;
@@ -2020,62 +1423,15 @@ static unsigned int aloc_D_Indirect(FileSectorMgr *_fsm, long long int _blockCou
     }  // end else
 }
 
-/************************** def beg aloc_S_Indirect **************************
-
-        unsigned int aloc_S_Indirect(FileSectorMgr *_fsm,
-                                                                 long long int _blockCount)
-
-        Function:
-                        aloc_S_Indirect gets a sector from the SSM, fills it with pointers
-                        to other sectors and returns the address for the Sindirect pointer
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-                        long long int _blockCount
-                        := the number of blocks to be allocated
-
-                Local Variables
-                        unsigned int baseAddress
-                        := address to newly allocated sindirect to be filled with pointers
-
-                        unsigned int address
-                        := used to fill the sindirect block with pointers
-
-                        unsigned int diskOffset
-                        := offset to first sector allocated
-
-                        unsigned int i
-                        := variable used for looping
-
-                Struct Variables (from FileSectorMgr struct)
-                        SecSpaceMgr ssm[1]
-                        := SSM used to manage disk blocks
-
-                        FILE *iMapHandle
-                        := pointer to the inode map
-
-                        FILE *diskHandle
-                        := pointer to the hard disk
-
-                        unsigned int diskOffset
-                        := offset from inode area to data area of disk
-
-                        unsigned int sampleCount
-                        := used to keep track of the number of samples
-
-                        unsigned int index[2]
-                        := used to access bit and byte offset to blocks
-
-        unsigned int aloc_S_Indirect
-           = returns the address of the Sindirect block in an
-                 unsigned int on success, returns -1 on failure
-
-
-        Change Record: 4/12/10 first implemented
-
-************************** def end aloc_S_Indirect **************************/
+/**
+ * @brief Allocates a single indirect block and its associated data blocks.
+ * Allocates a sector from the SSM, fills it with pointers to other sectors,
+ * and returns the address of the allocated single indirect block.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[in] _blockCount Number of blocks to allocate.
+ * @return The address of the single indirect block on success, or -1 on failure.
+ * @date 2010-04-12 First implementation.
+ */
 static unsigned int aloc_S_Indirect(FileSectorMgr *_fsm, long long int _blockCount) {
     unsigned int baseAddress;
     unsigned int address;
@@ -2114,62 +1470,18 @@ static unsigned int aloc_S_Indirect(FileSectorMgr *_fsm, long long int _blockCou
     }  // end else
 }
 
-/********************* def beg writeTo_T_IndirectBlocks **********************
-
-   void writeTo_T_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset,
-
-                                                                 void *_buffer, unsigned int
-_tIndirectPtrs) {
-
-        Function:
-                        Writes triple indirect blocks to be written into a buffer 1 block
-                        at a time. Calls writeTo_D_IndirectBlocks to write
-                        double indirect blocks
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-
-                        unsigned int _baseOffset
-                        := the offset to the first usable data on disk
-
-                        void *_buffer
-                        := pointer to the buffer used to store the value as it's written
-
-                        unsigned int _dIndirectPtrs
-                        := the number of blocks to allocate through the dIndirect block
-
-                Local Variables
-                         unsigned int diskOffset
-                        := offset to first usable sector on disk
-
-                        unsigned int indirectBlock[BLOCK_SIZE / 4]
-                        := array to store the new block that will be written
-
-                        void* buffer
-                        := pointer to data yet to be written
-
-                        unsigned int tIndirectPtrs
-                        := the amount of sectors to be allocated through the tIndirect ptr
-
-                        unsigned int i
-                        := variable used for looping
-
-                Struct Variables (from FileSectorMgr struct)
-                        FILE *diskHandle
-                        := pointer to the hard disk
-
-                        unsigned int diskOffset
-                        := offset from inode area to data area of disk
-
-
-        void writeTo_T_IndirectBlocks
-           = returns void for all calls to this function
-
-        Change Record: 4/12/10 first implemented
-
-****************** def end writeTo_T_IndirectBlocks **************************/
+/**
+ * @brief Writes data into triple indirect blocks one block at a time.
+ * Writes the contents of the given buffer into a triple indirect structure,
+ * starting at the specified base offset. Internally calls `writeTo_D_IndirectBlocks`
+ * to handle the lower levels.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[in] _baseOffset Offset to the first usable data block on disk.
+ * @param[in] _buffer Pointer to the buffer containing data to be written.
+ * @param[in] _tIndirectPtrs Number of blocks to allocate through the triple indirect pointer.
+ * @return void
+ * @date 2010-04-12 First implementation.
+ */
 static void writeTo_T_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, void *_buffer,
                                      unsigned int _tIndirectPtrs) {
     unsigned int diskOffset;
@@ -2211,60 +1523,18 @@ static void writeTo_T_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffs
     }  // end for (i = 0; i < PTRS_PER_BLOCK; i++)
 }
 
-/********************* def beg writeTo_D_IndirectBlocks **********************
-
-   void writeTo_D_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset,
-
-   void *_buffer, unsigned int _sIndirectPtrs) {
-
-        Function:
-                        Writes double indirect blocks to be written into a buffer 1 block
-                        at a time. Calls writeTo_S_IndirectBlocks
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-
-                        unsigned int _baseOffset
-                        := the offset to the first usable data on disk
-
-                        void *_buffer
-                        := pointer to the buffer used to store the value as it's written
-
-                        unsigned int _dIndirectPtrs
-                        := the number of blocks to allocate through the dIndirect block
-
-                Local Variables
-                         unsigned int diskOffset
-                        := offset to first usable sector on disk
-
-                        unsigned int indirectBlock[BLOCK_SIZE / 4]
-                        := array to store the new block that will be written
-
-                        void* buffer
-                        := pointer to data yet to be written
-
-                        unsigned int dIndirectPtrs
-                        := the amount of sectors to be allocated through the dIndirect ptr
-
-                        unsigned int i
-                        := variable used for looping
-
-                Struct Variables (from FileSectorMgr struct)
-                        FILE *diskHandle
-                        := pointer to the hard disk
-
-                        unsigned int diskOffset
-                        := offset from inode area to data area of disk
-
-
-        void writeTo_d_IndirectBlocks
-           = returns void for all calls to this function
-
-        Change Record: 4/12/10 first implemented
-
-*******************def end writeTo_D_IndirectBlocks **************************/
+/**
+ * @brief Writes data into double indirect blocks one block at a time.
+ * Writes the contents of the given buffer into a double indirect structure,
+ * starting at the specified base offset. Internally calls `writeTo_S_IndirectBlocks`
+ * to handle the single indirect level.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[in] _baseOffset Offset to the first usable data block on disk.
+ * @param[in] _buffer Pointer to the buffer containing data to be written.
+ * @param[in] _dIndirectPtrs Number of blocks to allocate through the double indirect pointer.
+ * @return void
+ * @date 2010-04-12 First implementation.
+ */
 static void writeTo_D_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, void *_buffer,
                                      unsigned int _dIndirectPtrs) {
     unsigned int diskOffset;
@@ -2307,60 +1577,17 @@ static void writeTo_D_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffs
     }  // end for (i = 0; i < PTRS_PER_BLOCK; i++)
 }
 
-/********************* def beg writeTo_S_IndirectBlocks **********************
-
-   void writeTo_S_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset,
-
-   void *_buffer, unsigned int _sIndirectPtrs) {
-
-        Function:
-                        Writes single indirect blocks to be written into a buffer a block
-                        at a time.
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-
-                        unsigned int _baseOffset
-                        := the offset to the first usable data on disk
-
-                        void *_buffer
-                        := pointer to the buffer used to store the value as it's written
-
-                        unsigned int _sIndirectPtrs
-                        := the number of blocks to allocate through the sIndirect block
-
-                Local Variables
-                         unsigned int diskOffset
-                        := offset to first usable sector on disk
-
-                        unsigned int indirectBlock[BLOCK_SIZE / 4]
-                        := array to store the new block that will be written
-
-                        void* buffer
-                        := pointer to data yet to be written
-
-                        unsigned int sIndirectPtrs
-                        := the amount of sectors to be allocated through the sIndirect ptr
-
-                        unsigned int i
-                        := variable used for looping
-
-                Struct Variables (from FileSectorMgr struct)
-                        FILE *diskHandle
-                        := pointer to the hard disk
-
-                        unsigned int diskOffset
-                        := offset from inode area to data area of disk
-
-
-        void writeTo_S_IndirectBlocks
-           = returns void for all calls to this function
-
-        Change Record: 4/12/10 first implemented
-
-********************def end writeTo_S_IndirectBlocks *************************/
+/**
+ * @brief Writes data into single indirect blocks one block at a time.
+ * Writes the contents of the provided buffer into a single indirect structure,
+ * starting at the specified base offset.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[in] _baseOffset Offset to the first usable data block on disk.
+ * @param[in] _buffer Pointer to the buffer containing data to be written.
+ * @param[in] _sIndirectPtrs Number of blocks to allocate through the single indirect pointer.
+ * @return void
+ * @date 2010-04-12 First implementation.
+ */
 static void writeTo_S_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, void *_buffer,
                                      unsigned int _sIndirectPtrs) {
     unsigned int diskOffset;
@@ -2386,36 +1613,15 @@ static void writeTo_S_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffs
     }  // end for (i = 0; i < _sIndirectPtrs; i++)
 }
 
-/******************************* def beg rmFile ********************************
-
-   Bool rmFile(FileSectorMgr *_fsm, unsigned int _inodeNum,
-        unsigned int _inodeNumD)
-
-        Function:
-                        Removes a file
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-
-                        unsigned int _inodeNum
-                        := inode number of file
-
-                        unsigned int _inodeNumD
-                        := inode number of directory
-
-                Local Variables
-                        Bool success
-                        := holds whether opening file was successful
-
-        Bool rmFile
-           = returns true if file removed succesfully,
-                false otherwise
-
-        Change Record: 4/12/10 first implemented
-
-********************def end rmFile *************************/
+/**
+ * @brief Removes a file from the filesystem.
+ * Removes the file identified by `_inodeNum` from the directory specified by `_inodeNumD`.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[in] _inodeNum Inode number of the file to be removed.
+ * @param[in] _inodeNumD Inode number of the directory containing the file.
+ * @return True if the file was removed successfully, false otherwise.
+ * @date 2010-04-12 First implementation.
+ */
 Bool rmFile(FileSectorMgr *_fsm, unsigned int _inodeNum, unsigned int _inodeNumD) {
     // Open file at Inode _inodeNum for reading
     Bool success;
@@ -2539,51 +1745,16 @@ Bool rmFile(FileSectorMgr *_fsm, unsigned int _inodeNum, unsigned int _inodeNumD
     return True;
 }
 
-/********************* def beg rmFile_T_IndirectBlocks **********************
-
-   void rmFile_T_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType,
-
-                unsigned int _inodeNumD, unsigned int _diskOffset)
-
-        Function:
-                        Removes Triple Indirect pointers from a file
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-
-                        unsigned int _fileType
-                        := holds the type of file
-
-                unsigned int _inodeNumD
-                := inode number of directory
-
-                unsigned int _diskOffset
-                := offset to first usable block on disk
-
-                Local Variables
-                unsigned int indirectBlock
-                := holds information of the indirect block
-
-                unsigned int diskOffset
-                := Offset to data to be removed
-
-                unsigned int sectorNumber
-                := sector number of data to be removed
-
-                unsigned int byte
-                := byte number of data to be removed
-
-                unsigned int bit
-                := bit number of data to be removed
-
-        void rmFile_T_IndirectBlocks
-           = Does not return a value
-
-        Change Record: 4/12/10 first implemented
-
-********************def end rmFile_T_IndirectBlocks *************************/
+/**
+ * @brief Removes triple indirect pointers associated with a file.
+ * Clears triple indirect block references for a file, starting at the specified disk offset.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[in] _fileType Type of the file being removed.
+ * @param[in] _inodeNumD Inode number of the directory containing the file.
+ * @param[in] _diskOffset Offset to the first usable data block on disk.
+ * @return void
+ * @date 2010-04-12 First implementation.
+ */
 static void rmFile_T_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType,
                                     unsigned int _inodeNumD, unsigned int _diskOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
@@ -2615,51 +1786,16 @@ static void rmFile_T_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType,
     deallocateSectors(_fsm->ssm);
 }
 
-/********************* def beg rmFile_D_IndirectBlocks **********************
-
-   void rmFile_D_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType,
-
-                unsigned int _inodeNumD, unsigned int _diskOffset)
-
-        Function:
-                        Removes Double Indirect pointers from a file
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-
-                        unsigned int _fileType
-                        := holds the type of file
-
-                unsigned int _inodeNumD
-                := inode number of directory
-
-                unsigned int _diskOffset
-                := offset to first usable block on disk
-
-                Local Variables
-                unsigned int indirectBlock
-                := holds information of the indirect block
-
-                unsigned int diskOffset
-                := Offset to data to be removed
-
-                unsigned int sectorNumber
-                := sector number of data to be removed
-
-                unsigned int byte
-                := byte number of data to be removed
-
-                unsigned int bit
-                := bit number of data to be removed
-
-        void rmFile_D_IndirectBlocks
-           = Does not return a value
-
-        Change Record: 4/12/10 first implemented
-
-********************def end rmFile_D_IndirectBlocks *************************/
+/**
+ * @brief Removes double indirect pointers associated with a file.
+ * Clears double indirect block references for a file, starting at the specified disk offset.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[in] _fileType Type of the file being removed.
+ * @param[in] _inodeNumD Inode number of the directory containing the file.
+ * @param[in] _diskOffset Offset to the first usable data block on disk.
+ * @return void
+ * @date 2010-04-12 First implementation.
+ */
 static void rmFile_D_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType,
                                     unsigned int _inodeNumD, unsigned int _diskOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
@@ -2691,50 +1827,16 @@ static void rmFile_D_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType,
     deallocateSectors(_fsm->ssm);
 }
 
-/********************* def beg rmFile_S_IndirectBlocks **********************
-
-   void rmFile_S_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType,
-                unsigned int _inodeNumD, unsigned int _diskOffset)
-
-        Function:
-                        Removes Single Indirect pointers from a file
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-
-                        unsigned int _fileType
-                        := holds the type of file
-
-                unsigned int _inodeNumD
-                := inode number of directory
-
-                unsigned int _diskOffset
-                := offset to first usable block on disk
-
-                Local Variables
-                unsigned int indirectBlock
-                := holds information of the indirect block
-
-                unsigned int diskOffset
-                := Offset to data to be removed
-
-                unsigned int sectorNumber
-                := sector number of data to be removed
-
-                unsigned int byte
-                := byte number of data to be removed
-
-                unsigned int bit
-                := bit number of data to be removed
-
-        void rmFile_S_IndirectBlocks
-           = Does not return a value
-
-        Change Record: 4/12/10 first implemented
-
-********************def end rmFile_S_IndirectBlocks *************************/
+/**
+ * @brief Removes single indirect pointers associated with a file.
+ * Clears single indirect block references for a file, starting at the specified disk offset.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[in] _fileType Type of the file being removed.
+ * @param[in] _inodeNumD Inode number of the directory containing the file.
+ * @param[in] _diskOffset Offset to the first usable data block on disk.
+ * @return void
+ * @date 2010-04-12 First implementation.
+ */
 static void rmFile_S_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType,
                                     unsigned int _inodeNumD, unsigned int _diskOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
@@ -2784,47 +1886,17 @@ static void rmFile_S_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType,
     deallocateSectors(_fsm->ssm);
 }
 
-/********************* def beg renameFile **********************
-
-   Bool renameFile(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-        unsigned int *_name, unsigned int _inodeNumD)
-
-        Function:
-                        Renames a file
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-
-                        unsigned int _inodeNumF
-                        := Inode number of file
-
-                unsigned int *_name
-                := Name to rename file to
-
-                unsigned int _inodeNumD
-                := inode number of directory
-
-                Local Variables
-                Bool success
-                := Holds whether operations were successful
-
-                unsigned int i,j
-                := loop variables
-
-                unsigned int buffer
-                := buffer to hold data
-
-                unsigned int diskOffset
-                := Offset to data to be removed
-
-        void rmFile_S_IndirectBlocks
-           = Does not return a value
-
-        Change Record: 4/12/10 first implemented
-
-********************def end renameFile *************************/
+/**
+ * @brief Renames a file within a directory.
+ * Updates the name of the file identified by `_inodeNumF` in the directory
+ * specified by `_inodeNumD`.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[in] _inodeNumF Inode number of the file to rename.
+ * @param[in] _name Pointer to the new name for the file.
+ * @param[in] _inodeNumD Inode number of the directory containing the file.
+ * @return True if the rename was successful, false otherwise.
+ * @date 2010-04-12 First implementation.
+ */
 Bool renameFile(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
                 unsigned int _inodeNumD) {
     Bool success;
@@ -2881,44 +1953,17 @@ Bool renameFile(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_nam
     return False;
 }
 
-/********************* def beg renameFileIn_T_Indirect **********************
-
-   Bool renameFileIn_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-         unsigned int *_name, unsigned int _tIndirectOffset)
-
-        Function:
-                        Renames a file
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-
-                        unsigned int _inodeNumF
-                        := Inode number of file
-
-                unsigned int *_name
-                := Name to rename file to
-
-                unsigned int _tIndirectOffset
-                := offset of triple indirect pointer
-
-                Local Variables
-                Bool success
-                := Holds whether operations were successful
-
-                unsigned int diskOffset
-                := Offset to data to be removed
-
-                unsigned int indirectBlock
-                := holds the block containing triple indirect pointer
-
-        Bool renameFileIn_T_Indirect
-           = Returns True if rename successful, false otherwise
-
-        Change Record: 4/12/10 first implemented
-
-********************def end renameFileIn_T_Indirect *************************/
+/**
+ * @brief Renames a file within a triple indirect block.
+ * Renames the file identified by `_inodeNumF` in the structure pointed to
+ * by the triple indirect pointer at `_tIndirectOffset`.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[in] _inodeNumF Inode number of the file to rename.
+ * @param[in] _name Pointer to the new name for the file.
+ * @param[in] _tIndirectOffset Offset of the triple indirect pointer.
+ * @return True if the rename was successful, false otherwise.
+ * @date 2010-04-12 First implementation.
+ */
 static Bool renameFileIn_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
                                     unsigned int *_name, unsigned int _tIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
@@ -2943,44 +1988,17 @@ static Bool renameFileIn_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF
     return False;
 }
 
-/********************* def beg renameFileIn_D_Indirect **********************
-
-   Bool renameFileIn_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-         unsigned int *_name, unsigned int _dIndirectOffset)
-
-        Function:
-                        Renames a file
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-
-                        unsigned int _inodeNumF
-                        := Inode number of file
-
-                unsigned int *_name
-                := Name to rename file to
-
-                unsigned int _dIndirectOffset
-                := offset of double indirect pointer
-
-                Local Variables
-                Bool success
-                := Holds whether operations were successful
-
-                unsigned int diskOffset
-                := Offset to data to be removed
-
-                unsigned int indirectBlock
-                := holds the block containing triple indirect pointer
-
-        Bool renameFileIn_D_Indirect
-                := Returns true if rename successful, false otherwise
-
-        Change Record: 4/12/10 first implemented
-
-********************def end renameFileIn_D_Indirect *************************/
+/**
+ * @brief Renames a file within a double indirect block.
+ * Renames the file identified by `_inodeNumF` in the structure pointed to
+ * by the double indirect pointer at `_dIndirectOffset`.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[in] _inodeNumF Inode number of the file to rename.
+ * @param[in] _name Pointer to the new name for the file.
+ * @param[in] _dIndirectOffset Offset of the double indirect pointer.
+ * @return True if the rename was successful, false otherwise.
+ * @date 2010-04-12 First implementation.
+ */
 static Bool renameFileIn_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
                                     unsigned int *_name, unsigned int _dIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
@@ -3005,44 +2023,17 @@ static Bool renameFileIn_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF
     return False;
 }
 
-/********************* def beg renameFileIn_S_Indirect **********************
-
-   Bool renameFileIn_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-         unsigned int *_name, unsigned int _sIndirectOffset)
-
-        Function:
-                        Renames a file
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-
-                        unsigned int _inodeNumF
-                        := Inode number of file
-
-                unsigned int *_name
-                := Name to rename file to
-
-                unsigned int _sIndirectOffset
-                := offset of single indirect pointer
-
-                Local Variables
-                Bool success
-                := Holds whether operations were successful
-
-                unsigned int diskOffset
-                := Offset to data to be removed
-
-                unsigned int indirectBlock
-                := holds the block containing triple indirect pointer
-
-        Bool renameFileIn_S_Indirect
-                := Returns true if rename successful, false otherwise
-
-        Change Record: 4/12/10 first implemented
-
-********************def end renameFileIn_S_Indirect *************************/
+/**
+ * @brief Renames a file within a single indirect block.
+ * Renames the file identified by `_inodeNumF` in the structure pointed to
+ * by the single indirect pointer at `_sIndirectOffset`.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[in] _inodeNumF Inode number of the file to rename.
+ * @param[in] _name Pointer to the new name for the file.
+ * @param[in] _sIndirectOffset Offset of the single indirect pointer.
+ * @return True if the rename was successful, false otherwise.
+ * @date 2010-04-12 First implementation.
+ */
 static Bool renameFileIn_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
                                     unsigned int *_name, unsigned int _sIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
@@ -3078,56 +2069,20 @@ static Bool renameFileIn_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF
     return False;
 }
 
-/*********************** def beg mkfs ***************************************
-
-   void mkfs(FileSectorMgr *_fsm)
-
-        Function:
-                        creates the entire file system:
-                        Allocates boot and superblocks
-                        allocates and initializes all inode blocks.
-                        allocates inodes for boot, super and root
-
-        Data Environment:
-                Function Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the FileSectorMgr struct
-
-                Local Variables
-                        int i
-                        := variable used for looping
-
-                        int factorsOf_32
-                        := number of groups of 32 inodes to allocate
-
-                        int remainder
-                        := number of inodes to allocate less than 32
-
-                        bool success
-                        := variable used to check addFileToDir success or failure
-
-                        unsigned int name[2]
-                        := 2-tuple used to store name
-
-                        unsigned int inodeNumF
-                        := the inode number of the file to be added
-
-                Struct Variables (from FileSectorMgr struct)
-                        FILE *diskHandle
-                        := pointer to the hard disk
-
-                        unsigned int diskOffset
-                        := offset from inode area to data area of disk
-
-                        _fsm->ssm
-                        := used to allocate sectors on disk
-
-        void mkfs
-           = returns void for all calls to this function
-
-        Change Record: 4/12/10 first implemented
-
-*************************** def end mkfs ******************************/
+/**
+ * @brief Creates and initializes the entire file system.
+ * Allocates boot and superblocks, initializes all inode blocks, and sets up
+ * inodes for the boot, super, and root directories.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @param[in] _DISK_SIZE Total size of the disk in bytes.
+ * @param[in] _BLOCK_SIZE Block size in bytes.
+ * @param[in] _INODE_SIZE Size of a single inode in bytes.
+ * @param[in] _INODE_BLOCKS Number of blocks reserved for inodes.
+ * @param[in] _INODE_COUNT Total number of inodes to initialize.
+ * @param[in] _initSsmMaps Flag indicating whether to initialize the SSM maps.
+ * @return void
+ * @date 2010-04-12 First implementation.
+ */
 void mkfs(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE,
           unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT,
           int _initSsmMaps) {
@@ -3169,19 +2124,13 @@ void mkfs(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE
     createFile(_fsm, 1, name, (unsigned int)(-1));
 }
 
-/*********************** def beg rmfs ***************************************
-
-   void rmfs(FileSectorMgr *_fsm)
-
-        Function:
-                        closes the file system:
-
-        void rmfs
-           = returns void for all calls to this function
-
-        Change Record: 6/13/25 first implemented
-
-*************************** def end rmfs ******************************/
+/**
+ * @brief Closes the file system and releases associated resources.
+ * Finalizes the file system by closing the disk handle if it is open.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @return void
+ * @date 2025-06-13 First implementation.
+ */
 void rmfs(FileSectorMgr *_fsm) {
     if (_fsm->diskHandle) {
         fclose(_fsm->diskHandle);
@@ -3189,35 +2138,13 @@ void rmfs(FileSectorMgr *_fsm) {
     }
 }
 
-/**************************** def beg allocateInode *************************
-
-        Bool allocateInode (FileSectorMgr *_fsm)
-
-        Function
-                Initializes the File Sector Manager
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                Local Variables
-                        int n
-                        := Holds number of contiguous inodes
-
-                        int byte
-                        := holds the byte number
-
-                        int bit
-                        := holds the bit number
-
-        allocateInode
-                = Returns true if allocation successful, false otherwise
-
-
-        Change record: 4/12/10 first implemented
-
-***************************** def end allocateInode ************************/
+/**
+ * @brief Allocates a new inode.
+ * Searches for a free inode in the inode bitmap and marks it as allocated.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @return True if inode allocation was successful, false otherwise.
+ * @date 2010-04-12 First implementation.
+ */
 static Bool allocateInode(FileSectorMgr *_fsm) {
     if (_fsm->index[0] != (unsigned int)(-1)) {
         int n;
@@ -3252,39 +2179,13 @@ static Bool allocateInode(FileSectorMgr *_fsm) {
     return True;
 }
 
-/**************************** def beg deallocateInode *************************
-
-        void initFileSectorMgr(FileSectorMgr *_fsm, int _initSsmMaps)
-
-        Function
-                Deallocates inode
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                        int _initSsmMaps
-                        := variable that tells program whether to initialize
-                        the SSM maps
-
-                Local Variables
-                        int n
-                        := number of contiguous sectors
-
-                        int byte
-                        := byte number
-
-                        int bit
-                        := bit number
-
-        deallocateInode
-                = Returns true if deallocation successful, false otherwise
-
-
-        Change record: 4/12/10 first implemented
-
-***************************** def end deallocateInode ************************/
+/**
+ * @brief Deallocates an inode.
+ * Frees an inode previously marked as allocated in the inode bitmap.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @return True if inode deallocation was successful, false otherwise.
+ * @date 2010-04-12 First implementation.
+ */
 static Bool deallocateInode(FileSectorMgr *_fsm) {
     // Deallocate iMap at Inode's location
     if (_fsm->index[0] != (unsigned int)(-1)) {
@@ -3319,54 +2220,14 @@ static Bool deallocateInode(FileSectorMgr *_fsm) {
     return True;
 }
 
-/**************************** def beg getInode *************************
-
-        Bool getInode (int _n, FileSectorMgr *_fsm)
-
-        Function
-                Gets an inode
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                        int _n
-                        := Number of contiguous inodes to get
-
-                Local Variables
-                        int i
-                        := loop variables
-
-                        int mask
-                        := mask for bit wise compare operations
-
-                        int result
-                        := holds the result of applying the AND operation to
-                        the bitmaps
-
-                        int buff
-                        := inode searching buffer
-
-                        char *iMap
-                        := inode map pointer
-
-                        long long int subsetMap
-                        := inode map
-
-                        int byteCount
-                        := variable to loop through inodes
-
-                        Bool found
-                        := Holds whether an inode was found
-
-        getInode
-                = Returns true if inode is retrieved, false otherwise
-
-
-        Change record: 4/12/10 first implemented
-
-***************************** def end getInode ************************/
+/**
+ * @brief Retrieves an inode from the inode map.
+ * Searches the inode map for a free inodes.
+ * @param[in] _n number of contiguous inodes to get.
+ * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
+ * @return True if an inode was successfully retrieved, false otherwise.
+ * @date 2010-04-12 First implementation.
+ */
 static Bool getInode(int _n, FileSectorMgr *_fsm) {
     int i;
     unsigned int mask;
