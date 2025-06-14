@@ -190,3 +190,60 @@ int read_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, Bool* s
     i = advance_to_char(driver, '\n', i);
     return i;
 }
+
+int remove_command(char* driver, FileSectorMgr* fsm, Bool* success, unsigned int* inodeNumD,
+                   unsigned int* inodeNumF, int* digit, int i) {
+    // move to retrieve the file's iNode number
+    i += 2;
+    // check to see that the character is a digit
+    *digit = isdigit(driver[i]);
+    // if the character is a digit, proceed
+    if (*digit > 0) {
+        // convert the character to a digit
+        *inodeNumF = atoi(&driver[i]);
+        // find next input
+        i = advance_to_char(driver, ':', i);
+        // move to after semi-colon, folder's iNode number
+        i += 1;
+        // check to see that the character is a digit
+        *digit = isdigit(driver[i]);
+        // if the character is a digit, proceed
+        if (*digit > 0) {
+            // convert the character to a digit
+            *inodeNumD = atoi(&driver[i]);
+            // print debug information
+            printf("\nDEBUG_LEVEL > 0:\n");
+            // print that file will be removed
+            printf("//Removing File (Inode ");
+            printf("%d) from Folder (Inode %d)\n", *inodeNumF, *inodeNumD);
+            // print input information
+            printf("//V:%d:%d\n\n", *inodeNumF, *inodeNumD);
+            // print that file has been removed
+            printf("-> Removed File (Inode ");
+            printf("%d) from Folder (Inode %d).\n", *inodeNumF, *inodeNumD);
+            // call to openFile to ensure file has been removed
+            openFile(fsm, *inodeNumF);
+            // if removing a folder, recursively remove all
+            // subdirectories and files
+            if (fsm->inode.fileType == 2) {
+                // print all subdirectories and files will be deleted
+                printf("** Expected Result: Recursively removing ");
+                printf("all Files in Folder (Inode %d)\n", *inodeNumD);
+            }  // end if (fsm->inode.fileType == 2)
+            // print expected results from rmFile
+            printf("** Expected Result: 1 Inode deallocated in ");
+            printf("the Inode Map\n");
+            printf("** Expected Result: ");
+            printf("%d Blocks deallocated in the Aloc/Free Map\n",
+                   fsm->inode.fileSize / BLOCK_SIZE);
+            // call to rmFile
+            *success = rmFile(fsm, *inodeNumF, *inodeNumD);
+        }  // end if (digit > 0)
+        // print section break
+        printf("- - - - - - - - - - - - - - - - - - - - - - - - ");
+        printf("- - - - - - - - - - - -\n\n");
+    }  // end if (digit > 0)
+    // find the next line of input
+    i = advance_to_char(driver, '\n', i);
+    return i;
+}
