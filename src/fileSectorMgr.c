@@ -151,16 +151,6 @@ static void initFsmMaps(FileSectorMgr *_fsm) {
     _fsm->diskHandle = Null;
 }
 
-/**
- * @brief Creates a file or directory.
- * This function creates a new file or directory in the file sector manager.
- * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
- * @param[in] _isDirectory Non-zero if the new file is a directory, 0 otherwise.
- * @param[out] _name Pointer to where the generated name will be stored.
- * @param[in] _inodeNumD Inode number of the directory in which to create the file.
- * @return Non-zero (true) if successful, 0 (false) otherwise.
- * @date 2010-04-01 First implementation.
- */
 unsigned int createFile(FileSectorMgr *_fsm, int _isDirectory, unsigned int *_name,
                         unsigned int _inodeNumD) {
     getInode(1, _fsm);
@@ -206,14 +196,6 @@ unsigned int createFile(FileSectorMgr *_fsm, int _isDirectory, unsigned int *_na
     return inodeNum;
 }
 
-/**
- * @brief Opens a file.
- * Opens a file identified by the given inode number within the File Sector Manager.
- * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
- * @param[in] _inodeNum Inode number of the file to open.
- * @return True if the file was successfully opened, false otherwise.
- * @date 2010-04-01 First implementation.
- */
 Bool openFile(FileSectorMgr *_fsm, unsigned int _inodeNum) {
     int i, j;
     if (_inodeNum == (unsigned int)(-1)) {
@@ -248,13 +230,6 @@ Bool openFile(FileSectorMgr *_fsm, unsigned int _inodeNum) {
     }  // end else (_fsm->inode.fileType > 0)
 }
 
-/**
- * @brief Closes the currently opened file.
- * Closes the file currently open in the File Sector Manager.
- * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
- * @return void
- * @date 2010-04-01 First implementation.
- */
 void closeFile(FileSectorMgr *_fsm) {
     int i, j;
     // Reset all FSM->Inode variables to defaults
@@ -276,16 +251,6 @@ void closeFile(FileSectorMgr *_fsm) {
     _fsm->inode.tIndirect = (unsigned int)(-1);
 }
 
-/**
- * @brief Reads a file.
- * Reads the contents of the file associated with the given inode number
- * into the provided buffer.
- * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
- * @param[in] _inodeNum Inode number of the file to read.
- * @param[out] _buffer Pointer to a buffer where the file contents will be stored.
- * @return True if the file was read successfully, false otherwise.
- * @date 2010-04-01 First implementation.
- */
 Bool readFromFile(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer) {
     // Open file at Inode _inodeNum for reading
     Bool success;
@@ -325,16 +290,6 @@ Bool readFromFile(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer) {
     return True;
 }
 
-/**
- * @brief Writes data to a file.
- * Writes the contents of the provided buffer to the file identified by the given inode number.
- * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
- * @param[in] _inodeNum Inode number of the file to write to.
- * @param[in] _buffer Pointer to the data to be written.
- * @param[in] _fileSize Size of the data to write, in bytes.
- * @return True if the write was successful, false otherwise.
- * @date 2010-04-01 First implementation.
- */
 Bool writeToFile(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer,
                  long long int _fileSize) {
     Bool success;
@@ -924,15 +879,6 @@ static Bool addFileTo_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, u
     return False;
 }
 
-/**
- * @brief Removes a file from a directory.
- * Removes the file identified by `_inodeNumF` from the directory specified by `_inodeNumD`.
- * @param[in,out] _fsm Pointer to the FileSectorMgr instance.
- * @param[in] _inodeNumF Inode number of the file to be removed.
- * @param[in] _inodeNumD Inode number of the directory containing the file.
- * @return True if the file was successfully removed, false if the file could not be accessed.
- * @date 2010-04-01 First implementation.
- */
 Bool rmFileFromDir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int _inodeNumD) {
     Bool success;
     unsigned int i, j, k;
@@ -1613,15 +1559,6 @@ static void writeTo_S_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffs
     }  // end for (i = 0; i < _sIndirectPtrs; i++)
 }
 
-/**
- * @brief Removes a file from the filesystem.
- * Removes the file identified by `_inodeNum` from the directory specified by `_inodeNumD`.
- * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
- * @param[in] _inodeNum Inode number of the file to be removed.
- * @param[in] _inodeNumD Inode number of the directory containing the file.
- * @return True if the file was removed successfully, false otherwise.
- * @date 2010-04-12 First implementation.
- */
 Bool rmFile(FileSectorMgr *_fsm, unsigned int _inodeNum, unsigned int _inodeNumD) {
     // Open file at Inode _inodeNum for reading
     Bool success;
@@ -1886,17 +1823,6 @@ static void rmFile_S_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType,
     deallocateSectors(_fsm->ssm);
 }
 
-/**
- * @brief Renames a file within a directory.
- * Updates the name of the file identified by `_inodeNumF` in the directory
- * specified by `_inodeNumD`.
- * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
- * @param[in] _inodeNumF Inode number of the file to rename.
- * @param[in] _name Pointer to the new name for the file.
- * @param[in] _inodeNumD Inode number of the directory containing the file.
- * @return True if the rename was successful, false otherwise.
- * @date 2010-04-12 First implementation.
- */
 Bool renameFile(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
                 unsigned int _inodeNumD) {
     Bool success;
@@ -2069,20 +1995,6 @@ static Bool renameFileIn_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF
     return False;
 }
 
-/**
- * @brief Creates and initializes the entire file system.
- * Allocates boot and superblocks, initializes all inode blocks, and sets up
- * inodes for the boot, super, and root directories.
- * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
- * @param[in] _DISK_SIZE Total size of the disk in bytes.
- * @param[in] _BLOCK_SIZE Block size in bytes.
- * @param[in] _INODE_SIZE Size of a single inode in bytes.
- * @param[in] _INODE_BLOCKS Number of blocks reserved for inodes.
- * @param[in] _INODE_COUNT Total number of inodes to initialize.
- * @param[in] _initSsmMaps Flag indicating whether to initialize the SSM maps.
- * @return void
- * @date 2010-04-12 First implementation.
- */
 void mkfs(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE,
           unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT,
           int _initSsmMaps) {
@@ -2124,13 +2036,6 @@ void mkfs(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE
     createFile(_fsm, 1, name, (unsigned int)(-1));
 }
 
-/**
- * @brief Closes the file system and releases associated resources.
- * Finalizes the file system by closing the disk handle if it is open.
- * @param[in,out] _fsm Pointer to the FileSectorMgr structure.
- * @return void
- * @date 2025-06-13 First implementation.
- */
 void rmfs(FileSectorMgr *_fsm) {
     if (_fsm->diskHandle) {
         fclose(_fsm->diskHandle);
