@@ -8,6 +8,9 @@
 #include "gDefinitions.h"
 #include "logger.h"
 
+// buffer for holding block information
+static unsigned int buffer[600 * (MAX_BLOCK_SIZE / 4)];
+
 // Helper function to advance an index through a buffer
 int advance_to_char(char* buffer, char c, int i) {
     char* p = strchr(&buffer[i], c);
@@ -285,7 +288,7 @@ int rename_command(char* driver, FileSectorMgr* fsm, unsigned int* name, int i) 
     return i;
 }
 
-int write_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, int i) {
+int write_command(char* driver, FileSectorMgr* fsm, int i) {
     // iNode number dealing with files
     unsigned int inodeNumF;
     // move to retrieve the iNode number
@@ -338,7 +341,7 @@ int write_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, int i)
     return i;
 }
 
-int read_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, int i) {
+int read_command(char* driver, FileSectorMgr* fsm, int i) {
     // iNode number dealing with files
     unsigned int inodeNumF;
     // move to retrieve the iNode number of the file to be read
@@ -583,8 +586,7 @@ int remove_test_command(char* driver, FileSectorMgr* fsm, int i) {
     return i;
 }
 
-int list_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsigned int* name,
-                 int i) {
+int list_command(char* driver, FileSectorMgr* fsm, unsigned int* name, int i) {
     // iNode number dealing with files
     unsigned int inodeNumF;
     // move to retrieve the iNode number

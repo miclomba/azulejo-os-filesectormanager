@@ -71,19 +71,15 @@ int main(int _argc, char* _argv[]) {
     // FileSectorMgr array used for pointer simplicity
     FileSectorMgr fsm[1];
     // boolean for state of reading input
-    Bool loop;
-    // buffer variable i
-    unsigned int i;
+    Bool loop = True;
+    // placeholder in the buffer array should start at the beginning
+    unsigned int i = 0;
     // buffer for the location of the file to be used
     char dbfile[256];
     // buffer for input read, has a maximum input of 10,000 characters
     char driver[MAX_INPUT];
     // buffer used when renaming files
     unsigned int name[2];
-    // buffer for holding block information
-    unsigned int buffer[600 * (MAX_BLOCK_SIZE / 4)];
-    // buffer for holding block information
-    unsigned int buffer2[600 * (MAX_BLOCK_SIZE / 4)];
     // if designated by the parameters, run program with stub output
     if (_argc > 2 && atoi(_argv[2]) == 1) {
         // if the debug level is greater than 0, generate stub output
@@ -121,10 +117,6 @@ int main(int _argc, char* _argv[]) {
         fread(driver, sizeof(char), MAX_INPUT, driverHandle);
         fclose(driverHandle);
         driverHandle = Null;
-        // placeholder in the buffer array should start at the beginning
-        i = 0;
-        // set loop to true to ensure that all input is read
-        loop = True;
         // while there is input, process the commands and operate accordingly
         while (loop == True) {
             // determine what the program should do based on input
@@ -139,11 +131,11 @@ int main(int _argc, char* _argv[]) {
                     break;
                 // case 'W' will write data to a file
                 case 'W':
-                    i = write_command(driver, fsm, buffer, i);
+                    i = write_command(driver, fsm, i);
                     break;
                 // case 'R' will read a file
                 case 'R':
-                    i = read_command(driver, fsm, buffer2, i);
+                    i = read_command(driver, fsm, i);
                     break;
                 // case 'V' removes a file from a folder
                 case 'V':
@@ -155,7 +147,7 @@ int main(int _argc, char* _argv[]) {
                     break;
                 // case 'L' lists the contents of a directory
                 case 'L':
-                    i = list_command(driver, fsm, buffer2, name, i);
+                    i = list_command(driver, fsm, name, i);
                     break;
                 // case 'C' should create either a file or directory
                 case 'C':

@@ -72,22 +72,20 @@ int rename_command(char* driver, FileSectorMgr* fsm, unsigned int* name, int i);
  *
  * @param driver buffer for input read, has a maximum input of 10,000 characters
  * @param fsm The FileSectorMgr reference
- * @param buffer for holding block information
  * @param i the driver buffer current index
  * @return an updated driver buffer index
  */
-int write_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, int i);
+int write_command(char* driver, FileSectorMgr* fsm, int i);
 
 /*
  * @brief A filesystem read command
  *
  * @param driver buffer for input read, has a maximum input of 10,000 characters
  * @param fsm The FileSectorMgr reference
- * @param buffer for holding block information
  * @param i the driver buffer current index
  * @return an updated driver buffer index
  */
-int read_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, int i);
+int read_command(char* driver, FileSectorMgr* fsm, int i);
 
 /*
  * @brief A filesystem remove command
@@ -114,11 +112,10 @@ int remove_test_command(char* driver, FileSectorMgr* fsm, int i);
  *
  * @param driver buffer for input read, has a maximum input of 10,000 characters
  * @param fsm The FileSectorMgr reference
- * @param buffer for holding block information
  * @param name buffer used when renaming files
  * @param i the driver buffer current index
  * @return an updated driver buffer index
  */
-int list_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsigned int* name, int i);
+int list_command(char* driver, FileSectorMgr* fsm, unsigned int* name, int i);
 
 #endif  // COMMANDS_H
