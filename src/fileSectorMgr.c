@@ -15,6 +15,51 @@
 #include "iNode.h"
 #include "sectorSpaceMgr.h"
 
+//========================= FSM FUNCTION PROTOTYPES =======================//
+static void initFileSectorMgr(FileSectorMgr *_fsm, int _initSsmMaps);
+static void initFsmMaps(FileSectorMgr *_fsm);
+static Bool allocateInode(FileSectorMgr *_fsm);
+static Bool deallocateInode(FileSectorMgr *_fsm);
+static Bool getInode(int _n, FileSectorMgr *_fsm);
+static Bool addFileToDir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
+                         unsigned int _inodeNumD);
+static Bool addFileTo_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
+                                 unsigned int _sIndirectOffset, Bool _allocate);
+static Bool addFileTo_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
+                                 unsigned int _dIndirectOffset, Bool _allocate);
+static Bool addFileTo_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
+                                 unsigned int _tIndirectOffset, Bool _allocate);
+static Bool rmFileFrom_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
+                                  unsigned int _dIndirectOffset, unsigned int _sIndirectOffset);
+static Bool rmFileFrom_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
+                                  unsigned int _tIndirectOffset, unsigned int _dIndirectOffset);
+static Bool rmFileFrom_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
+                                  unsigned int _tIndirectOffset);
+static unsigned int aloc_S_Indirect(FileSectorMgr *_fsm, long long int _blockCount);
+static unsigned int aloc_D_Indirect(FileSectorMgr *_fsm, long long int _blockCount);
+static unsigned int aloc_T_Indirect(FileSectorMgr *_fsm, long long int _blockCount);
+static void writeTo_S_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, void *_buffer,
+                                     unsigned int _sIndirectPtrs);
+static void writeTo_D_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, void *_buffer,
+                                     unsigned int _dIndirectPtrs);
+static void writeTo_T_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, void *_buffer,
+                                     unsigned int _tIndirectPtrs);
+static void readFrom_S_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer, unsigned int _diskOffset);
+static void readFrom_D_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer, unsigned int _diskOffset);
+static void readFrom_T_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer, unsigned int _diskOffset);
+static void rmFile_S_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType,
+                                    unsigned int _inodeNumD, unsigned int _diskOffset);
+static void rmFile_D_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType,
+                                    unsigned int _inodeNumD, unsigned int _diskOffset);
+static void rmFile_T_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType,
+                                    unsigned int _inodeNumD, unsigned int _diskOffset);
+static Bool renameFileIn_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
+                                    unsigned int *_name, unsigned int _sIndirectOffset);
+static Bool renameFileIn_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
+                                    unsigned int *_name, unsigned int _dIndirectOffset);
+static Bool renameFileIn_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
+                                    unsigned int *_name, unsigned int _tIndirectOffset);
+
 //========================= FSM FUNCTION DEFINITIONS =======================//
 /************************* def beg initFileSectorMgr *************************
 
@@ -43,7 +88,7 @@
         Change Record: 4/1/10 first implementation
 
 ************************* def end initFileSectorMgr ************************/
-void initFileSectorMgr(FileSectorMgr *_fsm, int _initSsmMaps) {
+static void initFileSectorMgr(FileSectorMgr *_fsm, int _initSsmMaps) {
     int i, j;
     // Initialize SSM Maps
     if (_initSsmMaps == 1) {
@@ -119,7 +164,7 @@ void initFileSectorMgr(FileSectorMgr *_fsm, int _initSsmMaps) {
         Change Record: 4/1/10 first implementation
 
 ***************************** def end initFsmMaps **********************/
-void initFsmMaps(FileSectorMgr *_fsm) {
+static void initFsmMaps(FileSectorMgr *_fsm) {
     unsigned int i;
     char dbfile[256];
     unsigned char map[INODE_BLOCKS];  // SECTOR_BYTES
@@ -599,8 +644,8 @@ Bool writeToFile(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer,
         Change Record: 4/1/10 first implementation
 
 ***************************** def end addFileToDir ************************/
-Bool addFileToDir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                  unsigned int _inodeNumD) {
+static Bool addFileToDir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
+                         unsigned int _inodeNumD) {
     Bool success;
     unsigned int i, j;
     unsigned int diskOffset;
@@ -878,8 +923,8 @@ Bool addFileToDir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_n
         Change Record: 4/1/10 first implementation
 
 ************************** def end addFileTo_T_Indirect *******************/
-Bool addFileTo_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                          unsigned int _tIndirectOffset, Bool _allocate) {
+static Bool addFileTo_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
+                                 unsigned int _tIndirectOffset, Bool _allocate) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int buffer[BLOCK_SIZE / 4];
     unsigned int diskOffset;
@@ -972,8 +1017,8 @@ Bool addFileTo_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned
         Change Record: 4/1/10 first implementation
 
 ************************ def end addFileTo_D_Indirect ************************/
-Bool addFileTo_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                          unsigned int _dIndirectOffset, Bool _allocate) {
+static Bool addFileTo_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
+                                 unsigned int _dIndirectOffset, Bool _allocate) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int buffer[BLOCK_SIZE / 4];
     unsigned int diskOffset;
@@ -1066,8 +1111,8 @@ Bool addFileTo_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned
         Change Record: 4/1/10 first implementation
 
 ************************ def end addFileTo_S_Indirect ***********************/
-Bool addFileTo_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                          unsigned int _sIndirectOffset, Bool _allocate) {
+static Bool addFileTo_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
+                                 unsigned int _sIndirectOffset, Bool _allocate) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset;
     unsigned int buffer[BLOCK_SIZE / 4];
@@ -1307,8 +1352,8 @@ Bool rmFileFromDir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int _i
         Change Record: 4/1/10 first implementation
 
 ************************ def end rmFileFrom_T_Indirect ***********************/
-Bool rmFileFrom_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-                           unsigned int _tIndirectOffset) {
+static Bool rmFileFrom_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
+                                  unsigned int _tIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset;
     unsigned int sectorNum;
@@ -1390,8 +1435,8 @@ Bool rmFileFrom_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
         Change Record: 4/1/10 first implementation
 
 ************************ def end rmFileFrom_D_Indirect ***********************/
-Bool rmFileFrom_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-                           unsigned int _tIndirectOffset, unsigned int _dIndirectOffset) {
+static Bool rmFileFrom_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
+                                  unsigned int _tIndirectOffset, unsigned int _dIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset;
     unsigned int sectorNum;
@@ -1485,8 +1530,8 @@ Bool rmFileFrom_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
         Change Record: 4/1/10 first implementation
 
 ************************ def end rmFileFrom_S_Indirect ***********************/
-Bool rmFileFrom_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
-                           unsigned int _dIndirectOffset, unsigned int _sIndirectOffset) {
+static Bool rmFileFrom_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
+                                  unsigned int _dIndirectOffset, unsigned int _sIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset;
     unsigned int buffer[BLOCK_SIZE / 4];
@@ -1620,7 +1665,8 @@ Bool rmFileFrom_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
         Change Record: 4/12/10 first implemented
 
 ************************def end readFrom_T_IndirectBlocks ********************/
-void readFrom_T_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer, unsigned int _diskOffset) {
+static void readFrom_T_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer,
+                                      unsigned int _diskOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset;
     void *buffer;
@@ -1687,7 +1733,8 @@ void readFrom_T_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer, unsigned int 
         Change Record: 4/12/10 first implemented
 
 *****************def end readFrom_D_IndirectBlocks **************************/
-void readFrom_D_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer, unsigned int _diskOffset) {
+static void readFrom_D_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer,
+                                      unsigned int _diskOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset;
     void *buffer;
@@ -1756,7 +1803,8 @@ void readFrom_D_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer, unsigned int 
         Change Record: 4/12/10 first implemented
 
 ******************def end readFrom_S_IndirectBlocks **************************/
-void readFrom_S_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer, unsigned int _diskOffset) {
+static void readFrom_S_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer,
+                                      unsigned int _diskOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset;
     void *buffer;
@@ -1832,7 +1880,7 @@ void readFrom_S_IndirectBlocks(FileSectorMgr *_fsm, void *_buffer, unsigned int 
 
         Change Record: 4/12/10 first implemented
 ************************** def end aloc_T_Indirect **************************/
-unsigned int aloc_T_Indirect(FileSectorMgr *_fsm, long long int _blockCount) {
+static unsigned int aloc_T_Indirect(FileSectorMgr *_fsm, long long int _blockCount) {
     unsigned int baseAddress;
     unsigned int address;
     unsigned int diskOffset;
@@ -1931,7 +1979,7 @@ unsigned int aloc_T_Indirect(FileSectorMgr *_fsm, long long int _blockCount) {
         Change Record: 4/12/10 first implemented
 
 ************************** def end aloc_D_Indirect **************************/
-unsigned int aloc_D_Indirect(FileSectorMgr *_fsm, long long int _blockCount) {
+static unsigned int aloc_D_Indirect(FileSectorMgr *_fsm, long long int _blockCount) {
     unsigned int baseAddress;
     unsigned int address;
     unsigned int diskOffset;
@@ -2028,7 +2076,7 @@ unsigned int aloc_D_Indirect(FileSectorMgr *_fsm, long long int _blockCount) {
         Change Record: 4/12/10 first implemented
 
 ************************** def end aloc_S_Indirect **************************/
-unsigned int aloc_S_Indirect(FileSectorMgr *_fsm, long long int _blockCount) {
+static unsigned int aloc_S_Indirect(FileSectorMgr *_fsm, long long int _blockCount) {
     unsigned int baseAddress;
     unsigned int address;
     unsigned int diskOffset;
@@ -2122,8 +2170,8 @@ _tIndirectPtrs) {
         Change Record: 4/12/10 first implemented
 
 ****************** def end writeTo_T_IndirectBlocks **************************/
-void writeTo_T_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, void *_buffer,
-                              unsigned int _tIndirectPtrs) {
+static void writeTo_T_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, void *_buffer,
+                                     unsigned int _tIndirectPtrs) {
     unsigned int diskOffset;
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     void *buffer;
@@ -2217,8 +2265,8 @@ void writeTo_T_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, voi
         Change Record: 4/12/10 first implemented
 
 *******************def end writeTo_D_IndirectBlocks **************************/
-void writeTo_D_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, void *_buffer,
-                              unsigned int _dIndirectPtrs) {
+static void writeTo_D_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, void *_buffer,
+                                     unsigned int _dIndirectPtrs) {
     unsigned int diskOffset;
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     void *buffer;
@@ -2313,8 +2361,8 @@ void writeTo_D_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, voi
         Change Record: 4/12/10 first implemented
 
 ********************def end writeTo_S_IndirectBlocks *************************/
-void writeTo_S_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, void *_buffer,
-                              unsigned int _sIndirectPtrs) {
+static void writeTo_S_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _baseOffset, void *_buffer,
+                                     unsigned int _sIndirectPtrs) {
     unsigned int diskOffset;
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     void *buffer;
@@ -2536,8 +2584,8 @@ Bool rmFile(FileSectorMgr *_fsm, unsigned int _inodeNum, unsigned int _inodeNumD
         Change Record: 4/12/10 first implemented
 
 ********************def end rmFile_T_IndirectBlocks *************************/
-void rmFile_T_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType, unsigned int _inodeNumD,
-                             unsigned int _diskOffset) {
+static void rmFile_T_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType,
+                                    unsigned int _inodeNumD, unsigned int _diskOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset;
     unsigned int sectorNumber;
@@ -2612,8 +2660,8 @@ void rmFile_T_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType, unsign
         Change Record: 4/12/10 first implemented
 
 ********************def end rmFile_D_IndirectBlocks *************************/
-void rmFile_D_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType, unsigned int _inodeNumD,
-                             unsigned int _diskOffset) {
+static void rmFile_D_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType,
+                                    unsigned int _inodeNumD, unsigned int _diskOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset;
     unsigned int sectorNumber;
@@ -2687,8 +2735,8 @@ void rmFile_D_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType, unsign
         Change Record: 4/12/10 first implemented
 
 ********************def end rmFile_S_IndirectBlocks *************************/
-void rmFile_S_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType, unsigned int _inodeNumD,
-                             unsigned int _diskOffset) {
+static void rmFile_S_IndirectBlocks(FileSectorMgr *_fsm, unsigned int _fileType,
+                                    unsigned int _inodeNumD, unsigned int _diskOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset;
     unsigned int buffer[BLOCK_SIZE / 4];
@@ -2871,8 +2919,8 @@ Bool renameFile(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_nam
         Change Record: 4/12/10 first implemented
 
 ********************def end renameFileIn_T_Indirect *************************/
-Bool renameFileIn_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                             unsigned int _tIndirectOffset) {
+static Bool renameFileIn_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
+                                    unsigned int *_name, unsigned int _tIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset;
     Bool success;
@@ -2933,8 +2981,8 @@ Bool renameFileIn_T_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsig
         Change Record: 4/12/10 first implemented
 
 ********************def end renameFileIn_D_Indirect *************************/
-Bool renameFileIn_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                             unsigned int _dIndirectOffset) {
+static Bool renameFileIn_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
+                                    unsigned int *_name, unsigned int _dIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset;
     Bool success;
@@ -2995,8 +3043,8 @@ Bool renameFileIn_D_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsig
         Change Record: 4/12/10 first implemented
 
 ********************def end renameFileIn_S_Indirect *************************/
-Bool renameFileIn_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                             unsigned int _sIndirectOffset) {
+static Bool renameFileIn_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF,
+                                    unsigned int *_name, unsigned int _sIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset;
     unsigned int buffer[BLOCK_SIZE / 4];
@@ -3170,7 +3218,7 @@ void rmfs(FileSectorMgr *_fsm) {
         Change record: 4/12/10 first implemented
 
 ***************************** def end allocateInode ************************/
-Bool allocateInode(FileSectorMgr *_fsm) {
+static Bool allocateInode(FileSectorMgr *_fsm) {
     if (_fsm->index[0] != (unsigned int)(-1)) {
         int n;
         int byte;
@@ -3237,7 +3285,7 @@ Bool allocateInode(FileSectorMgr *_fsm) {
         Change record: 4/12/10 first implemented
 
 ***************************** def end deallocateInode ************************/
-Bool deallocateInode(FileSectorMgr *_fsm) {
+static Bool deallocateInode(FileSectorMgr *_fsm) {
     // Deallocate iMap at Inode's location
     if (_fsm->index[0] != (unsigned int)(-1)) {
         int n;
@@ -3319,7 +3367,7 @@ Bool deallocateInode(FileSectorMgr *_fsm) {
         Change record: 4/12/10 first implemented
 
 ***************************** def end getInode ************************/
-Bool getInode(int _n, FileSectorMgr *_fsm) {
+static Bool getInode(int _n, FileSectorMgr *_fsm) {
     int i;
     unsigned int mask;
     unsigned int result;

@@ -30,9 +30,5 @@ void initSsmMaps(SecSpaceMgr *_ssm);
 Bool allocateSectors(SecSpaceMgr *_ssm);
 Bool deallocateSectors(SecSpaceMgr *_ssm);
 Bool getSector(int _n, SecSpaceMgr *_ssm);
-Bool checkIntegrity(SecSpaceMgr *_ssm);
-void isFragmented(SecSpaceMgr *_ssm);
-void setAlocSector(SecSpaceMgr *_ssm, int _byte, int _bit);
-void setFreeSector(SecSpaceMgr *_ssm, int _byte, int _bit);
 
 #endif  // SECTOR_SPACE_MGR_H

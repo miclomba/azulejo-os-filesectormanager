@@ -12,6 +12,12 @@
 #include "gDefinitions.h"
 #include "ssmDefinitions.h"
 
+//============================== SSM FUNCTION PROTOTYPES =========================//
+static Bool checkIntegrity(SecSpaceMgr *_ssm);
+static void isFragmented(SecSpaceMgr *_ssm) __attribute__((unused));
+static void setAlocSector(SecSpaceMgr *_ssm, int _byte, int _bit) __attribute__((unused));
+static void setFreeSector(SecSpaceMgr *_ssm, int _byte, int _bit) __attribute__((unused));
+
 //============================== SSM FUNCTION DEFINITIONS =========================//
 void initSecSpaceMgr(SecSpaceMgr *_ssm) {
     char dbfile[256];
@@ -187,7 +193,7 @@ Bool getSector(int _n, SecSpaceMgr *_ssm) {
     return False;
 }
 
-Bool checkIntegrity(SecSpaceMgr *_ssm) {
+static Bool checkIntegrity(SecSpaceMgr *_ssm) {
     unsigned int i, j;
     int bitShift;
     unsigned char result;
@@ -215,7 +221,7 @@ Bool checkIntegrity(SecSpaceMgr *_ssm) {
     return True;
 }
 
-void isFragmented(SecSpaceMgr *_ssm) {
+static void isFragmented(SecSpaceMgr *_ssm) {
     int i, j;
     int tmp;
     int result;
@@ -241,7 +247,7 @@ void isFragmented(SecSpaceMgr *_ssm) {
     _ssm->fragmented = (float)((float)fragment / (float)NUM_SECTORS);
 }
 
-void setAlocSector(SecSpaceMgr *_ssm, int _byte, int _bit) {
+static void setAlocSector(SecSpaceMgr *_ssm, int _byte, int _bit) {
     unsigned char mapByte;
     mapByte = _ssm->alocMap[_byte];
     mapByte >>= (7 - _bit);
@@ -262,7 +268,7 @@ void setAlocSector(SecSpaceMgr *_ssm, int _byte, int _bit) {
     _ssm->freeMapHandle = Null;
 }
 
-void setFreeSector(SecSpaceMgr *_ssm, int _byte, int _bit) {
+static void setFreeSector(SecSpaceMgr *_ssm, int _byte, int _bit) {
     unsigned char mapByte;
     mapByte = _ssm->freeMap[_byte];
     mapByte >>= (7 - _bit);
