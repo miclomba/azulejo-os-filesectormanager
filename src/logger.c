@@ -5,12 +5,12 @@
 #include <stdio.h>
 
 #include "config.h"
-#include "fileSectorMgr.h"
+#include "fsm.h"
 #include "gDefinitions.h"
 #include "sectorSpaceMgr.h"
 #include "ssmDefinitions.h"
 
-void log_fsm(FileSectorMgr *_fsm, int _case, unsigned int _startByte) {
+void log_fsm(FSM *_fsm, int _case, unsigned int _startByte) {
     unsigned int i, j, k;
     int count;
     int sector;

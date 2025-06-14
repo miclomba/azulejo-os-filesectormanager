@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "fileSectorMgr.h"
+#include "fsm.h"
 #include "gDefinitions.h"
 #include "logger.h"
 #include "utils.h"
@@ -16,7 +16,7 @@
 // buffer for holding block information
 static unsigned int buffer[600 * (MAX_BLOCK_SIZE / 4)];
 
-int init_command(int _argc, char** _argv, char* input, FileSectorMgr* fsm, int i) {
+int init_command(int _argc, char** _argv, char* input, FSM* fsm, int i) {
     // vars for holding the disk, block, iNode, iNode-block, iNode-count sizes for the file system
     unsigned int _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT;
     // if debug, print the creation of the file system
@@ -75,7 +75,7 @@ int init_command(int _argc, char** _argv, char* input, FileSectorMgr* fsm, int i
     return i;
 }
 
-void end_command(FileSectorMgr* fsm) {
+void end_command(FSM* fsm) {
     // if debug, print the end has been reached
     if (DEBUG_LEVEL > 0) {
         // call to log_fsm, print the end has been reached
@@ -84,7 +84,7 @@ void end_command(FileSectorMgr* fsm) {
     fs_remove(fsm);
 }
 
-int info_command(char* input, FileSectorMgr* fsm, int i) {
+int info_command(char* input, FSM* fsm, int i) {
     // iNode number dealing with files
     unsigned int inodeNumF;
     // move to retrieve the iNode number
@@ -111,7 +111,7 @@ int info_command(char* input, FileSectorMgr* fsm, int i) {
     return i;
 }
 
-int print_command(char* input, FileSectorMgr* fsm, int i) {
+int print_command(char* input, FSM* fsm, int i) {
     // get the starting point, (for our input, a number)
     i += 2;
     // check to see that the character is a digit
@@ -131,7 +131,7 @@ int print_command(char* input, FileSectorMgr* fsm, int i) {
     return i;
 }
 
-int create_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i) {
+int create_command(char* input, FSM* fsm, unsigned int* name, int i) {
     // iNode number dealing with files and directories
     unsigned int inodeNumF = 0;
     unsigned int inodeNumD = 0;
@@ -196,7 +196,7 @@ int create_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i) {
     return i;
 }
 
-int rename_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i) {
+int rename_command(char* input, FSM* fsm, unsigned int* name, int i) {
     // iNode number dealing with files and directories
     unsigned int inodeNumF, inodeNumD;
     // move to retrieve the file's iNode
@@ -249,7 +249,7 @@ int rename_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i) {
     return i;
 }
 
-int write_command(char* input, FileSectorMgr* fsm, int i) {
+int write_command(char* input, FSM* fsm, int i) {
     // iNode number dealing with files
     unsigned int inodeNumF;
     // move to retrieve the iNode number
@@ -302,7 +302,7 @@ int write_command(char* input, FileSectorMgr* fsm, int i) {
     return i;
 }
 
-int read_command(char* input, FileSectorMgr* fsm, int i) {
+int read_command(char* input, FSM* fsm, int i) {
     // iNode number dealing with files
     unsigned int inodeNumF;
     // move to retrieve the iNode number of the file to be read
@@ -347,7 +347,7 @@ int read_command(char* input, FileSectorMgr* fsm, int i) {
     return i;
 }
 
-int remove_command(char* input, FileSectorMgr* fsm, int i) {
+int remove_command(char* input, FSM* fsm, int i) {
     // iNode number dealing with files and directories
     unsigned int inodeNumF, inodeNumD;
     // move to retrieve the file's iNode number
@@ -405,7 +405,7 @@ int remove_command(char* input, FileSectorMgr* fsm, int i) {
     return i;
 }
 
-int remove_test_command(char* input, FileSectorMgr* fsm, int i) {
+int remove_test_command(char* input, FSM* fsm, int i) {
     // buffer for holding temporary values
     unsigned int index[6];
     // buffer for holding block information
@@ -527,7 +527,7 @@ int remove_test_command(char* input, FileSectorMgr* fsm, int i) {
     return i;
 }
 
-int list_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i) {
+int list_command(char* input, FSM* fsm, unsigned int* name, int i) {
     // iNode number dealing with files
     unsigned int inodeNumF;
     // move to retrieve the iNode number
@@ -586,7 +586,7 @@ int list_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i) {
     return i;
 }
 
-int default_command(char* input, FileSectorMgr* fsm, int i) {
+int default_command(char* input, FSM* fsm, int i) {
     // discard input until new line
     i = advance_to_char(input, '\n', i);
     // if debug, print bad input

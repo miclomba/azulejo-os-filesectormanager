@@ -9,7 +9,7 @@
 
 #include "commands.h"
 #include "config.h"
-#include "fileSectorMgr.h"
+#include "fsm.h"
 #include "logger.h"
 #include "test_config.h"
 #include "utils.h"
@@ -25,8 +25,8 @@
  * @return void
  */
 void process_input(int argc, char** argv) {
-    // FileSectorMgr array used for pointer simplicity
-    FileSectorMgr fsm[1];
+    // FSM array used for pointer simplicity
+    FSM fsm[1];
     // boolean for state of reading input
     Bool loop = True;
     // placeholder in the buffer array should start at the beginning
@@ -112,8 +112,8 @@ void process_input(int argc, char** argv) {
  * @return void
  */
 void process_input_stub() {
-    // FileSectorMgr array used for pointer simplicity
-    FileSectorMgr fsm[1];
+    // FSM array used for pointer simplicity
+    FSM fsm[1];
     // buffer for input read, has a maximum input of 10,000 characters
     char input[MAX_INPUT];
     // if the debug level is greater than 0, generate stub output
