@@ -125,12 +125,8 @@ int main(int _argc, char *_argv[]) {
     char action;
     // buffer variable i
     unsigned int i;
-    // buffer variable k
-    unsigned int k;
     // buffer variable m
     unsigned int m;
-    // buffer variable c
-    char c;
     // placeholder for any conversions from character to integer
     int digit;
     // boolean for use with file handles
@@ -365,86 +361,11 @@ int main(int _argc, char *_argv[]) {
                     break;
                 // case 'C' should create either a file or directory
                 case 'C':
-                    // move to retrieve character
-                    i += 2;
-                    // store character value
-                    c = driver[i];
-                    // find next input
-                    i = advance_to_char(driver, ':', i);
-                    // move to after semi-colon
-                    i += 1;
-                    // check to see that the character is a digit
-                    digit = isdigit(driver[i]);
-                    // if the character is a digit, proceed
-                    if (digit > 0) {
-                        // convert the character to a digit
-                        inodeNumD = atoi(&driver[i]);
-                        // for debugging purposes, string of characters in buffer
-                        strcpy((char *)name, "my name");
-                        // if character is 'F', create a file
-                        if (c == 'F') {
-                            // call to createFile with parameter for file
-                            inodeNumF = createFile(fsm, 0, name, inodeNumD);
-                        }  // end if (c == 'F')
-                        // if character is 'D', create a directory
-                        else if (c == 'D') {
-                            // call to createFile with parameter for directory
-                            inodeNumF = createFile(fsm, 1, name, inodeNumD);
-                        }  // end if (c == 'D')
-                        // find next input
-                        i = advance_to_char(driver, ':', i);
-                        // move to after the semi-colon
-                        i += 1;
-                        // get the name for the new file or directory
-                        for (k = 0; k < 8; k++) {
-                            // copy values from the input buffer
-                            *((char *)name + k) = driver[i];
-                            // proceed through input buffer
-                            i++;
-                        }  // end for (k = 0; k < 8; k++)
-                        // call to renameFile
-                        renameFile(fsm, inodeNumF, name, inodeNumD);
-                    }  // end if (digit > 0)
-                    // print debug information
-                    printf("DEBUG_LEVEL > 0:\n");
-                    // if a folder was created, print respective output
-                    if (c == 'F') {
-                        // print input information
-                        printf("//Create a File (\'%s\') in Folder (Inode %d)\n", (char *)name,
-                               inodeNumD);
-                    }  // end if (c == 'F')
-                    // if a directory was created, print respective output
-                    else if (c == 'D') {
-                        // print input information
-                        printf("//Create a Directory ");
-                        printf("(\'%s\') in Folder (Inode %d)\n", (char *)name, inodeNumD);
-                    }  // end else if (c == 'D')
-                    // print input information
-                    printf("//C:%c:%d:%s\n\n", c, inodeNumD, (char *)name);
-                    // print more information based on type
-                    if (c == 'D') {
-                        printf("-> Used (Inode %d) to create a Directory.\n", inodeNumF);
-                        printf("** Expected Result: 1 Inode allocated in ");
-                        printf("the Inode Map\n");
-                        printf("** Expected Result: 1 Block allocated in the ");
-                        printf("Aloc/Free Map\n");
-                    }  // end if (c == 'D')
-                    else if (c == 'F') {
-                        printf("-> Used (Inode %d) to create a File.\n", inodeNumF);
-                        printf("** Expected Result: 1 Inode allocated in ");
-                        printf("the Inode Map\n");
-                        printf("** Expected Result: 0 Blocks allocated in the ");
-                        printf("Aloc/Free Map\n");
-                    }  // end if (c == 'F')
-                    // print section break
-                    printf("- - - - - - - - - - - - - - - - - - - - - - - - - -");
-                    printf(" - - - - - - - - - -\n\n\n");
-                    // find next line of input
-                    i = advance_to_char(driver, '\n', i);
+                    i = create_command(driver, fsm, name, &inodeNumD, &inodeNumF, &digit, i);
                     break;
                 // case 'M' creates the filesystem
                 case 'M':
-                    i = create_command(_argc, _argv, driver, fsm, &digit, i);
+                    i = init_command(_argc, _argv, driver, fsm, &digit, i);
                     break;
                 // case 'P' should print the maps
                 case 'P':

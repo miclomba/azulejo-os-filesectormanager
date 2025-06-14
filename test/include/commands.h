@@ -7,7 +7,7 @@
 int advance_to_char(char* buffer, char c, int i);
 
 /*
- * @brief A filesystem create command
+ * @brief A filesystem init command
  * @param _argc the number of arguments passed to program
  # @param _argv an array holding the arguments
  * @param driver buffer for input read, has a maximum input of 10,000 characters
@@ -16,7 +16,7 @@ int advance_to_char(char* buffer, char c, int i);
  * @param i the driver buffer current index
  * @return an updated driver buffer index
  */
-int create_command(int _argc, char** _argv, char* driver, FileSectorMgr* fsm, int* digit, int i);
+int init_command(int _argc, char** _argv, char* driver, FileSectorMgr* fsm, int* digit, int i);
 
 /*
  * @brief A filesystem info command
@@ -31,6 +31,21 @@ int create_command(int _argc, char** _argv, char* driver, FileSectorMgr* fsm, in
  */
 int info_command(char* driver, FileSectorMgr* fsm, Bool* success, unsigned int* inodeNumF,
                  int* digit, int i);
+
+/*
+ * @brief A filesystem create command
+ *
+ * @param driver buffer for input read, has a maximum input of 10,000 characters
+ * @param fsm The FileSectorMgr reference
+ * @param name buffer used when renaming files
+ * @param inodeNumD buffer for holding an iNode number dealing with directories
+ * @param inodeNumF buffer for holding an iNode number dealing with files
+ * @param digit placeholder for any conversions from character to integer
+ * @param i the driver buffer current index
+ * @return an updated driver buffer index
+ */
+int create_command(char* driver, FileSectorMgr* fsm, unsigned int* name, unsigned int* inodeNumD,
+                   unsigned int* inodeNumF, int* digit, int i);
 
 /*
  * @brief A filesystem rename command
