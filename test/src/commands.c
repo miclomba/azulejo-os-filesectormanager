@@ -119,6 +119,26 @@ int info_command(char* driver, FileSectorMgr* fsm, Bool* success, unsigned int* 
     return i;
 }
 
+int print_command(char* driver, FileSectorMgr* fsm, int* digit, int i) {
+    // get the starting point, (for our input, a number)
+    i += 2;
+    // check to see that the character is a digit
+    *digit = isdigit(driver[i]);
+    // if the character is a digit, print both FSM and SSM maps
+    if (*digit > 0) {
+        // if debug, print the call to both logFSM and logSSM
+        if (DEBUG_LEVEL > 0) {
+            // call to logFSM
+            logFSM(fsm, 1, 0);
+            // call to logSSM
+            logSSM(fsm->ssm, 1, atoi(&driver[i]));
+        }  // end if (DEBUG_LEVEL > 0)
+    }  // end if (digit > 0)
+    // discard input until new line
+    i = advance_to_char(driver, '\n', i);
+    return i;
+}
+
 int create_command(char* driver, FileSectorMgr* fsm, unsigned int* name, unsigned int* inodeNumD,
                    unsigned int* inodeNumF, int* digit, int i) {
     // move to retrieve character

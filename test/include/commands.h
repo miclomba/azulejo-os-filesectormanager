@@ -33,6 +33,17 @@ int info_command(char* driver, FileSectorMgr* fsm, Bool* success, unsigned int* 
                  int* digit, int i);
 
 /*
+ * @brief A filesystem print command
+ *
+ * @param driver buffer for input read, has a maximum input of 10,000 characters
+ * @param fsm The FileSectorMgr reference
+ * @param digit placeholder for any conversions from character to integer
+ * @param i the driver buffer current index
+ * @return an updated driver buffer index
+ */
+int print_command(char* driver, FileSectorMgr* fsm, int* digit, int i);
+
+/*
  * @brief A filesystem create command
  *
  * @param driver buffer for input read, has a maximum input of 10,000 characters

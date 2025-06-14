@@ -369,22 +369,7 @@ int main(int _argc, char *_argv[]) {
                     break;
                 // case 'P' should print the maps
                 case 'P':
-                    // get the starting point, (for our input, a number)
-                    i += 2;
-                    // check to see that the character is a digit
-                    digit = isdigit(driver[i]);
-                    // if the character is a digit, print both FSM and SSM maps
-                    if (digit > 0) {
-                        // if debug, print the call to both logFSM and logSSM
-                        if (DEBUG_LEVEL > 0) {
-                            // call to logFSM
-                            logFSM(fsm, 1, 0);
-                            // call to logSSM
-                            logSSM(fsm->ssm, 1, atoi(&driver[i]));
-                        }  // end if (DEBUG_LEVEL > 0)
-                    }  // end if (digit > 0)
-                    // discard input until new line
-                    i = advance_to_char(driver, '\n', i);
+                    i = print_command(driver, fsm, &digit, i);
                     break;
                 // case '/' should ignore all lines with comments
                 case '/':
