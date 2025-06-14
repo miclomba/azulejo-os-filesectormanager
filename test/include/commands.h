@@ -31,10 +31,9 @@ int init_command(int _argc, char** _argv, char* driver, FileSectorMgr* fsm, int 
 /*
  * @brief A filesystem end command
  * @param fsm The FileSectorMgr reference
- * @param loop the driver input loop status
  * @return an updated driver buffer index
  */
-void end_command(FileSectorMgr* fsm, Bool* loop);
+void end_command(FileSectorMgr* fsm);
 
 /*
  * @brief A filesystem info command

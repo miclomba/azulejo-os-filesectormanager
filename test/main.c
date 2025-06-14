@@ -11,130 +11,101 @@
 #include "config.h"
 #include "fileSectorMgr.h"
 #include "logger.h"
+#include "test_config.h"
 
-/********************************* def beg process_input *******************************
+/*
+ * @brief read from file into given buffer
+ * @param buffer the buffer to load content into
+ * @param file_name the fully qualified file path
+ */
+void read_file(char* buffer, const char* file_name) {
+    // open the input file; file should already exist
+    FILE* inputFile = fopen(file_name, "r+");
+    // read the input file
+    fread(buffer, sizeof(char), MAX_INPUT, inputFile);
+    fclose(inputFile);
+    inputFile = Null;
+}
 
-   void process_input(int _argc, char *_argv[])
-
-   Function
-        Opens either an input file, creates the file system and processes input.
-
-   Data Environment
-        Parameters
-                int _argc
-                := the number of arguments passed to program
-
-                char *_argv[]
-                := an array holding the arguments
-
-        Local Variables
-                FileSectorMgr fsm[1]
-                := FSM object
-
-                Bool loop
-                := boolean for state of reading input
-
-                unsigned int i
-                := buffer variable
-
-                char dbfile[256]
-                := buffer for the location of the file to be used
-
-                char driver[MAX_INPUT]
-                := buffer for input read, has a maximum input of
-                10,000 characters
-
-                unsigned int name[2]
-                := buffer for holding temporary values
-
-   void process_input
-
-   Change Record
-        6/13/25 - Function implemented.
-
-*********************************** def end process_input ******************************/
-void process_input(int _argc, char** _argv) {
+/*
+ * @brief Opens an input file, creates the file system and processes input.
+ * @param argc the number of args
+ * @param argv the args list
+ */
+void process_input(int argc, char** argv) {
     // FileSectorMgr array used for pointer simplicity
     FileSectorMgr fsm[1];
     // boolean for state of reading input
     Bool loop = True;
     // placeholder in the buffer array should start at the beginning
     unsigned int i = 0;
-    // buffer for the location of the file to be used
-    char dbfile[256];
     // buffer for input read, has a maximum input of 10,000 characters
-    char driver[MAX_INPUT];
+    char input[MAX_INPUT];
     // buffer used when renaming files
     unsigned int name[2];
 
-    // write the qa input location into buffer
-    sprintf(dbfile, "./test/qaInput.txt");
-    // open the qa input file, file should already exist
-    FILE* driverHandle = fopen(dbfile, "r+");
-    // read the driverHandle
-    fread(driver, sizeof(char), MAX_INPUT, driverHandle);
-    fclose(driverHandle);
-    driverHandle = Null;
+    read_file(input, INPUT_FILE);
     // while there is input, process the commands and operate accordingly
     while (loop == True) {
         // determine what the program should do based on input
-        switch (driver[i]) {
+        switch (input[i]) {
             // case 'I' displays the information of a file
             case 'I':
-                i = info_command(driver, fsm, i);
+                i = info_command(input, fsm, i);
                 break;
             // case 'N' renames a file
             case 'N':
-                i = rename_command(driver, fsm, name, i);
+                i = rename_command(input, fsm, name, i);
                 break;
             // case 'W' will write data to a file
             case 'W':
-                i = write_command(driver, fsm, i);
+                i = write_command(input, fsm, i);
                 break;
             // case 'R' will read a file
             case 'R':
-                i = read_command(driver, fsm, i);
+                i = read_command(input, fsm, i);
                 break;
             // case 'V' removes a file from a folder
             case 'V':
-                i = remove_command(driver, fsm, i);
+                i = remove_command(input, fsm, i);
                 break;
             // case 'T' tests the removal of a file or directory
             case 'T':
-                i = remove_test_command(driver, fsm, i);
+                i = remove_test_command(input, fsm, i);
                 break;
             // case 'L' lists the contents of a directory
             case 'L':
-                i = list_command(driver, fsm, name, i);
+                i = list_command(input, fsm, name, i);
                 break;
             // case 'C' should create either a file or directory
             case 'C':
-                i = create_command(driver, fsm, name, i);
+                i = create_command(input, fsm, name, i);
                 break;
             // case 'M' creates the filesystem
             case 'M':
-                i = init_command(_argc, _argv, driver, fsm, i);
+                i = init_command(argc, argv, input, fsm, i);
                 break;
             // case 'P' should print the maps
             case 'P':
-                i = print_command(driver, fsm, i);
+                i = print_command(input, fsm, i);
                 break;
             // case '/' should ignore all lines with comments
             case '/':
                 // discard input until new line
-                i = advance_to_char(driver, '\n', i);
+                i = advance_to_char(input, '\n', i);
                 break;
             // case '\n' should ignore blank lines with new lines
             case '\n':
                 break;
             // case 'E' should respond to the end of input
             case 'E':
-                end_command(fsm, &loop);
+                end_command(fsm);
+                loop = False;
                 break;
             // default case should ignore any other form of input
             default:
                 // discard input until new line
-                i = advance_to_char(driver, '\n', i);
+                i = advance_to_char(input, '\n', i);
                 // if debug, print bad input
                 if (DEBUG_LEVEL > 0) {
                     // call to logFSM, print bad input
@@ -147,107 +118,39 @@ void process_input(int _argc, char** _argv) {
     }  // end while (loop == True)
 }
 
-/********************************* def beg process_input_stub *******************************
-
-   void process_input_stub()
-
-   Function
-        Opens either a stub file, creates the file system and processes input stub.
-
-   Data Environment
-        Local Variables
-                FileSectorMgr fsm[1]
-                := FSM object
-
-                char dbfile[256]
-                := buffer for the location of the file to be used
-
-                char driver[MAX_INPUT]
-                := buffer for input read, has a maximum input of
-                10,000 characters
-
-   void process_input_stub
-
-   Change Record
-        6/13/25 - Function implemented.
-
-*********************************** def end process_input_stub ******************************/
+/*
+ * @brief Opens a stub file, creates the file system and processes input stub.
+ */
 void process_input_stub() {
     // FileSectorMgr array used for pointer simplicity
     FileSectorMgr fsm[1];
-    // buffer for the location of the file to be used
-    char dbfile[256];
     // buffer for input read, has a maximum input of 10,000 characters
-    char driver[MAX_INPUT];
+    char input[MAX_INPUT];
     // if the debug level is greater than 0, generate stub output
     if (DEBUG_LEVEL > 0) {
         // call logFSM to print that stub output is being created
         logFSM(fsm, 18, 0);
     }  // end if(DEBUG_LEVEL > 0)
-    // write the stub input location into buffer
-    sprintf(dbfile, "./test/qaInputStub.txt");
     // open the stub input file, file should already exist
-    FILE* driverHandle = fopen(dbfile, "r+");
-    // read the driverHandle
-    fread(driver, sizeof(char), MAX_INPUT, driverHandle);
-    fclose(driverHandle);
-    driverHandle = Null;
+    read_file(input, INPUT_STUB_FILE);
+
     // print all lines of the driver buffer
     for (unsigned int i = 0; i < MAX_INPUT; i++) {
         // look for the end of the input file, start with character 'E'
-        if (i <= 253 && strncmp(&driver[i], "END", 3) == 0) {
+        if (i <= 253 && strncmp(&input[i], "END", 3) == 0) {
             logFSM(fsm, 14, 0);
             // no need to continue reading input
             break;
         }  // end if 'END'
         // print the input read from the buffer
-        printf("%c", driver[i]);
+        printf("%c", input[i]);
     }  // end for (i = 0; i < MAX_INPUT; i++)
 }
 
-/********************************* def beg main *******************************
-
-   int main(int _argc, char *_argv[])
-
-   Function
-        This is the main for our FSM project. Opens either a stub
-        or input file, creates the file system and processes input.
-
-   Data Environment
-        Parameters
-                int _argc
-                := the number of arguments passed to program
-
-                char *_argv[]
-                := an array holding the arguments
-
-        Local Variables
-                FileSectorMgr fsm[1]
-                := FSM object
-
-                Bool loop
-                := boolean for state of reading input
-
-                unsigned int i
-                := buffer variable
-
-                char dbfile[256]
-                := buffer for the location of the file to be used
-
-                char driver[MAX_INPUT]
-                := buffer for input read, has a maximum input of
-                10,000 characters
-
-                unsigned int name[2]
-                := buffer for holding temporary values
-
-   int main
-        = returns 0 upon completing
-
-   Change Record
-        5/2/10 - Function implemented.
-
-*********************************** def end main ******************************/
+/*
+ * @brief This is the main for our FSM project. Opens either a stub or input file, creates the file
+ * system and processes input.
+ */
 int main(int _argc, char* _argv[]) {
     // if designated by the parameters, run program with stub output
     if (_argc > 2 && atoi(_argv[2]) == 1) {

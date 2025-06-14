@@ -100,14 +100,12 @@ int init_command(int _argc, char** _argv, char* driver, FileSectorMgr* fsm, int 
     return i;
 }
 
-void end_command(FileSectorMgr* fsm, Bool* loop) {
+void end_command(FileSectorMgr* fsm) {
     // if debug, print the end has been reached
     if (DEBUG_LEVEL > 0) {
         // call to logFSM, print the end has been reached
         logFSM(fsm, 14, 0);
     }  // end if (DEBUG_LEVEL > 0)
-    // no more input, stop reading loop
-    *loop = False;
     rmfs(fsm);
 }
 

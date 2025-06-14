@@ -6,7 +6,7 @@ OBJ = test/main.o test/src/commands.o src/fileSectorMgr.o src/fsmDefinitions.o s
 test/fsm: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $(OBJ) -lm
 
-test/main.o: test/main.c include/ssmDefinitions.h include/gDefinitions.h include/config.h
+test/main.o: test/main.c include/ssmDefinitions.h include/gDefinitions.h include/config.h test/include/test_config.h
 	$(CC) $(CFLAGS) -c test/main.c -o $@
 
 test/src/commands.o: test/src/commands.c test/include/commands.h
