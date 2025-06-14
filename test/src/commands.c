@@ -93,6 +93,17 @@ int init_command(int _argc, char** _argv, char* driver, FileSectorMgr* fsm, int*
     return i;
 }
 
+void end_command(FileSectorMgr* fsm, Bool* loop) {
+    // if debug, print the end has been reached
+    if (DEBUG_LEVEL > 0) {
+        // call to logFSM, print the end has been reached
+        logFSM(fsm, 14, 0);
+    }  // end if (DEBUG_LEVEL > 0)
+    // no more input, stop reading loop
+    *loop = False;
+    rmfs(fsm);
+}
+
 int info_command(char* driver, FileSectorMgr* fsm, Bool* success, unsigned int* inodeNumF,
                  int* digit, int i) {
     // move to retrieve the iNode number
@@ -418,6 +429,148 @@ int remove_command(char* driver, FileSectorMgr* fsm, Bool* success, unsigned int
         // print section break
         printf("- - - - - - - - - - - - - - - - - - - - - - - - ");
         printf("- - - - - - - - - - - -\n\n");
+    }  // end if (digit > 0)
+    // find the next line of input
+    i = advance_to_char(driver, '\n', i);
+    return i;
+}
+
+int remove_test_command(char* driver, FileSectorMgr* fsm, Bool* success, int* digit, int i) {
+    // buffer for holding temporary values
+    unsigned int index[6];
+    // buffer for holding block information
+    unsigned int block[MAX_BLOCK_SIZE / 4];
+
+    // move to retrieve the iNode number
+    i += 2;
+    // check to see that character is a digit
+    *digit = isdigit(driver[i]);
+    // if the character is a digit, proceed
+    if (*digit > 0) {
+        // print debug information
+        printf("\nDEBUG_LEVEL > 0:\n");
+        // print that iNode values will be tested
+        printf("//TESTING: Writing File-Tuple (Inode 25) into ");
+        printf("Double Indirect Data Block of Folder ");
+        printf("(Inode %d)\n", atoi(&driver[i]));
+        // print input information
+        printf("//T:%d\n\n", atoi(&driver[i]));
+        // call to openFile
+        *success = openFile(fsm, atoi(&driver[i]));
+        // print that iNode has been opened
+        printf("Opened Folder (Inode %d)\n", atoi(&driver[i]));
+        // print that the required data blocks are being allocated
+        printf("Allocating required data Blocks:\n\n");
+        // call to getSector
+        getSector(1, fsm->ssm);
+        // retrieve index values from SSM
+        index[0] = fsm->ssm->index[0];
+        index[1] = fsm->ssm->index[1];
+        // locate double indirect
+        fsm->inode.dIndirect = BLOCK_SIZE * (8 * fsm->ssm->index[0] + fsm->ssm->index[1]);
+        // call to writeInode
+        writeInode(&fsm->inode, atoi(&driver[i]), fsm->diskHandle);
+        // call to allocateSectors
+        allocateSectors(fsm->ssm);
+        // print the block size
+        printf("Double indirect Ptr --> %d\n", fsm->inode.dIndirect / BLOCK_SIZE);
+        // call to getSector
+        getSector(1, fsm->ssm);
+        // retrieve index values from SSM
+        index[2] = fsm->ssm->index[0];
+        index[3] = fsm->ssm->index[1];
+        // clear the block
+        for (unsigned int m = 0; m < BLOCK_SIZE / 4; m++) {
+            // block values set to -1
+            block[m] = (unsigned int)(-1);
+        }  // end for (m = 0; m < BLOCK_SIZE/4; m
+        // retrieve the block
+        block[0] = BLOCK_SIZE * (8 * fsm->ssm->index[0] + fsm->ssm->index[1]);
+        // move to the beginning of the file
+        fseek(fsm->diskHandle, 0, SEEK_SET);
+        // move to the double indirect block
+        fseek(fsm->diskHandle, fsm->inode.dIndirect, SEEK_SET);
+        // write block to the file
+        fwrite(block, BLOCK_SIZE, 1, fsm->diskHandle);
+        // call to allocateSectors
+        allocateSectors(fsm->ssm);
+        // print that iNode values will be tested
+        printf("Double indirect Ptr --> Double Indirect Block ");
+        printf("--> %d\n", block[0] / BLOCK_SIZE);
+        // call to getSector
+        getSector(1, fsm->ssm);
+        // retrieve index values from SSM
+        index[4] = fsm->ssm->index[0];
+        index[5] = fsm->ssm->index[1];
+        // clear the block
+        for (unsigned int m = 0; m < BLOCK_SIZE / 4; m++) {
+            // block values set to -1
+            block[m] = (unsigned int)(-1);
+        }  // end for (m = 0; m < BLOCK_SIZE/4; m++)
+        // retrieve the block
+        block[0] = BLOCK_SIZE * (8 * fsm->ssm->index[0] + fsm->ssm->index[1]);
+        // move to the beginning of the file
+        fseek(fsm->diskHandle, 0, SEEK_SET);
+        // move to the double indirect block
+        fseek(fsm->diskHandle, BLOCK_SIZE * (8 * index[2] + index[3]), SEEK_SET);
+        // write block to file
+        fwrite(block, BLOCK_SIZE, 1, fsm->diskHandle);
+        // call to allocateSectors
+        allocateSectors(fsm->ssm);
+        // print block value
+        printf("Double indirect Ptr --> Double Indirect Block ");
+        printf("--> Single Indirect Block -> %d\n", block[0] / BLOCK_SIZE);
+        // move value of block to index
+        index[0] = block[0];
+        // clear the block
+        for (unsigned int m = 0; m < BLOCK_SIZE / 4; m++) {
+            // block value set to 0
+            block[m] = 0;
+        }  // end for (m = 0; m < BLOCK_SIZE/4; m++)
+        // for debugging purposes, assign values in buffer
+        block[0] = 1;
+        block[1] = 1;
+        block[2] = 1;
+        block[3] = 0;
+        block[4] = 1;
+        block[5] = 1;
+        block[6] = 25;
+        block[7] = 1;
+        block[8] = 3;
+        block[9] = 3;
+        block[10] = 1;
+        block[11] = 0;
+        // move to the beginning of the file
+        fseek(fsm->diskHandle, 0, SEEK_SET);
+        // move to the location stored in index
+        fseek(fsm->diskHandle, index[0], SEEK_SET);
+        // write value of block to disk
+        fwrite(block, sizeof(unsigned int), BLOCK_SIZE / 4, fsm->diskHandle);
+        // print the addition of tuple
+        printf("Added File-Tuple (Inode 25) to data block at ");
+        printf("sector %d\n", index[0] / BLOCK_SIZE);
+        // call to rmFileFromDir
+        *success = rmFileFromDir(fsm, 25, atoi(&driver[i]));
+        // print respective functions
+        if (*success == True) {
+            // print remove was successful
+            printf("\nTRY FUNCTION CALL: rmFileFromDir(fsm,25,");
+            printf("%d);\n\nReturned TRUE\n", atoi(&driver[i]));
+        }  // end if (success == True)
+        else {
+            // print remove was unsuccessful
+            printf("\nTRY FUNCTION CALL: rmFileFromDir(fsm,25,");
+            printf("%d);\n\nReturned FALSE\n", atoi(&driver[i]));
+        }  // end else
+        // call to openFile
+        *success = openFile(fsm, atoi(&driver[i]));
+        // set single indirect to -1
+        fsm->inode.dIndirect = -1;
+        // write iNode to file
+        writeInode(&fsm->inode, atoi(&driver[i]), fsm->diskHandle);
+        // print section break
+        printf("- - - - - - - - - - - - - - - - - - - - - - - - ");
+        printf("- - - - - - - - - - - -\n\n\n");
     }  // end if (digit > 0)
     // find the next line of input
     i = advance_to_char(driver, '\n', i);

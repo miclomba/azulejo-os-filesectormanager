@@ -19,6 +19,14 @@ int advance_to_char(char* buffer, char c, int i);
 int init_command(int _argc, char** _argv, char* driver, FileSectorMgr* fsm, int* digit, int i);
 
 /*
+ * @brief A filesystem end command
+ * @param fsm The FileSectorMgr reference
+ * @param loop the driver input loop status
+ * @return an updated driver buffer index
+ */
+void end_command(FileSectorMgr* fsm, Bool* loop);
+
+/*
  * @brief A filesystem info command
  *
  * @param driver buffer for input read, has a maximum input of 10,000 characters
@@ -117,6 +125,18 @@ int read_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, Bool* s
  */
 int remove_command(char* driver, FileSectorMgr* fsm, Bool* success, unsigned int* inodeNumD,
                    unsigned int* inodeNumF, int* digit, int i);
+
+/*
+ * @brief A filesystem remove test command
+ *
+ * @param driver buffer for input read, has a maximum input of 10,000 characters
+ * @param fsm The FileSectorMgr reference
+ * @param success boolean for use with file handles
+ * @param digit placeholder for any conversions from character to integer
+ * @param i the driver buffer current index
+ * @return an updated driver buffer index
+ */
+int remove_test_command(char* driver, FileSectorMgr* fsm, Bool* success, int* digit, int i);
 
 /*
  * @brief A filesystem list command
