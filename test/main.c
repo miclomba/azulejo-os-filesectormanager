@@ -91,13 +91,7 @@ void process_input(int argc, char** argv) {
                 break;
             // default case should ignore any other form of input
             default:
-                // discard input until new line
-                i = advance_to_char(input, '\n', i);
-                // if debug, print bad input
-                if (DEBUG_LEVEL > 0) {
-                    // call to logFSM, print bad input
-                    logFSM(fsm, 15, 0);
-                }  // end if (DEBUG_LEVEL > 0)
+                i = default_command(input, fsm, i);
                 break;
         }  // end switch (action)
         // increment to the next character of the input buffer

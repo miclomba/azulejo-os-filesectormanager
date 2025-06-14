@@ -16,7 +16,7 @@
 // buffer for holding block information
 static unsigned int buffer[600 * (MAX_BLOCK_SIZE / 4)];
 
-int init_command(int _argc, char** _argv, char* driver, FileSectorMgr* fsm, int i) {
+int init_command(int _argc, char** _argv, char* input, FileSectorMgr* fsm, int i) {
     // vars for holding the disk, block, iNode, iNode-block, iNode-count sizes for the file system
     unsigned int _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT;
 
@@ -28,55 +28,55 @@ int init_command(int _argc, char** _argv, char* driver, FileSectorMgr* fsm, int 
     // move to retrieve disk size
     i += 2;
     // check to see that the character is a digit
-    int digit = isdigit(driver[i]);
+    int digit = isdigit(input[i]);
     // if the character is a digit, proceed
     if (digit > 0) {
         // first parameter is disk size, store value
-        _DISK_SIZE = atoi(&driver[i]);
+        _DISK_SIZE = atoi(&input[i]);
     }  // end if (digit > 0)
     // find next input
-    i = advance_to_char(driver, ':', i);
+    i = advance_to_char(input, ':', i);
     // move to retrieve block size
     i += 1;
     // check to see that the character is a digit
-    digit = isdigit(driver[i]);
+    digit = isdigit(input[i]);
     // if the character is a digit, proceed
     if (digit > 0) {
         // second parameter is block size, store value
-        _BLOCK_SIZE = atoi(&driver[i]);
+        _BLOCK_SIZE = atoi(&input[i]);
     }  // end if digit (digit > 0)
     // find next input
-    i = advance_to_char(driver, ':', i);
+    i = advance_to_char(input, ':', i);
     // move to retrieve iNode size
     i += 1;
     // check to see that the character is a digit
-    digit = isdigit(driver[i]);
+    digit = isdigit(input[i]);
     // if the character is a digit, proceed
     if (digit > 0) {
         // third parameter is iNode size, store value
-        _INODE_SIZE = atoi(&driver[i]);
+        _INODE_SIZE = atoi(&input[i]);
     }  // end if (digit > 0)
     // find next input
-    i = advance_to_char(driver, ':', i);
+    i = advance_to_char(input, ':', i);
     // move to retrieve number of iNode blocks
     i += 1;
     // check to see that the character is a digit
-    digit = isdigit(driver[i]);
+    digit = isdigit(input[i]);
     // if the character is a digit, proceed
     if (digit > 0) {
         // fourth parameter is number iNode blocks, store value
-        _INODE_BLOCKS = atoi(&driver[i]);
+        _INODE_BLOCKS = atoi(&input[i]);
     }  // end if (digit > 0)
     // find next input
-    i = advance_to_char(driver, ':', i);
+    i = advance_to_char(input, ':', i);
     // move to retrieve iNodes per block
     i += 1;
     // check to see that the character is a digit
-    digit = isdigit(driver[i]);
+    digit = isdigit(input[i]);
     // if the character is a digit, proceed
     if (digit > 0) {
         // fifth parameter is iNodes per block, store value
-        _INODE_COUNT = atoi(&driver[i]);
+        _INODE_COUNT = atoi(&input[i]);
     }  // end if (digit > 0)
     // if correct parameters, create the file system
     if (_argc > 1 && atoi(_argv[1]) == 1) {
@@ -88,7 +88,7 @@ int init_command(int _argc, char** _argv, char* driver, FileSectorMgr* fsm, int 
         mkfs(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 0);
     }  // end else
     // find next line of input
-    i = advance_to_char(driver, '\n', i);
+    i = advance_to_char(input, '\n', i);
     return i;
 }
 
@@ -101,17 +101,17 @@ void end_command(FileSectorMgr* fsm) {
     rmfs(fsm);
 }
 
-int info_command(char* driver, FileSectorMgr* fsm, int i) {
+int info_command(char* input, FileSectorMgr* fsm, int i) {
     // iNode number dealing with files
     unsigned int inodeNumF;
     // move to retrieve the iNode number
     i += 2;
     // ensure that the character is a digit
-    int digit = isdigit(driver[i]);
+    int digit = isdigit(input[i]);
     // if the character is a digit, attempt to locate iNode
     if (digit > 0) {
         // convert the character to a digit
-        inodeNumF = atoi(&driver[i]);
+        inodeNumF = atoi(&input[i]);
         // attempt to open the file located at inodeNumF
         Bool success = openFile(fsm, inodeNumF);
         // if the iNode was successfully opened, print the
@@ -124,15 +124,15 @@ int info_command(char* driver, FileSectorMgr* fsm, int i) {
         closeFile(fsm);
     }  // end if (digit > 0)
     // find the next line of input
-    i = advance_to_char(driver, '\n', i);
+    i = advance_to_char(input, '\n', i);
     return i;
 }
 
-int print_command(char* driver, FileSectorMgr* fsm, int i) {
+int print_command(char* input, FileSectorMgr* fsm, int i) {
     // get the starting point, (for our input, a number)
     i += 2;
     // check to see that the character is a digit
-    int digit = isdigit(driver[i]);
+    int digit = isdigit(input[i]);
     // if the character is a digit, print both FSM and SSM maps
     if (digit > 0) {
         // if debug, print the call to both logFSM and logSSM
@@ -140,31 +140,31 @@ int print_command(char* driver, FileSectorMgr* fsm, int i) {
             // call to logFSM
             logFSM(fsm, 1, 0);
             // call to logSSM
-            logSSM(fsm->ssm, 1, atoi(&driver[i]));
+            logSSM(fsm->ssm, 1, atoi(&input[i]));
         }  // end if (DEBUG_LEVEL > 0)
     }  // end if (digit > 0)
     // discard input until new line
-    i = advance_to_char(driver, '\n', i);
+    i = advance_to_char(input, '\n', i);
     return i;
 }
 
-int create_command(char* driver, FileSectorMgr* fsm, unsigned int* name, int i) {
+int create_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i) {
     // iNode number dealing with files and directories
     unsigned int inodeNumF, inodeNumD = 0;
     // move to retrieve character
     i += 2;
     // store character value
-    char c = driver[i];
+    char c = input[i];
     // find next input
-    i = advance_to_char(driver, ':', i);
+    i = advance_to_char(input, ':', i);
     // move to after semi-colon
     i += 1;
     // check to see that the character is a digit
-    int digit = isdigit(driver[i]);
+    int digit = isdigit(input[i]);
     // if the character is a digit, proceed
     if (digit > 0) {
         // convert the character to a digit
-        inodeNumD = atoi(&driver[i]);
+        inodeNumD = atoi(&input[i]);
         // for debugging purposes, string of characters in buffer
         strcpy((char*)name, "my name");
         // if character is 'F', create a file
@@ -178,13 +178,13 @@ int create_command(char* driver, FileSectorMgr* fsm, unsigned int* name, int i) 
             inodeNumF = createFile(fsm, 1, name, inodeNumD);
         }  // end if (c == 'D')
         // find next input
-        i = advance_to_char(driver, ':', i);
+        i = advance_to_char(input, ':', i);
         // move to after the semi-colon
         i += 1;
         // get the name for the new file or directory
         for (int k = 0; k < 8; k++) {
             // copy values from the input buffer
-            *((char*)name + k) = driver[i];
+            *((char*)name + k) = input[i];
             // proceed through input buffer
             i++;
         }  // end for (k = 0; k < 8; k++)
@@ -225,39 +225,39 @@ int create_command(char* driver, FileSectorMgr* fsm, unsigned int* name, int i) 
     printf("- - - - - - - - - - - - - - - - - - - - - - - - - -");
     printf(" - - - - - - - - - -\n\n\n");
     // find next line of input
-    i = advance_to_char(driver, '\n', i);
+    i = advance_to_char(input, '\n', i);
     return i;
 }
 
-int rename_command(char* driver, FileSectorMgr* fsm, unsigned int* name, int i) {
+int rename_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i) {
     // iNode number dealing with files and directories
     unsigned int inodeNumF, inodeNumD;
     // move to retrieve the file's iNode
     i += 2;
     // ensure that the character is a digit
-    int digit = isdigit(driver[i]);
+    int digit = isdigit(input[i]);
     // if the character is a digit, proceed
     if (digit > 0) {
         // convert the character to a digit
-        inodeNumF = atoi(&driver[i]);
+        inodeNumF = atoi(&input[i]);
         // find next input
-        i = advance_to_char(driver, ':', i);
+        i = advance_to_char(input, ':', i);
         // move to after semi-colon
         i += 1;
         // ensure that the character is a digit
-        digit = isdigit(driver[i]);
+        digit = isdigit(input[i]);
         // if the character is a digit, proceed
         if (digit > 0) {
             // convert the character to a digit
-            inodeNumD = atoi(&driver[i]);
+            inodeNumD = atoi(&input[i]);
             // find next input
-            i = advance_to_char(driver, ':', i);
+            i = advance_to_char(input, ':', i);
             // move to after semi-colon
             i += 1;
             // read the characters for the new file name
             for (int k = 0; k < 8; k++) {
                 // store the character from the buffer
-                *((char*)name + k) = driver[i];
+                *((char*)name + k) = input[i];
                 // proceed through input buffer
                 i++;
             }  // end for (k = 0; k < 8; k++)
@@ -278,35 +278,35 @@ int rename_command(char* driver, FileSectorMgr* fsm, unsigned int* name, int i) 
         }  // end if (digit > 0)
     }  // end if (digit > 0)
     // find the next line of input
-    i = advance_to_char(driver, '\n', i);
+    i = advance_to_char(input, '\n', i);
     return i;
 }
 
-int write_command(char* driver, FileSectorMgr* fsm, int i) {
+int write_command(char* input, FileSectorMgr* fsm, int i) {
     // iNode number dealing with files
     unsigned int inodeNumF;
     // move to retrieve the iNode number
     i += 2;
     // ensure that the character is a digit
-    int digit = isdigit(driver[i]);
+    int digit = isdigit(input[i]);
     // if the digit is a character, proceed
     if (digit > 0) {
         // convert the character to a digit
-        inodeNumF = atoi(&driver[i]);
+        inodeNumF = atoi(&input[i]);
         // find next input
-        i = advance_to_char(driver, ':', i);
+        i = advance_to_char(input, ':', i);
         // move to after semi-colon
         i += 1;
         // ensure that the character is a digit
-        digit = isdigit(driver[i]);
+        digit = isdigit(input[i]);
         // if the character is a digit, proceed
         if (digit > 0) {
             // print debug information
             printf("\nDEBUG_LEVEL > 0:\n");
             // print that file will be written to
-            printf("//Writing %d bytes to File (Inode %d)\n", atoi(&driver[i]), inodeNumF);
+            printf("//Writing %d bytes to File (Inode %d)\n", atoi(&input[i]), inodeNumF);
             // print input information
-            printf("//W:%d:%d\n\n", inodeNumF, atoi(&driver[i]));
+            printf("//W:%d:%d\n\n", inodeNumF, atoi(&input[i]));
             // initialize input buffer to 0
             for (unsigned int j = 0; j < 600 * (BLOCK_SIZE / 4); j++) {
                 // array slot will have value of 0
@@ -316,13 +316,13 @@ int write_command(char* driver, FileSectorMgr* fsm, int i) {
             buffer[14 * (BLOCK_SIZE / 4) + 23] = 77;
             buffer[266 * (BLOCK_SIZE / 4) + 56] = 113;
             // call to writeToFile
-            writeToFile(fsm, inodeNumF, buffer, atoi(&driver[i]));
+            writeToFile(fsm, inodeNumF, buffer, atoi(&input[i]));
             // print file had been written to
-            printf("-> Wrote %d bytes to File (Inode %d)\n", atoi(&driver[i]), inodeNumF);
+            printf("-> Wrote %d bytes to File (Inode %d)\n", atoi(&input[i]), inodeNumF);
             printf("** Expected Result: 0 Inodes allocated in the");
             printf(" Inode Map\n");
             printf("** Expected Result: ");
-            printf("%d Blocks allocated in the Aloc/Free Map\n", atoi(&driver[i]) / BLOCK_SIZE);
+            printf("%d Blocks allocated in the Aloc/Free Map\n", atoi(&input[i]) / BLOCK_SIZE);
             printf("** Note: value of WRITE buffer at byte ");
             printf("(272608) = %d\n\n", buffer[266 * (BLOCK_SIZE / 4) + 56]);
         }  // end if (digit > 0)
@@ -331,39 +331,39 @@ int write_command(char* driver, FileSectorMgr* fsm, int i) {
         printf("- - - - - - - - - - - -\n\n");
     }  // end if (digit > 0)
     // find next line of input
-    i = advance_to_char(driver, '\n', i);
+    i = advance_to_char(input, '\n', i);
     return i;
 }
 
-int read_command(char* driver, FileSectorMgr* fsm, int i) {
+int read_command(char* input, FileSectorMgr* fsm, int i) {
     // iNode number dealing with files
     unsigned int inodeNumF;
     // move to retrieve the iNode number of the file to be read
     i += 2;
     // check to see if character is a digit
-    int digit = isdigit(driver[i]);
+    int digit = isdigit(input[i]);
     // if the character is a digit, proceed
     if (digit > 0) {
         // convert the character to a number
-        inodeNumF = atoi(&driver[i]);
+        inodeNumF = atoi(&input[i]);
         // find the next input
-        i = advance_to_char(driver, ':', i);
+        i = advance_to_char(input, ':', i);
         // move to after the semi-colon, size of bytes to be read
         i += 1;
         // check to see if character is a digit
-        digit = isdigit(driver[i]);
+        digit = isdigit(input[i]);
         // if the character is a digit, proceed
         if (digit > 0) {
             // print debug information
             printf("\nDEBUG_LEVEL > 0:\n");
             // print that file will be read
-            printf("//Reading %d bytes from file at Inode %d\n", atoi(&driver[i]), inodeNumF);
+            printf("//Reading %d bytes from file at Inode %d\n", atoi(&input[i]), inodeNumF);
             // print input information
-            printf("//R:%d:%d\n\n", inodeNumF, atoi(&driver[i]));
+            printf("//R:%d:%d\n\n", inodeNumF, atoi(&input[i]));
             // call to readFromFile
             readFromFile(fsm, inodeNumF, buffer);
             // print that the file had been read
-            printf("-> Read %d bytes from File (Inode %d)\n", atoi(&driver[i]), inodeNumF);
+            printf("-> Read %d bytes from File (Inode %d)\n", atoi(&input[i]), inodeNumF);
             printf("** Expected Result: 0 Inodes allocated in the");
             printf(" Inode Map\n");
             printf("** Expected Result: 0 Blocks allocated in the");
@@ -376,31 +376,31 @@ int read_command(char* driver, FileSectorMgr* fsm, int i) {
         printf("- - - - - - - - - - - -\n\n\n");
     }  // end if (digit > 0)
     // discard input until new line
-    i = advance_to_char(driver, '\n', i);
+    i = advance_to_char(input, '\n', i);
     return i;
 }
 
-int remove_command(char* driver, FileSectorMgr* fsm, int i) {
+int remove_command(char* input, FileSectorMgr* fsm, int i) {
     // iNode number dealing with files and directories
     unsigned int inodeNumF, inodeNumD;
     // move to retrieve the file's iNode number
     i += 2;
     // check to see that the character is a digit
-    int digit = isdigit(driver[i]);
+    int digit = isdigit(input[i]);
     // if the character is a digit, proceed
     if (digit > 0) {
         // convert the character to a digit
-        inodeNumF = atoi(&driver[i]);
+        inodeNumF = atoi(&input[i]);
         // find next input
-        i = advance_to_char(driver, ':', i);
+        i = advance_to_char(input, ':', i);
         // move to after semi-colon, folder's iNode number
         i += 1;
         // check to see that the character is a digit
-        digit = isdigit(driver[i]);
+        digit = isdigit(input[i]);
         // if the character is a digit, proceed
         if (digit > 0) {
             // convert the character to a digit
-            inodeNumD = atoi(&driver[i]);
+            inodeNumD = atoi(&input[i]);
             // print debug information
             printf("\nDEBUG_LEVEL > 0:\n");
             // print that file will be removed
@@ -434,11 +434,11 @@ int remove_command(char* driver, FileSectorMgr* fsm, int i) {
         printf("- - - - - - - - - - - -\n\n");
     }  // end if (digit > 0)
     // find the next line of input
-    i = advance_to_char(driver, '\n', i);
+    i = advance_to_char(input, '\n', i);
     return i;
 }
 
-int remove_test_command(char* driver, FileSectorMgr* fsm, int i) {
+int remove_test_command(char* input, FileSectorMgr* fsm, int i) {
     // buffer for holding temporary values
     unsigned int index[6];
     // buffer for holding block information
@@ -447,7 +447,7 @@ int remove_test_command(char* driver, FileSectorMgr* fsm, int i) {
     // move to retrieve the iNode number
     i += 2;
     // check to see that character is a digit
-    int digit = isdigit(driver[i]);
+    int digit = isdigit(input[i]);
     // if the character is a digit, proceed
     if (digit > 0) {
         // print debug information
@@ -455,13 +455,13 @@ int remove_test_command(char* driver, FileSectorMgr* fsm, int i) {
         // print that iNode values will be tested
         printf("//TESTING: Writing File-Tuple (Inode 25) into ");
         printf("Double Indirect Data Block of Folder ");
-        printf("(Inode %d)\n", atoi(&driver[i]));
+        printf("(Inode %d)\n", atoi(&input[i]));
         // print input information
-        printf("//T:%d\n\n", atoi(&driver[i]));
+        printf("//T:%d\n\n", atoi(&input[i]));
         // call to openFile
-        openFile(fsm, atoi(&driver[i]));
+        openFile(fsm, atoi(&input[i]));
         // print that iNode has been opened
-        printf("Opened Folder (Inode %d)\n", atoi(&driver[i]));
+        printf("Opened Folder (Inode %d)\n", atoi(&input[i]));
         // print that the required data blocks are being allocated
         printf("Allocating required data Blocks:\n\n");
         // call to getSector
@@ -472,7 +472,7 @@ int remove_test_command(char* driver, FileSectorMgr* fsm, int i) {
         // locate double indirect
         fsm->inode.dIndirect = BLOCK_SIZE * (8 * fsm->ssm->index[0] + fsm->ssm->index[1]);
         // call to writeInode
-        writeInode(&fsm->inode, atoi(&driver[i]), fsm->diskHandle);
+        writeInode(&fsm->inode, atoi(&input[i]), fsm->diskHandle);
         // call to allocateSectors
         allocateSectors(fsm->ssm);
         // print the block size
@@ -553,52 +553,52 @@ int remove_test_command(char* driver, FileSectorMgr* fsm, int i) {
         printf("Added File-Tuple (Inode 25) to data block at ");
         printf("sector %d\n", index[0] / BLOCK_SIZE);
         // call to rmFileFromDir
-        Bool success = rmFileFromDir(fsm, 25, atoi(&driver[i]));
+        Bool success = rmFileFromDir(fsm, 25, atoi(&input[i]));
         // print respective functions
         if (success == True) {
             // print remove was successful
             printf("\nTRY FUNCTION CALL: rmFileFromDir(fsm,25,");
-            printf("%d);\n\nReturned TRUE\n", atoi(&driver[i]));
+            printf("%d);\n\nReturned TRUE\n", atoi(&input[i]));
         }  // end if (success == True)
         else {
             // print remove was unsuccessful
             printf("\nTRY FUNCTION CALL: rmFileFromDir(fsm,25,");
-            printf("%d);\n\nReturned FALSE\n", atoi(&driver[i]));
+            printf("%d);\n\nReturned FALSE\n", atoi(&input[i]));
         }  // end else
         // call to openFile
-        openFile(fsm, atoi(&driver[i]));
+        openFile(fsm, atoi(&input[i]));
         // set single indirect to -1
         fsm->inode.dIndirect = -1;
         // write iNode to file
-        writeInode(&fsm->inode, atoi(&driver[i]), fsm->diskHandle);
+        writeInode(&fsm->inode, atoi(&input[i]), fsm->diskHandle);
         // print section break
         printf("- - - - - - - - - - - - - - - - - - - - - - - - ");
         printf("- - - - - - - - - - - -\n\n\n");
     }  // end if (digit > 0)
     // find the next line of input
-    i = advance_to_char(driver, '\n', i);
+    i = advance_to_char(input, '\n', i);
     return i;
 }
 
-int list_command(char* driver, FileSectorMgr* fsm, unsigned int* name, int i) {
+int list_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i) {
     // iNode number dealing with files
     unsigned int inodeNumF;
     // move to retrieve the iNode number
     i += 2;
     // check to see that the character is a digit
-    int digit = isdigit(driver[i]);
+    int digit = isdigit(input[i]);
     // if the character is a digit
     if (digit > 0) {
         // convert the character into a digit
-        inodeNumF = atoi(&driver[i]);
+        inodeNumF = atoi(&input[i]);
         // find next input
-        i = advance_to_char(driver, ':', i);
+        i = advance_to_char(input, ':', i);
         // move to after semi-colon
         i += 1;
         // store value in buffer
         for (int k = 0; k < 8; k++) {
             // read characters from input buffer
-            *((char*)name + k) = driver[i];
+            *((char*)name + k) = input[i];
             // proceed through input buffer
             i++;
         }  // end for (k = 0; k < 8; k++)
@@ -635,6 +635,17 @@ int list_command(char* driver, FileSectorMgr* fsm, unsigned int* name, int i) {
         printf("- - - - - - - - - - - -\n\n\n");
     }  // end if (digit > 0)
     // find next line of input
-    i = advance_to_char(driver, '\n', i);
+    i = advance_to_char(input, '\n', i);
+    return i;
+}
+
+int default_command(char* input, FileSectorMgr* fsm, int i) {
+    // discard input until new line
+    i = advance_to_char(input, '\n', i);
+    // if debug, print bad input
+    if (DEBUG_LEVEL > 0) {
+        // call to logFSM, print bad input
+        logFSM(fsm, 15, 0);
+    }  // end if (DEBUG_LEVEL > 0)
     return i;
 }
