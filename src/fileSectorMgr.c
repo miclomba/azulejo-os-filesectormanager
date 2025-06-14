@@ -81,10 +81,10 @@ static void init_file_sector_mgr(FileSectorMgr *_fsm, int _initSsmMaps) {
     int i, j;
     // Initialize SSM Maps
     if (_initSsmMaps == 1) {
-        initSsmMaps(_fsm->ssm);
+        ssm_init_maps(_fsm->ssm);
     }  // end if (_initSsmMaps == 1)
     // Initialize SEctor Space Manager
-    initSecSpaceMgr(_fsm->ssm);
+    ssm_init(_fsm->ssm);
     char dbfile[256];
     // Initialize FSM's variables
     _fsm->contInodes = 0;
@@ -159,8 +159,8 @@ static void init_fsm_maps(FileSectorMgr *_fsm) {
     _fsm->diskHandle = Null;
 }
 
-unsigned int create_file(FileSectorMgr *_fsm, int _isDirectory, unsigned int *_name,
-                         unsigned int _inodeNumD) {
+unsigned int fs_create_file(FileSectorMgr *_fsm, int _isDirectory, unsigned int *_name,
+                            unsigned int _inodeNumD) {
     get_inode(1, _fsm);
     if (_fsm->index[0] == (unsigned int)(-1)) {
         return (unsigned int)(-1);
@@ -168,7 +168,7 @@ unsigned int create_file(FileSectorMgr *_fsm, int _isDirectory, unsigned int *_n
     // Create a default file. Will start with all pointers as -1
     unsigned int inodeNum;
     inodeNum = 8 * _fsm->index[0] + _fsm->index[1];
-    read_inode(&_fsm->inode, inodeNum, _fsm->diskHandle);
+    inode_read(&_fsm->inode, inodeNum, _fsm->diskHandle);
     // initialize inode metadata
     _fsm->inode.fileSize = 0;
     _fsm->inode.permissions = 0;
@@ -189,7 +189,7 @@ unsigned int create_file(FileSectorMgr *_fsm, int _isDirectory, unsigned int *_n
     } else {
         _fsm->inode.fileType = 1;
     }  // end else (_isDirectory == 1)
-    write_inode(&_fsm->inode, inodeNum, _fsm->diskHandle);
+    inode_write(&_fsm->inode, inodeNum, _fsm->diskHandle);
     allocate_inode(_fsm);
     unsigned int name[2];
     if (_isDirectory == 1) {
@@ -204,12 +204,12 @@ unsigned int create_file(FileSectorMgr *_fsm, int _isDirectory, unsigned int *_n
     return inodeNum;
 }
 
-Bool open_file(FileSectorMgr *_fsm, unsigned int _inodeNum) {
+Bool fs_open_file(FileSectorMgr *_fsm, unsigned int _inodeNum) {
     int i, j;
     if (_inodeNum == (unsigned int)(-1)) {
         return False;
     }  // end if (_inodeNum == (unsigned int)(-1)) {
-    read_inode(&_fsm->inode, _inodeNum, _fsm->diskHandle);
+    inode_read(&_fsm->inode, _inodeNum, _fsm->diskHandle);
     _fsm->inodeNum = _inodeNum;
     // Return true if file loaded correctly
     if (_fsm->inode.fileType > 0) {
@@ -238,7 +238,7 @@ Bool open_file(FileSectorMgr *_fsm, unsigned int _inodeNum) {
     }  // end else (_fsm->inode.fileType > 0)
 }
 
-void close_file(FileSectorMgr *_fsm) {
+void fs_close_file(FileSectorMgr *_fsm) {
     int i, j;
     // Reset all FSM->Inode variables to defaults
     _fsm->inodeNum = (unsigned int)(-1);
@@ -259,10 +259,10 @@ void close_file(FileSectorMgr *_fsm) {
     _fsm->inode.tIndirect = (unsigned int)(-1);
 }
 
-Bool read_from_file(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer) {
+Bool fs_read_from_file(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer) {
     // Open file at Inode _inodeNum for reading
     Bool success;
-    success = open_file(_fsm, _inodeNum);
+    success = fs_open_file(_fsm, _inodeNum);
     if (success == False) {
         return False;
     }  // end if (success == False)
@@ -298,11 +298,11 @@ Bool read_from_file(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer) 
     return True;
 }
 
-Bool write_to_file(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer,
-                   long long int _fileSize) {
+Bool fs_write_to_file(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer,
+                      long long int _fileSize) {
     Bool success;
     // return false if openFile fails
-    success = open_file(_fsm, _inodeNum);
+    success = fs_open_file(_fsm, _inodeNum);
     if (success == False) {
         return False;
     }  // end if (success == False)
@@ -331,7 +331,7 @@ Bool write_to_file(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer,
         diskOffset = _fsm->inode.directPtr[i];
         if (diskOffset == (unsigned int)(-1)) {
             // If direct pointer is empty, get a Sector for it
-            getSector(1, _fsm->ssm);
+            ssm_get_sector(1, _fsm->ssm);
             // If pointer invalid, break out of if
             if (_fsm->ssm->index[0] == (unsigned int)(-1)) {
                 break;
@@ -341,7 +341,7 @@ Bool write_to_file(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer,
                 _fsm->inode.directPtr[i] = diskOffset;
                 fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
                 _fsm->sampleCount = fwrite(buffer, BLOCK_SIZE, 1, _fsm->diskHandle);
-                allocateSectors(_fsm->ssm);
+                ssm_allocate_sectors(_fsm->ssm);
                 buffer += BLOCK_SIZE;
             }  // end else (_fsm->ssm->index[0] == (unsigned int)(-1))
         }  // end if (diskOffset == (unsigned int)(-1))
@@ -427,7 +427,7 @@ Bool write_to_file(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer,
         }  // end else
     }  // end if (fileSize > 0)
     // Write created inode to disk
-    write_inode(&_fsm->inode, _inodeNum, _fsm->diskHandle);
+    inode_write(&_fsm->inode, _inodeNum, _fsm->diskHandle);
     fseek(_fsm->diskHandle, 0, SEEK_SET);
     return True;
 }
@@ -449,7 +449,7 @@ static Bool add_file_to_dir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsign
     unsigned int diskOffset;
     unsigned int buffer[BLOCK_SIZE / 4];
     unsigned int buffer2[BLOCK_SIZE / 4];
-    success = open_file(_fsm, _inodeNumD);
+    success = fs_open_file(_fsm, _inodeNumD);
     if (success == True) {
         if (_fsm->inode.fileType == 2) {
             // Read file's direct pointers from disk
@@ -471,7 +471,7 @@ static Bool add_file_to_dir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsign
                             _fsm->sampleCount = fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4,
                                                        _fsm->diskHandle);
                             fseek(_fsm->diskHandle, 0, SEEK_SET);
-                            close_file(_fsm);
+                            fs_close_file(_fsm);
                             return True;
                         }  // end if (buffer[j+3] == 0)
                     }  // end or (j = 0; j < BLOCK_SIZE/4; j += 4)
@@ -501,7 +501,7 @@ static Bool add_file_to_dir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsign
             for (i = 0; i < 10; i++) {
                 if (_fsm->inode.directPtr[i] == (unsigned int)(-1)) {
                     // Get sectors for direct pointers
-                    getSector(1, _fsm->ssm);
+                    ssm_get_sector(1, _fsm->ssm);
                     if (_fsm->ssm->index[0] == (unsigned int)(-1)) {
                         // If sectors can't be retrieved, return false
                         return False;
@@ -526,9 +526,9 @@ static Bool add_file_to_dir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsign
                             fwrite(buffer2, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
                         // Write file to disk
                         fseek(_fsm->diskHandle, 0, SEEK_SET);
-                        write_inode(&_fsm->inode, _inodeNumD, _fsm->diskHandle);
-                        allocateSectors(_fsm->ssm);
-                        close_file(_fsm);
+                        inode_write(&_fsm->inode, _inodeNumD, _fsm->diskHandle);
+                        ssm_allocate_sectors(_fsm->ssm);
+                        fs_close_file(_fsm);
                         return True;
                     }  // end else (_fsm->ssm->index[0] == (unsigned int)(-1))
                 }  // end if (_fsm->inode.directPtr[i] == (unsigned int)(-1))
@@ -590,7 +590,7 @@ static Bool add_file_to_dir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsign
                 }  // end if (success == True)
             }  // end if (_fsm->inode.tIndirect != (unsigned int)(-1))
             if (_fsm->inode.sIndirect == (unsigned int)(-1)) {
-                getSector(1, _fsm->ssm);
+                ssm_get_sector(1, _fsm->ssm);
                 if (_fsm->ssm->index[0] == (unsigned int)(-1)) {
                     return False;
                 }  // end if (_fsm->ssm->index[0] == (unsigned int)(-1))
@@ -605,9 +605,9 @@ static Bool add_file_to_dir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsign
                     fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
                     _fsm->sampleCount =
                         fwrite(buffer2, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
-                    allocateSectors(_fsm->ssm);
+                    ssm_allocate_sectors(_fsm->ssm);
                     fseek(_fsm->diskHandle, 0, SEEK_SET);
-                    write_inode(&_fsm->inode, _inodeNumD, _fsm->diskHandle);
+                    inode_write(&_fsm->inode, _inodeNumD, _fsm->diskHandle);
                 }
             }  // end else (_fsm->ssm->index[0] == (unsigned int)(-1))
             success = add_file_to_single_indirect(_fsm, _inodeNumF, _name, diskOffset, True);
@@ -616,7 +616,7 @@ static Bool add_file_to_dir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsign
             }  // end if (success == True)
         }  // end if (_fsm->inode.sIndirect == (unsigned int)(-1))
         if (_fsm->inode.dIndirect == (unsigned int)(-1)) {
-            getSector(1, _fsm->ssm);
+            ssm_get_sector(1, _fsm->ssm);
             if (_fsm->ssm->index[0] == (unsigned int)(-1)) {
                 return False;
             }  // end if (_fsm->ssm->index[0] == (unsigned int)(-1))
@@ -631,9 +631,9 @@ static Bool add_file_to_dir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsign
                 fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
                 _fsm->sampleCount =
                     fwrite(buffer2, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
-                allocateSectors(_fsm->ssm);
+                ssm_allocate_sectors(_fsm->ssm);
                 fseek(_fsm->diskHandle, 0, SEEK_SET);
-                write_inode(&_fsm->inode, _inodeNumD, _fsm->diskHandle);
+                inode_write(&_fsm->inode, _inodeNumD, _fsm->diskHandle);
             }  // end else (_fsm->ssm->index[0] == (unsigned int)(-1))
             success =
                 add_file_to_double_indirect(_fsm, _inodeNumF, _name, _fsm->inode.dIndirect, True);
@@ -642,7 +642,7 @@ static Bool add_file_to_dir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsign
             }  // end if (success == True)
         }  // end if (_fsm->inode.dIndirect == (unsigned int)(-1))
         if (_fsm->inode.tIndirect == (unsigned int)(-1)) {
-            getSector(1, _fsm->ssm);
+            ssm_get_sector(1, _fsm->ssm);
             if (_fsm->ssm->index[0] == (unsigned int)(-1)) {
                 return False;
             }  // end if (_fsm->ssm->index[0] == (unsigned int)(-1))
@@ -657,9 +657,9 @@ static Bool add_file_to_dir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsign
                 fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
                 _fsm->sampleCount =
                     fwrite(buffer2, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
-                allocateSectors(_fsm->ssm);
+                ssm_allocate_sectors(_fsm->ssm);
                 fseek(_fsm->diskHandle, 0, SEEK_SET);
-                write_inode(&_fsm->inode, _inodeNumD, _fsm->diskHandle);
+                inode_write(&_fsm->inode, _inodeNumD, _fsm->diskHandle);
             }  // end else (_fsm->ssm->index[0] == (unsigned int)(-1))
             success =
                 add_file_to_triple_indirect(_fsm, _inodeNumF, _name, _fsm->inode.tIndirect, True);
@@ -716,7 +716,7 @@ static Bool add_file_to_triple_indirect(FileSectorMgr *_fsm, unsigned int _inode
     if (_allocate == True) {
         for (i = 0; i < BLOCK_SIZE / 4; i++) {
             if (indirectBlock[i] == (unsigned int)(-1)) {
-                getSector(1, _fsm->ssm);
+                ssm_get_sector(1, _fsm->ssm);
                 if (_fsm->ssm->index[0] == (unsigned int)(-1)) {
                     return False;
                 }  // end if (_fsm->ssm->index[0] == (unsigned int)(-1))
@@ -731,7 +731,7 @@ static Bool add_file_to_triple_indirect(FileSectorMgr *_fsm, unsigned int _inode
                     fseek(_fsm->diskHandle, indirectBlock[i], SEEK_SET);
                     _fsm->sampleCount =
                         fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
-                    allocateSectors(_fsm->ssm);
+                    ssm_allocate_sectors(_fsm->ssm);
                 }  // end else (_fsm->ssm->index[0] == (unsigned int)(-1))
                 diskOffset = indirectBlock[i];
                 success =
@@ -781,7 +781,7 @@ static Bool add_file_to_double_indirect(FileSectorMgr *_fsm, unsigned int _inode
     if (_allocate == True) {
         for (i = 0; i < BLOCK_SIZE / 4; i++) {
             if (indirectBlock[i] == (unsigned int)(-1)) {
-                getSector(1, _fsm->ssm);
+                ssm_get_sector(1, _fsm->ssm);
                 if (_fsm->ssm->index[0] == (unsigned int)(-1)) {
                     return False;
                 }  // end if (_fsm->ssm->index[0] == (unsigned int)(-1))
@@ -796,7 +796,7 @@ static Bool add_file_to_double_indirect(FileSectorMgr *_fsm, unsigned int _inode
                     fseek(_fsm->diskHandle, indirectBlock[i], SEEK_SET);
                     _fsm->sampleCount =
                         fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
-                    allocateSectors(_fsm->ssm);
+                    ssm_allocate_sectors(_fsm->ssm);
                 }  // end else (_fsm->ssm->index[0] == (unsigned int)(-1))
                 diskOffset = indirectBlock[i];
                 success =
@@ -850,7 +850,7 @@ static Bool add_file_to_single_indirect(FileSectorMgr *_fsm, unsigned int _inode
                         _fsm->sampleCount =
                             fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
                         fseek(_fsm->diskHandle, 0, SEEK_SET);
-                        close_file(_fsm);
+                        fs_close_file(_fsm);
                         return True;
                     }  // end if (buffer[j+3] == 0)
                 }  // for (j = 0; j < BLOCK_SIZE/4; j += 4)
@@ -861,7 +861,7 @@ static Bool add_file_to_single_indirect(FileSectorMgr *_fsm, unsigned int _inode
         // Allocate space then write
         for (i = 0; i < BLOCK_SIZE / 4; i++) {
             if (indirectBlock[i] == (unsigned int)(-1)) {
-                getSector(1, _fsm->ssm);
+                ssm_get_sector(1, _fsm->ssm);
                 if (_fsm->ssm->index[0] == (unsigned int)(-1)) {
                     return False;
                 }  // end if(_fsm->ssm->index[0] == (unsigned int)(-1))
@@ -884,8 +884,8 @@ static Bool add_file_to_single_indirect(FileSectorMgr *_fsm, unsigned int _inode
                     _fsm->sampleCount =
                         fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
                     fseek(_fsm->diskHandle, 0, SEEK_SET);
-                    allocateSectors(_fsm->ssm);
-                    close_file(_fsm);
+                    ssm_allocate_sectors(_fsm->ssm);
+                    fs_close_file(_fsm);
                     return True;
                 }  // if (_fsm->ssm->index[0] == (unsigned int)(-1))
             }  // if (indirectBlock[i] == (unsigned int)(-1))
@@ -894,14 +894,15 @@ static Bool add_file_to_single_indirect(FileSectorMgr *_fsm, unsigned int _inode
     return False;
 }
 
-Bool remove_file_from_dir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int _inodeNumD) {
+Bool fs_remove_file_from_dir(FileSectorMgr *_fsm, unsigned int _inodeNumF,
+                             unsigned int _inodeNumD) {
     Bool success;
     unsigned int i, j, k;
     unsigned int diskOffset;
     unsigned int buffer[BLOCK_SIZE / 4];
     unsigned int sectorNum;
     // open file, return false if access error
-    success = open_file(_fsm, _inodeNumD);
+    success = fs_open_file(_fsm, _inodeNumD);
     if (success == True) {
         if (_fsm->inode.fileType == 2) {  // type 2 is directory
             for (i = 0; i < 10; i++) {
@@ -944,10 +945,10 @@ Bool remove_file_from_dir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned
                                 _fsm->ssm->contSectors = 1;
                                 _fsm->ssm->index[0] = sectorNum / 8;
                                 _fsm->ssm->index[1] = sectorNum % 8;
-                                deallocateSectors(_fsm->ssm);
+                                ssm_deallocate_sectors(_fsm->ssm);
                                 _fsm->inode.directPtr[i] = (unsigned int)(-1);
                                 _fsm->inode.dataBlocks -= 1;
-                                write_inode(&_fsm->inode, _fsm->inodeNum, _fsm->diskHandle);
+                                inode_write(&_fsm->inode, _fsm->inodeNum, _fsm->diskHandle);
                             }  // end if (k == BLOCK_SIZE/4)
                             return True;
                         }  // end if (buffer[j+3] == 1 && buffer[j+2] == _inodeNumF)
@@ -1023,9 +1024,9 @@ static Bool remove_file_from_triple_indirect(FileSectorMgr *_fsm, unsigned int _
                     _fsm->ssm->contSectors = 1;
                     _fsm->ssm->index[0] = sectorNum / 8;
                     _fsm->ssm->index[1] = sectorNum % 8;
-                    deallocateSectors(_fsm->ssm);
+                    ssm_deallocate_sectors(_fsm->ssm);
                     _fsm->inode.tIndirect = (unsigned int)(-1);
-                    write_inode(&_fsm->inode, _fsm->inodeNum, _fsm->diskHandle);
+                    inode_write(&_fsm->inode, _fsm->inodeNum, _fsm->diskHandle);
                 }  // end if (k == BLOCK_SIZE/4)
                 return True;
             }  // if (success == True)
@@ -1076,7 +1077,7 @@ static Bool remove_file_from_double_indirect(FileSectorMgr *_fsm, unsigned int _
                     _fsm->ssm->contSectors = 1;
                     _fsm->ssm->index[0] = sectorNum / 8;
                     _fsm->ssm->index[1] = sectorNum % 8;
-                    deallocateSectors(_fsm->ssm);
+                    ssm_deallocate_sectors(_fsm->ssm);
                     if (_tIndirectOffset != (unsigned int)(-1)) {
                         diskOffset = _tIndirectOffset;
                         fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
@@ -1091,7 +1092,7 @@ static Bool remove_file_from_double_indirect(FileSectorMgr *_fsm, unsigned int _
                         _fsm->sampleCount = fwrite(indirectBlock, BLOCK_SIZE, 1, _fsm->diskHandle);
                     } else {
                         _fsm->inode.dIndirect = (unsigned int)(-1);
-                        write_inode(&_fsm->inode, _fsm->inodeNum, _fsm->diskHandle);
+                        inode_write(&_fsm->inode, _fsm->inodeNum, _fsm->diskHandle);
                     }  // end else
                 }  // if (k == BLOCK_SIZE/4)
                 return True;
@@ -1151,9 +1152,9 @@ static Bool remove_file_from_single_indirect(FileSectorMgr *_fsm, unsigned int _
                         _fsm->ssm->contSectors = 1;
                         _fsm->ssm->index[0] = sectorNum / 8;
                         _fsm->ssm->index[1] = sectorNum % 8;
-                        deallocateSectors(_fsm->ssm);
+                        ssm_deallocate_sectors(_fsm->ssm);
                         _fsm->inode.dataBlocks -= 1;
-                        write_inode(&_fsm->inode, _fsm->inodeNum, _fsm->diskHandle);
+                        inode_write(&_fsm->inode, _fsm->inodeNum, _fsm->diskHandle);
                         indirectBlock[i] = (unsigned int)(-1);
                         diskOffset = _sIndirectOffset;
                         fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
@@ -1168,7 +1169,7 @@ static Bool remove_file_from_single_indirect(FileSectorMgr *_fsm, unsigned int _
                             _fsm->ssm->contSectors = 1;
                             _fsm->ssm->index[0] = sectorNum / 8;
                             _fsm->ssm->index[1] = sectorNum % 8;
-                            deallocateSectors(_fsm->ssm);
+                            ssm_deallocate_sectors(_fsm->ssm);
                             if (_dIndirectOffset != (unsigned int)(-1)) {
                                 diskOffset = _dIndirectOffset;
                                 fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
@@ -1186,7 +1187,7 @@ static Bool remove_file_from_single_indirect(FileSectorMgr *_fsm, unsigned int _
                             }  // end if (_dIndirectOffset != (unsigned int)(-1))
                             else {
                                 _fsm->inode.sIndirect = (unsigned int)(-1);
-                                write_inode(&_fsm->inode, _fsm->inodeNum, _fsm->diskHandle);
+                                inode_write(&_fsm->inode, _fsm->inodeNum, _fsm->diskHandle);
                             }  // end else
                         }  // end if (k == BLOCK_SIZE/4)
                     }  // end if (k == BLOCK_SIZE/4)
@@ -1301,10 +1302,10 @@ static unsigned int aloc_triple_indirect(FileSectorMgr *_fsm, long long int _blo
     unsigned int address;
     unsigned int diskOffset;
     long long int blockCount;
-    getSector(1, _fsm->ssm);
+    ssm_get_sector(1, _fsm->ssm);
     if (_fsm->ssm->index[0] != (unsigned int)(-1)) {
         baseAddress = BLOCK_SIZE * (8 * _fsm->ssm->index[0] + _fsm->ssm->index[1]);
-        allocateSectors(_fsm->ssm);
+        ssm_allocate_sectors(_fsm->ssm);
         diskOffset = baseAddress;  //_fsm->inode.tIndirect;
         // Initialize the indirect block pointers to -1
         unsigned int i;
@@ -1352,11 +1353,11 @@ static unsigned int aloc_double_indirect(FileSectorMgr *_fsm, long long int _blo
     unsigned int address;
     unsigned int diskOffset;
     long long int blockCount;
-    getSector(1, _fsm->ssm);
+    ssm_get_sector(1, _fsm->ssm);
     // calculate base address
     if (_fsm->ssm->index[0] != (unsigned int)(-1)) {
         baseAddress = BLOCK_SIZE * (8 * _fsm->ssm->index[0] + _fsm->ssm->index[1]);
-        allocateSectors(_fsm->ssm);
+        ssm_allocate_sectors(_fsm->ssm);
         diskOffset = baseAddress;  //_fsm->inode.sIndirect;
         // Initialize the indirect block pointers to -1
         unsigned int i;
@@ -1401,11 +1402,11 @@ static unsigned int aloc_single_indirect(FileSectorMgr *_fsm, long long int _blo
     unsigned int baseAddress;
     unsigned int address;
     unsigned int diskOffset;
-    getSector(1, _fsm->ssm);
+    ssm_get_sector(1, _fsm->ssm);
     // calculate base address
     if (_fsm->ssm->index[0] != (unsigned int)(-1)) {
         baseAddress = BLOCK_SIZE * (8 * _fsm->ssm->index[0] + _fsm->ssm->index[1]);
-        allocateSectors(_fsm->ssm);
+        ssm_allocate_sectors(_fsm->ssm);
         diskOffset = baseAddress;  //_fsm->inode.sIndirect;
         // Initialize the indirect block pointers to -1
         unsigned int i;
@@ -1418,10 +1419,10 @@ static unsigned int aloc_single_indirect(FileSectorMgr *_fsm, long long int _blo
         // Allocate _blockCount blocks and store associated pointers in
         // the indirect block
         for (i = 0; i < _blockCount && i < PTRS_PER_BLOCK; i++) {
-            getSector(1, _fsm->ssm);
+            ssm_get_sector(1, _fsm->ssm);
             if (_fsm->ssm->index[0] != (unsigned int)(-1)) {
                 address = BLOCK_SIZE * (8 * _fsm->ssm->index[0] + _fsm->ssm->index[1]);
-                allocateSectors(_fsm->ssm);
+                ssm_allocate_sectors(_fsm->ssm);
                 // write to buffer
                 fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
                 _fsm->sampleCount = fwrite(&address, sizeof(unsigned int), 1, _fsm->diskHandle);
@@ -1578,10 +1579,10 @@ static void write_to_single_indirect_blocks(FileSectorMgr *_fsm, unsigned int _b
     }  // end for (i = 0; i < _sIndirectPtrs; i++)
 }
 
-Bool remove_file(FileSectorMgr *_fsm, unsigned int _inodeNum, unsigned int _inodeNumD) {
+Bool fs_remove_file(FileSectorMgr *_fsm, unsigned int _inodeNum, unsigned int _inodeNumD) {
     // Open file at Inode _inodeNum for reading
     Bool success;
-    success = open_file(_fsm, _inodeNum);
+    success = fs_open_file(_fsm, _inodeNum);
     if (success == False) {
         return False;
     }  // end if (success == False)
@@ -1613,7 +1614,7 @@ Bool remove_file(FileSectorMgr *_fsm, unsigned int _inodeNum, unsigned int _inod
                     fread(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
                 for (j = 8; j < BLOCK_SIZE / 4; j += 4) {
                     if (buffer[j + 3] == 1) {
-                        remove_file(_fsm, buffer[j + 2], _inodeNum);
+                        fs_remove_file(_fsm, buffer[j + 2], _inodeNum);
                     }  // end if (buffer[j+3] == 1)
                 }  // end for (j = 8; j < BLOCK_SIZE/4; j += 4)
             }  // end if (fileType == 2)
@@ -1623,7 +1624,7 @@ Bool remove_file(FileSectorMgr *_fsm, unsigned int _inodeNum, unsigned int _inod
             _fsm->ssm->contSectors = 1;
             _fsm->ssm->index[0] = byte;
             _fsm->ssm->index[1] = bit;
-            deallocateSectors(_fsm->ssm);
+            ssm_deallocate_sectors(_fsm->ssm);
         }  // end if (diskOffset != (unsigned int)(-1))
     }  // end for (i = 0; i < 10; i++)
     // Read data from single indirect pointer into buffer _buffer
@@ -1663,7 +1664,7 @@ Bool remove_file(FileSectorMgr *_fsm, unsigned int _inodeNum, unsigned int _inod
         }  // end else if (fileType == 2)
     }  // end if (diskOffset != (unsigned int)(-1))
     // Open inode, assign to success whether opening worked
-    success = open_file(_fsm, _inodeNum);
+    success = fs_open_file(_fsm, _inodeNum);
     // If inode didn't open, return false
     if (success == False) {
         return False;
@@ -1688,7 +1689,7 @@ Bool remove_file(FileSectorMgr *_fsm, unsigned int _inodeNum, unsigned int _inod
     _fsm->inode.tIndirect = (unsigned int)(-1);
     // Write over inode
     fseek(_fsm->diskHandle, 0, SEEK_SET);
-    write_inode(&_fsm->inode, _inodeNum, _fsm->diskHandle);
+    inode_write(&_fsm->inode, _inodeNum, _fsm->diskHandle);
     byte = _inodeNum / 8;
     bit = _inodeNum % 8;
     _fsm->index[0] = byte;
@@ -1696,7 +1697,7 @@ Bool remove_file(FileSectorMgr *_fsm, unsigned int _inodeNum, unsigned int _inod
     _fsm->contInodes = 1;
     deallocate_inode(_fsm);
     // Remove the file from its containing directory
-    remove_file_from_dir(_fsm, _inodeNum, _inodeNumD);
+    fs_remove_file_from_dir(_fsm, _inodeNum, _inodeNumD);
     // Succeeded so return true
     return True;
 }
@@ -1739,7 +1740,7 @@ static void remove_file_triple_indirect_blocks(FileSectorMgr *_fsm, unsigned int
     _fsm->ssm->index[0] = byte;
     _fsm->ssm->index[1] = bit;
     // Deallocate newly freed sectors
-    deallocateSectors(_fsm->ssm);
+    ssm_deallocate_sectors(_fsm->ssm);
 }
 
 /**
@@ -1780,7 +1781,7 @@ static void remove_file_double_indirect_blocks(FileSectorMgr *_fsm, unsigned int
     _fsm->ssm->index[0] = byte;
     _fsm->ssm->index[1] = bit;
     // Deallocate newly freed sectors
-    deallocateSectors(_fsm->ssm);
+    ssm_deallocate_sectors(_fsm->ssm);
 }
 
 /**
@@ -1817,7 +1818,7 @@ static void remove_file_single_indirect_blocks(FileSectorMgr *_fsm, unsigned int
                     fread(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
                 for (j = 8; j < BLOCK_SIZE / 4; j += 4) {
                     if (buffer[j + 3] == 1) {
-                        remove_file(_fsm, buffer[j + 2], _inodeNumD);
+                        fs_remove_file(_fsm, buffer[j + 2], _inodeNumD);
                     }  // end if (buffer[j+3] == 1)
                 }  // end for (j = 8; j < BLOCK_SIZE/4; j += 4)
             }  // end if (_fileType == 2)
@@ -1827,7 +1828,7 @@ static void remove_file_single_indirect_blocks(FileSectorMgr *_fsm, unsigned int
             _fsm->ssm->contSectors = 1;
             _fsm->ssm->index[0] = byte;
             _fsm->ssm->index[1] = bit;
-            deallocateSectors(_fsm->ssm);
+            ssm_deallocate_sectors(_fsm->ssm);
         }  // end if (indirectBlock[i] != (unsigned int)(-1))
     }  // end for (i = 0; i < BLOCK_SIZE/4; i++)
     // Deallocate S indirect block
@@ -1839,17 +1840,17 @@ static void remove_file_single_indirect_blocks(FileSectorMgr *_fsm, unsigned int
     _fsm->ssm->index[0] = byte;
     _fsm->ssm->index[1] = bit;
     // Deallocate newly freed sectors
-    deallocateSectors(_fsm->ssm);
+    ssm_deallocate_sectors(_fsm->ssm);
 }
 
-Bool rename_file(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                 unsigned int _inodeNumD) {
+Bool fs_rename_file(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
+                    unsigned int _inodeNumD) {
     Bool success;
     unsigned int i, j;
     unsigned int diskOffset;
     unsigned int buffer[BLOCK_SIZE / 4];
     // Attempt to open directory
-    success = open_file(_fsm, _inodeNumD);
+    success = fs_open_file(_fsm, _inodeNumD);
     if (success == True) {
         if (_fsm->inode.fileType == 2) {
             for (i = 0; i < 10; i++) {
@@ -2017,7 +2018,7 @@ static Bool rename_file_in_single_indirect(FileSectorMgr *_fsm, unsigned int _in
     return False;
 }
 
-void make_fs(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE,
+void fs_make(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE,
              unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT,
              int _initSsmMaps) {
     init_fsm_constants(_DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT);
@@ -2025,40 +2026,40 @@ void make_fs(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_S
     init_file_sector_mgr(_fsm, _initSsmMaps);
     int i;
     // Allocate the boot and super block sectors on disk
-    getSector(2, _fsm->ssm);
-    allocateSectors(_fsm->ssm);
+    ssm_get_sector(2, _fsm->ssm);
+    ssm_allocate_sectors(_fsm->ssm);
     // Create INODE_COUNT Inodes
     int factorsOf_32 = INODE_BLOCKS / 32;
     int remainder = INODE_BLOCKS % 32;
     // get 32 sectors at a time and make them inode sectors
     for (i = 0; i < factorsOf_32; i++) {
-        getSector(32, _fsm->ssm);
+        ssm_get_sector(32, _fsm->ssm);
         _fsm->diskOffset = BLOCK_SIZE * ((8 * _fsm->ssm->index[0]) + (_fsm->ssm->index[1]));
         // take the 32 sectors and make inodes
-        make_inodes(32, _fsm->diskHandle, _fsm->diskOffset);
-        allocateSectors(_fsm->ssm);
+        inode_make(32, _fsm->diskHandle, _fsm->diskOffset);
+        ssm_allocate_sectors(_fsm->ssm);
     }  // end for (i = 0; i < factorsOf_32; i++)
-    getSector(remainder, _fsm->ssm);
+    ssm_get_sector(remainder, _fsm->ssm);
     _fsm->diskOffset = BLOCK_SIZE * ((8 * _fsm->ssm->index[0]) + (_fsm->ssm->index[1]));
     // take the remaining sectors and make inodes
-    make_inodes(remainder, _fsm->diskHandle, _fsm->diskOffset);
-    allocateSectors(_fsm->ssm);
+    inode_make(remainder, _fsm->diskHandle, _fsm->diskOffset);
+    ssm_allocate_sectors(_fsm->ssm);
     unsigned int name[2];
     // Set inode 0 for boot sector
-    create_file(_fsm, 0, name, (unsigned int)(-1));
-    open_file(_fsm, 0);
+    fs_create_file(_fsm, 0, name, (unsigned int)(-1));
+    fs_open_file(_fsm, 0);
     _fsm->inode.directPtr[0] = 0;
-    write_inode(&_fsm->inode, 0, _fsm->diskHandle);
+    inode_write(&_fsm->inode, 0, _fsm->diskHandle);
     // Set inode 1 for super block
-    create_file(_fsm, 0, name, (unsigned int)(-1));
-    open_file(_fsm, 1);
+    fs_create_file(_fsm, 0, name, (unsigned int)(-1));
+    fs_open_file(_fsm, 1);
     _fsm->inode.directPtr[0] = BLOCK_SIZE * (1);
-    write_inode(&_fsm->inode, 1, _fsm->diskHandle);
+    inode_write(&_fsm->inode, 1, _fsm->diskHandle);
     // make root directory with inode 2
-    create_file(_fsm, 1, name, (unsigned int)(-1));
+    fs_create_file(_fsm, 1, name, (unsigned int)(-1));
 }
 
-void remove_fs(FileSectorMgr *_fsm) {
+void fs_remove(FileSectorMgr *_fsm) {
     if (_fsm->diskHandle) {
         fclose(_fsm->diskHandle);
         _fsm->diskHandle = Null;

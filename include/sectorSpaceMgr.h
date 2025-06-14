@@ -33,7 +33,7 @@ typedef struct {
  * @param[in,out] _ssm Pointer to the SecSpaceMgr structure to initialize.
  * @return void
  */
-void initSecSpaceMgr(SecSpaceMgr *_ssm);
+void ssm_init(SecSpaceMgr *_ssm);
 
 /**
  * @brief Initializes and zeroes out the sector allocation and free maps.
@@ -42,7 +42,7 @@ void initSecSpaceMgr(SecSpaceMgr *_ssm);
  * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
  * @return void
  */
-void initSsmMaps(SecSpaceMgr *_ssm);
+void ssm_init_maps(SecSpaceMgr *_ssm);
 
 /**
  * @brief Marks a contiguous range of sectors as allocated.
@@ -51,7 +51,7 @@ void initSsmMaps(SecSpaceMgr *_ssm);
  * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
  * @return True if sectors were allocated and maps remained consistent, False otherwise.
  */
-Bool allocateSectors(SecSpaceMgr *_ssm);
+Bool ssm_allocate_sectors(SecSpaceMgr *_ssm);
 
 /**
  * @brief Frees a contiguous range of sectors.
@@ -60,7 +60,7 @@ Bool allocateSectors(SecSpaceMgr *_ssm);
  * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
  * @return True if deallocation succeeded and maps remained consistent, False otherwise.
  */
-Bool deallocateSectors(SecSpaceMgr *_ssm);
+Bool ssm_deallocate_sectors(SecSpaceMgr *_ssm);
 
 /**
  * @brief Finds a contiguous block of free sectors.
@@ -71,6 +71,6 @@ Bool deallocateSectors(SecSpaceMgr *_ssm);
  * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
  * @return True if a suitable block was found, False otherwise.
  */
-Bool getSector(int _n, SecSpaceMgr *_ssm);
+Bool ssm_get_sector(int _n, SecSpaceMgr *_ssm);
 
 #endif  // SECTOR_SPACE_MGR_H

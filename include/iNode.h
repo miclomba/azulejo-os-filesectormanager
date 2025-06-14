@@ -41,7 +41,7 @@ typedef struct {
  * @param[in] _diskOffset Offset on disk where the inode block begins.
  * @return void
  */
-void make_inodes(unsigned int _count, FILE *_fileStream, unsigned int _diskOffset);
+void inode_make(unsigned int _count, FILE *_fileStream, unsigned int _diskOffset);
 
 /**
  * @brief Reads an inode from disk and loads it into the provided buffer.
@@ -52,7 +52,7 @@ void make_inodes(unsigned int _count, FILE *_fileStream, unsigned int _diskOffse
  * @param[in] _fileStream Pointer to the file representing the hard drive.
  * @return void
  */
-void read_inode(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream);
+void inode_read(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream);
 
 /**
  * @brief Writes an inode to its corresponding location on disk.
@@ -63,6 +63,6 @@ void read_inode(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream);
  * @param[in,out] _fileStream Pointer to the file representing the hard drive.
  * @return void
  */
-void write_inode(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream);
+void inode_write(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream);
 
 #endif  // I_NODE_H

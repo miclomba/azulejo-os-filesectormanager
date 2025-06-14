@@ -13,13 +13,13 @@
 #include "ssmDefinitions.h"
 
 //============================== SSM FUNCTION PROTOTYPES =========================//
-static Bool checkIntegrity(SecSpaceMgr *_ssm);
-static void isFragmented(SecSpaceMgr *_ssm) __attribute__((unused));
-static void setAlocSector(SecSpaceMgr *_ssm, int _byte, int _bit) __attribute__((unused));
-static void setFreeSector(SecSpaceMgr *_ssm, int _byte, int _bit) __attribute__((unused));
+static Bool check_integrity(SecSpaceMgr *_ssm);
+static void is_fragmented(SecSpaceMgr *_ssm) __attribute__((unused));
+static void set_aloc_sector(SecSpaceMgr *_ssm, int _byte, int _bit) __attribute__((unused));
+static void set_free_sector(SecSpaceMgr *_ssm, int _byte, int _bit) __attribute__((unused));
 
 //============================== SSM FUNCTION DEFINITIONS =========================//
-void initSecSpaceMgr(SecSpaceMgr *_ssm) {
+void ssm_init(SecSpaceMgr *_ssm) {
     char dbfile[256];
     unsigned int i;
     _ssm->contSectors = 0;
@@ -42,7 +42,7 @@ void initSecSpaceMgr(SecSpaceMgr *_ssm) {
     _ssm->freeMapHandle = Null;
 }
 
-void initSsmMaps(SecSpaceMgr *_ssm) {
+void ssm_init_maps(SecSpaceMgr *_ssm) {
     unsigned int i;
     char dbfile[256];
     unsigned char map[SECTOR_BYTES];
@@ -64,7 +64,7 @@ void initSsmMaps(SecSpaceMgr *_ssm) {
     _ssm->freeMapHandle = Null;
 }
 
-Bool allocateSectors(SecSpaceMgr *_ssm) {
+Bool ssm_allocate_sectors(SecSpaceMgr *_ssm) {
     if (_ssm->index[0] != (unsigned int)(-1)) {
         int n;
         unsigned int byte;
@@ -86,7 +86,7 @@ Bool allocateSectors(SecSpaceMgr *_ssm) {
         }
     }
     Bool integrity;
-    integrity = checkIntegrity(_ssm);
+    integrity = check_integrity(_ssm);
     if (integrity == False) return False;
     _ssm->index[0] = (unsigned int)(-1);
     _ssm->index[1] = (unsigned int)(-1);
@@ -105,7 +105,7 @@ Bool allocateSectors(SecSpaceMgr *_ssm) {
     return True;
 }
 
-Bool deallocateSectors(SecSpaceMgr *_ssm) {
+Bool ssm_deallocate_sectors(SecSpaceMgr *_ssm) {
     if (_ssm->index[0] != (unsigned int)(-1)) {
         int n;
         unsigned int byte;
@@ -127,7 +127,7 @@ Bool deallocateSectors(SecSpaceMgr *_ssm) {
         }
     }
     Bool integrity;
-    integrity = checkIntegrity(_ssm);
+    integrity = check_integrity(_ssm);
     if (integrity == False) return False;
     _ssm->index[0] = (unsigned int)(-1);
     _ssm->index[1] = (unsigned int)(-1);
@@ -146,7 +146,7 @@ Bool deallocateSectors(SecSpaceMgr *_ssm) {
     return True;
 }
 
-Bool getSector(int _n, SecSpaceMgr *_ssm) {
+Bool ssm_get_sector(int _n, SecSpaceMgr *_ssm) {
     int i;
     unsigned int mask;
     unsigned int result;
@@ -201,7 +201,7 @@ Bool getSector(int _n, SecSpaceMgr *_ssm) {
  * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
  * @return True if all sectors are consistent, False if corruption is detected.
  */
-static Bool checkIntegrity(SecSpaceMgr *_ssm) {
+static Bool check_integrity(SecSpaceMgr *_ssm) {
     unsigned int i, j;
     int bitShift;
     unsigned char result;
@@ -236,7 +236,7 @@ static Bool checkIntegrity(SecSpaceMgr *_ssm) {
  * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
  * @return void
  */
-static void isFragmented(SecSpaceMgr *_ssm) {
+static void is_fragmented(SecSpaceMgr *_ssm) {
     int i, j;
     int tmp;
     int result;
@@ -271,7 +271,7 @@ static void isFragmented(SecSpaceMgr *_ssm) {
  * @param[in] _bit Bit index (0–7) within the byte.
  * @return void
  */
-static void setAlocSector(SecSpaceMgr *_ssm, int _byte, int _bit) {
+static void set_aloc_sector(SecSpaceMgr *_ssm, int _byte, int _bit) {
     unsigned char mapByte;
     mapByte = _ssm->alocMap[_byte];
     mapByte >>= (7 - _bit);
@@ -301,7 +301,7 @@ static void setAlocSector(SecSpaceMgr *_ssm, int _byte, int _bit) {
  * @param[in] _bit Bit index (0–7) within the byte.
  * @return void
  */
-static void setFreeSector(SecSpaceMgr *_ssm, int _byte, int _bit) {
+static void set_free_sector(SecSpaceMgr *_ssm, int _byte, int _bit) {
     unsigned char mapByte;
     mapByte = _ssm->freeMap[_byte];
     mapByte >>= (7 - _bit);
