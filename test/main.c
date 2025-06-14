@@ -35,33 +35,8 @@
                 Bool loop
                 := boolean for state of reading input
 
-                char action
-                := character for current action of the program
-
                 unsigned int i
                 := buffer variable
-
-                unsigned int j
-                := buffer variable
-
-                unsigned int k
-                := buffer variable
-
-                unsigned int m
-                := buffer variable
-
-                char c
-                := buffer variable
-
-                int digit
-                := placeholder for any conversions from character
-                to integer
-
-                Bool success
-                := boolean for use with file handles
-
-                FILE * driverHandle
-                := handle to a file to be used
 
                 char dbfile[256]
                 := buffer for the location of the file to be used
@@ -116,21 +91,13 @@
         5/2/10 - Function implemented.
 
 *********************************** def end main ******************************/
-int main(int _argc, char *_argv[]) {
+int main(int _argc, char* _argv[]) {
     // FileSectorMgr array used for pointer simplicity
     FileSectorMgr fsm[1];
     // boolean for state of reading input
     Bool loop;
-    // character for current action of the program
-    char action;
     // buffer variable i
     unsigned int i;
-    // placeholder for any conversions from character to integer
-    int digit;
-    // boolean for use with file handles
-    Bool success;
-    // handle to a file to be used
-    FILE *driverHandle;
     // buffer for the location of the file to be used
     char dbfile[256];
     // buffer for input read, has a maximum input of 10,000 characters
@@ -155,7 +122,7 @@ int main(int _argc, char *_argv[]) {
         // write the stub input location into buffer
         sprintf(dbfile, "./test/qaInputStub.txt");
         // open the stub input file, file should already exist
-        driverHandle = fopen(dbfile, "r+");
+        FILE* driverHandle = fopen(dbfile, "r+");
         // read the driverHandle
         fread(driver, sizeof(char), MAX_INPUT, driverHandle);
         fclose(driverHandle);
@@ -177,7 +144,7 @@ int main(int _argc, char *_argv[]) {
         // write the qa input location into buffer
         sprintf(dbfile, "./test/qaInput.txt");
         // open the qa input file, file should already exist
-        driverHandle = fopen(dbfile, "r+");
+        FILE* driverHandle = fopen(dbfile, "r+");
         // read the driverHandle
         fread(driver, sizeof(char), MAX_INPUT, driverHandle);
         fclose(driverHandle);
@@ -188,49 +155,47 @@ int main(int _argc, char *_argv[]) {
         loop = True;
         // while there is input, process the commands and operate accordingly
         while (loop == True) {
-            // read the command from the driver buffer
-            action = driver[i];
             // determine what the program should do based on input
-            switch (action) {
+            switch (driver[i]) {
                 // case 'I' displays the information of a file
                 case 'I':
-                    i = info_command(driver, fsm, &success, &inodeNumF, &digit, i);
+                    i = info_command(driver, fsm, &inodeNumF, i);
                     break;
                 // case 'N' renames a file
                 case 'N':
-                    i = rename_command(driver, fsm, name, &inodeNumD, &inodeNumF, &digit, i);
+                    i = rename_command(driver, fsm, name, &inodeNumD, &inodeNumF, i);
                     break;
                 // case 'W' will write data to a file
                 case 'W':
-                    i = write_command(driver, fsm, buffer, &success, &inodeNumF, &digit, i);
+                    i = write_command(driver, fsm, buffer, &inodeNumF, i);
                     break;
                 // case 'R' will read a file
                 case 'R':
-                    i = read_command(driver, fsm, buffer2, &success, &inodeNumF, &digit, i);
+                    i = read_command(driver, fsm, buffer2, &inodeNumF, i);
                     break;
                 // case 'V' removes a file from a folder
                 case 'V':
-                    i = remove_command(driver, fsm, &success, &inodeNumD, &inodeNumF, &digit, i);
+                    i = remove_command(driver, fsm, &inodeNumD, &inodeNumF, i);
                     break;
                 // case 'T' tests the removal of a file or directory
                 case 'T':
-                    i = remove_test_command(driver, fsm, &success, &digit, i);
+                    i = remove_test_command(driver, fsm, i);
                     break;
                 // case 'L' lists the contents of a directory
                 case 'L':
-                    i = list_command(driver, fsm, buffer2, name, &success, &inodeNumF, &digit, i);
+                    i = list_command(driver, fsm, buffer2, name, &inodeNumF, i);
                     break;
                 // case 'C' should create either a file or directory
                 case 'C':
-                    i = create_command(driver, fsm, name, &inodeNumD, &inodeNumF, &digit, i);
+                    i = create_command(driver, fsm, name, &inodeNumD, &inodeNumF, i);
                     break;
                 // case 'M' creates the filesystem
                 case 'M':
-                    i = init_command(_argc, _argv, driver, fsm, &digit, i);
+                    i = init_command(_argc, _argv, driver, fsm, i);
                     break;
                 // case 'P' should print the maps
                 case 'P':
-                    i = print_command(driver, fsm, &digit, i);
+                    i = print_command(driver, fsm, i);
                     break;
                 // case '/' should ignore all lines with comments
                 case '/':
