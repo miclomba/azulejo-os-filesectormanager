@@ -33,6 +33,17 @@ unsigned int D_INDIRECT_SIZE;
 unsigned int T_INDIRECT_BLOCKS;
 unsigned int T_INDIRECT_SIZE;
 
+/**
+ * @brief Initializes file system constants.
+ * Sets global or static constants required for the File Sector Manager,
+ * such as disk size, block size, and inode layout.
+ * @param[in] _DISK_SIZE Total disk size in bytes.
+ * @param[in] _BLOCK_SIZE Block size in bytes.
+ * @param[in] _INODE_SIZE Size of a single inode in bytes.
+ * @param[in] _INODE_BLOCKS Number of blocks allocated for inodes.
+ * @param[in] _INODE_COUNT Total number of inodes.
+ * @return void
+ */
 void initializeFsmConstants(unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE,
                             unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS,
                             unsigned int _INODE_COUNT);

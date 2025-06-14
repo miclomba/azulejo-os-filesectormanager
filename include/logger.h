@@ -10,19 +10,23 @@
 #include "config.h"
 #include "sectorSpaceMgr.h"
 
-/*
- * @brief Print Sector Space Manager debug messages
- * @param _ssm pointer to the SSM
- * @param _case the debug statement to print
- * @param _startByte the byte to start at
+/**
+ * @brief Prints debug information for the Sector Space Manager (SSM).
+ * Logs diagnostic output based on the specified debug case and byte offset.
+ * @param[in] _ssm Pointer to the SecSpaceMgr structure.
+ * @param[in] _case Identifier for the type of debug information to print.
+ * @param[in] _startByte Byte offset at which to begin the debug trace.
+ * @return void
  */
 void logSSM(SecSpaceMgr *_ssm, int _case, int _startByte);
 
-/*
- * @brief Print File Sector Manager debug messages
- * @param _fsm pointer to the FSM
- * @param _case the debug statement to print
- * @param _startByte the byte to start at
+/**
+ * @brief Prints debug information for the File Sector Manager (FSM).
+ * Logs diagnostic output based on the specified debug case and byte offset.
+ * @param[in] _fsm Pointer to the FileSectorMgr structure.
+ * @param[in] _case Identifier for the type of debug information to print.
+ * @param[in] _startByte Byte offset at which to begin the debug trace.
+ * @return void
  */
 void logFSM(FileSectorMgr *_fsm, int _case, unsigned int _startByte);
 

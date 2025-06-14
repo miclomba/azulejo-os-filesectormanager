@@ -18,6 +18,7 @@
  * @brief Opens an input file, creates the file system and processes input.
  * @param argc the number of args
  * @param argv the args list
+ * @return void
  */
 void process_input(int argc, char** argv) {
     // FileSectorMgr array used for pointer simplicity
@@ -101,6 +102,7 @@ void process_input(int argc, char** argv) {
 
 /*
  * @brief Opens a stub file, creates the file system and processes input stub.
+ * @return void
  */
 void process_input_stub() {
     // FileSectorMgr array used for pointer simplicity
@@ -131,6 +133,7 @@ void process_input_stub() {
 /*
  * @brief This is the main for our FSM project. Opens either a stub or input file, creates the file
  * system and processes input.
+ * @return 0 for success; failure otherwise.
  */
 int main(int _argc, char* _argv[]) {
     // if designated by the parameters, run program with stub output
