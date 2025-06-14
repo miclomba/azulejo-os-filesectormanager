@@ -7,6 +7,18 @@
 int advance_to_char(char* buffer, char c, int i);
 
 /*
+ * @brief A filesystem create command
+ * @param _argc the number of arguments passed to program
+ # @param _argv an array holding the arguments
+ * @param driver buffer for input read, has a maximum input of 10,000 characters
+ * @param fsm The FileSectorMgr reference
+ * @param digit placeholder for any conversions from character to integer
+ * @param i the driver buffer current index
+ * @return an updated driver buffer index
+ */
+int create_command(int _argc, char** _argv, char* driver, FileSectorMgr* fsm, int* digit, int i);
+
+/*
  * @brief A filesystem info command
  *
  * @param driver buffer for input read, has a maximum input of 10,000 characters

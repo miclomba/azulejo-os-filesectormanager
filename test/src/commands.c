@@ -17,6 +17,82 @@ int advance_to_char(char* buffer, char c, int i) {
     return i;
 }
 
+int create_command(int _argc, char** _argv, char* driver, FileSectorMgr* fsm, int* digit, int i) {
+    // vars for holding the disk, block, iNode, iNode-block, iNode-count sizes for the file system
+    unsigned int _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT;
+
+    // if debug, print the creation of the file system
+    if (DEBUG_LEVEL > 0) {
+        // call to logFSM, print creation of the file system
+        logFSM(fsm, 21, 0);
+    }  // end if (DEBUG_LEVEL > 0)
+    // move to retrieve disk size
+    i += 2;
+    // check to see that the character is a digit
+    *digit = isdigit(driver[i]);
+    // if the character is a digit, proceed
+    if (*digit > 0) {
+        // first parameter is disk size, store value
+        _DISK_SIZE = atoi(&driver[i]);
+    }  // end if (digit > 0)
+    // find next input
+    i = advance_to_char(driver, ':', i);
+    // move to retrieve block size
+    i += 1;
+    // check to see that the character is a digit
+    *digit = isdigit(driver[i]);
+    // if the character is a digit, proceed
+    if (*digit > 0) {
+        // second parameter is block size, store value
+        _BLOCK_SIZE = atoi(&driver[i]);
+    }  // end if digit (digit > 0)
+    // find next input
+    i = advance_to_char(driver, ':', i);
+    // move to retrieve iNode size
+    i += 1;
+    // check to see that the character is a digit
+    *digit = isdigit(driver[i]);
+    // if the character is a digit, proceed
+    if (*digit > 0) {
+        // third parameter is iNode size, store value
+        _INODE_SIZE = atoi(&driver[i]);
+    }  // end if (digit > 0)
+    // find next input
+    i = advance_to_char(driver, ':', i);
+    // move to retrieve number of iNode blocks
+    i += 1;
+    // check to see that the character is a digit
+    *digit = isdigit(driver[i]);
+    // if the character is a digit, proceed
+    if (*digit > 0) {
+        // fourth parameter is number iNode blocks, store value
+        _INODE_BLOCKS = atoi(&driver[i]);
+    }  // end if (digit > 0)
+    // find next input
+    i = advance_to_char(driver, ':', i);
+    // move to retrieve iNodes per block
+    i += 1;
+    // check to see that the character is a digit
+    *digit = isdigit(driver[i]);
+    // if the character is a digit, proceed
+    if (*digit > 0) {
+        // fifth parameter is iNodes per block, store value
+        _INODE_COUNT = atoi(&driver[i]);
+    }  // end if (digit > 0)
+    // if correct parameters, create the file system
+    if (_argc > 1 && atoi(_argv[1]) == 1) {
+        // call to mkfs, initializing the SSM values
+        mkfs(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 1);
+    }  // end if
+    else {
+        // call to mkfs, without initializing SSM values
+        mkfs(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 0);
+    }  // end else
+    // find next line of input
+    i = advance_to_char(driver, '\n', i);
+    return i;
+}
+
 int info_command(char* driver, FileSectorMgr* fsm, Bool* success, unsigned int* inodeNumF,
                  int* digit, int i) {
     // move to retrieve the iNode number
