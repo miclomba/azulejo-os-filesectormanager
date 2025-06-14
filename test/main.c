@@ -222,55 +222,7 @@ int main(int _argc, char *_argv[]) {
                     break;
                 // case 'N' renames a file
                 case 'N':
-                    // move to retrieve the file's iNode
-                    i += 2;
-                    // ensure that the character is a digit
-                    digit = isdigit(driver[i]);
-                    // if the character is a digit, proceed
-                    if (digit > 0) {
-                        // convert the character to a digit
-                        inodeNumF = atoi(&driver[i]);
-                        // find next input
-                        i = advance_to_char(driver, ':', i);
-                        // move to after semi-colon
-                        i += 1;
-                        // ensure that the character is a digit
-                        digit = isdigit(driver[i]);
-                        // if the character is a digit, proceed
-                        if (digit > 0) {
-                            // convert the character to a digit
-                            inodeNumD = atoi(&driver[i]);
-                            // find next input
-                            i = advance_to_char(driver, ':', i);
-                            // move to after semi-colon
-                            i += 1;
-                            // read the characters for the new file name
-                            for (k = 0; k < 8; k++) {
-                                // store the character from the buffer
-                                *((char *)name + k) = driver[i];
-                                // proceed through input buffer
-                                i++;
-                            }  // end for (k = 0; k < 8; k++)
-                            // print debug information
-                            printf("\nDEBUG_LEVEL > 0:\n");
-                            // print that the file will be renamed
-                            printf("//Renaming File (Inode ");
-                            printf("%d), in Folder (Inode %d), to \"%s\"\n", inodeNumF, inodeNumD,
-                                   (char *)name);
-                            // print input information
-                            printf("//N:%d:%d:%s\n\n", inodeNumF, inodeNumD, (char *)name);
-                            // call renameFile
-                            renameFile(fsm, inodeNumF, name, inodeNumD);
-                            // print success in renaming file
-                            printf("-> Renamed File (Inode %d) to \'%s\'\n", inodeNumF,
-                                   (char *)name);
-                            // print section break
-                            printf("- - - - - - - - - - - - - - - - - - - - - - -");
-                            printf(" - - - - - - - - - - - - -\n\n");
-                        }  // end if (digit > 0)
-                    }  // end if (digit > 0)
-                    // find the next line of input
-                    i = advance_to_char(driver, '\n', i);
+                    i = rename_command(driver, fsm, name, &inodeNumD, &inodeNumF, &digit, i);
                     break;
                 // case 'W' will write data to a file
                 case 'W':
