@@ -25,10 +25,52 @@ typedef struct {
 } SecSpaceMgr;
 
 //============================== SSM FUNCTION PROTOTYPES ==========================//
+
+/**
+ * @brief Initializes the Sector Space Manager.
+ * Sets default values, resets tracking structures, and loads allocation and free maps
+ * from disk into memory. This should be called before any allocation or deallocation.
+ * @param[in,out] _ssm Pointer to the SecSpaceMgr structure to initialize.
+ * @return void
+ */
 void initSecSpaceMgr(SecSpaceMgr *_ssm);
+
+/**
+ * @brief Initializes and zeroes out the sector allocation and free maps.
+ * Writes a clean slate to both maps on disk: allocation map is zeroed (no sectors allocated),
+ * and the free map is filled (all sectors available).
+ * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
+ * @return void
+ */
 void initSsmMaps(SecSpaceMgr *_ssm);
+
+/**
+ * @brief Marks a contiguous range of sectors as allocated.
+ * Using internal state (index and count), marks sectors in the free map as allocated
+ * and updates both maps on disk. Checks consistency between maps afterward.
+ * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
+ * @return True if sectors were allocated and maps remained consistent, False otherwise.
+ */
 Bool allocateSectors(SecSpaceMgr *_ssm);
+
+/**
+ * @brief Frees a contiguous range of sectors.
+ * Reverses allocation by marking the sectors as free in the maps, then updates the
+ * maps on disk. Checks for consistency between maps.
+ * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
+ * @return True if deallocation succeeded and maps remained consistent, False otherwise.
+ */
 Bool deallocateSectors(SecSpaceMgr *_ssm);
+
+/**
+ * @brief Finds a contiguous block of free sectors.
+ * Searches the free map for `_n` contiguous free sectors. If found, stores
+ * the byte and bit index in the manager's internal state (`_ssm->index`)
+ * and returns success.
+ * @param[in] _n Number of contiguous sectors to find (1–32).
+ * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
+ * @return True if a suitable block was found, False otherwise.
+ */
 Bool getSector(int _n, SecSpaceMgr *_ssm);
 
 #endif  // SECTOR_SPACE_MGR_H

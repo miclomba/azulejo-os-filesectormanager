@@ -193,6 +193,14 @@ Bool getSector(int _n, SecSpaceMgr *_ssm) {
     return False;
 }
 
+/**
+ * @brief Verifies consistency between the free map and allocation map.
+ * Compares each byte in the free and allocation maps using XOR to identify
+ * overlapping or missing sector status entries. Records problematic sectors in
+ * `_ssm->badSector[]`.
+ * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
+ * @return True if all sectors are consistent, False if corruption is detected.
+ */
 static Bool checkIntegrity(SecSpaceMgr *_ssm) {
     unsigned int i, j;
     int bitShift;
@@ -221,6 +229,13 @@ static Bool checkIntegrity(SecSpaceMgr *_ssm) {
     return True;
 }
 
+/**
+ * @brief Estimates fragmentation of the free space.
+ * Scans the free map and counts transitions between free and used bits to estimate
+ * fragmentation. Stores the result in `_ssm->fragmented` as a normalized ratio.
+ * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
+ * @return void
+ */
 static void isFragmented(SecSpaceMgr *_ssm) {
     int i, j;
     int tmp;
@@ -247,6 +262,15 @@ static void isFragmented(SecSpaceMgr *_ssm) {
     _ssm->fragmented = (float)((float)fragment / (float)NUM_SECTORS);
 }
 
+/**
+ * @brief Flips the allocation bit for a specific sector.
+ * Toggles the allocation status of a given sector in the allocation map and persists
+ * the updated maps to disk.
+ * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
+ * @param[in] _byte Byte index of the sector in the map.
+ * @param[in] _bit Bit index (0–7) within the byte.
+ * @return void
+ */
 static void setAlocSector(SecSpaceMgr *_ssm, int _byte, int _bit) {
     unsigned char mapByte;
     mapByte = _ssm->alocMap[_byte];
@@ -268,6 +292,15 @@ static void setAlocSector(SecSpaceMgr *_ssm, int _byte, int _bit) {
     _ssm->freeMapHandle = Null;
 }
 
+/**
+ * @brief Flips the free bit for a specific sector.
+ * Toggles the free status of a given sector in the free map and writes the
+ * updated maps to disk.
+ * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
+ * @param[in] _byte Byte index of the sector in the map.
+ * @param[in] _bit Bit index (0–7) within the byte.
+ * @return void
+ */
 static void setFreeSector(SecSpaceMgr *_ssm, int _byte, int _bit) {
     unsigned char mapByte;
     mapByte = _ssm->freeMap[_byte];
