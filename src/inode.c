@@ -2,13 +2,13 @@
  *   File Sector Manager (FSM)
  *   Author: Michael Lombardi
  ******************************************************************************/
-#include "iNode.h"
+#include "inode.h"
 
 #include <stdio.h>
 
 #include "config.h"
-#include "fsmDefinitions.h"
-#include "gDefinitions.h"
+#include "fsm_constants.h"
+#include "global_constants.h"
 
 void inode_make(unsigned int _count, FILE *_fileStream, unsigned int _diskOffset) {
     // iterators for moving through a buffer during initialization

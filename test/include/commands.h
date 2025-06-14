@@ -6,7 +6,7 @@
 #define COMMANDS_H
 
 #include "fsm.h"
-#include "gDefinitions.h"
+#include "global_constants.h"
 
 /**
  * @brief Initializes the file system.

@@ -10,9 +10,9 @@
 #include <string.h>
 
 #include "config.h"
-#include "fsmDefinitions.h"
-#include "gDefinitions.h"
-#include "iNode.h"
+#include "fsm_constants.h"
+#include "global_constants.h"
+#include "inode.h"
 #include "ssm.h"
 
 //========================= FSM FUNCTION PROTOTYPES =======================//

@@ -8,8 +8,8 @@
 #include <stdio.h>
 
 #include "config.h"
-#include "gDefinitions.h"
-#include "ssmDefinitions.h"
+#include "global_constants.h"
+#include "ssm_constants.h"
 
 //============================== SSM TYPE DEFINITION ==============================//
 typedef struct {

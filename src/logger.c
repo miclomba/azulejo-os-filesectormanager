@@ -6,9 +6,9 @@
 
 #include "config.h"
 #include "fsm.h"
-#include "gDefinitions.h"
+#include "global_constants.h"
 #include "ssm.h"
-#include "ssmDefinitions.h"
+#include "ssm_constants.h"
 
 void log_fsm(FSM *_fsm, int _case, unsigned int _startByte) {
     unsigned int i, j, k;

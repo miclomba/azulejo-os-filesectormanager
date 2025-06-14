@@ -9,7 +9,7 @@
 #include <string.h>
 
 #include "fsm.h"
-#include "gDefinitions.h"
+#include "global_constants.h"
 #include "logger.h"
 #include "utils.h"
 

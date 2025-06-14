@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "gDefinitions.h"
+#include "global_constants.h"
 
 void read_file(char* buffer, const char* file_name) {
     // open the input file; file should already exist

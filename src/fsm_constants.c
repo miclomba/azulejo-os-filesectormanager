@@ -2,9 +2,8 @@
  * File Sector Manager (FSM)
  * Author: Michael Lombardi
  *******************************************************************************/
-#include "fsmDefinitions.h"
-
 #include "config.h"
+#include "fsm_constants.h"
 
 void init_fsm_constants(unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE, unsigned int _INODE_SIZE,
                         unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT) {

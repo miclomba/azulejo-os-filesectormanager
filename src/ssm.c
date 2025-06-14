@@ -9,8 +9,8 @@
 #include <stdlib.h>
 
 #include "config.h"
-#include "gDefinitions.h"
-#include "ssmDefinitions.h"
+#include "global_constants.h"
+#include "ssm_constants.h"
 
 //============================== SSM FUNCTION PROTOTYPES =========================//
 static Bool check_integrity(SSM *_ssm);
