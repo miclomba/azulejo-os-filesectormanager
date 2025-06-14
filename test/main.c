@@ -230,47 +230,7 @@ int main(int _argc, char *_argv[]) {
                     break;
                 // case 'R' will read a file
                 case 'R':
-                    // move to retrieve the iNode number of the file to be read
-                    i += 2;
-                    // check to see if character is a digit
-                    digit = isdigit(driver[i]);
-                    // if the character is a digit, proceed
-                    if (digit > 0) {
-                        // convert the character to a number
-                        inodeNumF = atoi(&driver[i]);
-                        // find the next input
-                        i = advance_to_char(driver, ':', i);
-                        // move to after the semi-colon, size of bytes to be read
-                        i += 1;
-                        // check to see if character is a digit
-                        digit = isdigit(driver[i]);
-                        // if the character is a digit, proceed
-                        if (digit > 0) {
-                            // print debug information
-                            printf("\nDEBUG_LEVEL > 0:\n");
-                            // print that file will be read
-                            printf("//Reading %d bytes from file at Inode %d\n", atoi(&driver[i]),
-                                   inodeNumF);
-                            // print input information
-                            printf("//R:%d:%d\n\n", inodeNumF, atoi(&driver[i]));
-                            // call to readFromFile
-                            success = readFromFile(fsm, inodeNumF, &buffer2);
-                            // print that the file had been read
-                            printf("-> Read %d bytes from File (Inode %d)\n", atoi(&driver[i]),
-                                   inodeNumF);
-                            printf("** Expected Result: 0 Inodes allocated in the");
-                            printf(" Inode Map\n");
-                            printf("** Expected Result: 0 Blocks allocated in the");
-                            printf(" Aloc/Free Map\n");
-                            printf("** Note: value of READ buffer at byte ");
-                            printf("(272608) = %d\n\n", buffer2[266 * (BLOCK_SIZE / 4) + 56]);
-                        }  // end if (digit > 0)
-                        // print section break
-                        printf("- - - - - - - - - - - - - - - - - - - - - - - - ");
-                        printf("- - - - - - - - - - - -\n\n\n");
-                    }  // end if (digit > 0)
-                    // discard input until new line
-                    i = advance_to_char(driver, '\n', i);
+                    i = read_command(driver, fsm, buffer2, &success, &inodeNumF, &digit, i);
                     break;
                 // case 'V' removes a file from a folder
                 case 'V':
