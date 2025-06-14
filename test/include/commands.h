@@ -9,15 +9,6 @@
 #include "gDefinitions.h"
 
 /*
- * @brief Advance the input buffer
- * @param buffer the input buffer
- * @param c the character to advance until
- * @param i the driver buffer current index
- * @return an updated driver buffer index
- */
-int advance_to_char(char* buffer, char c, int i);
-
-/*
  * @brief A filesystem init command
  * @param _argc the number of arguments passed to program
  # @param _argv an array holding the arguments

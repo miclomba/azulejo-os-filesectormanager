@@ -12,20 +12,7 @@
 #include "fileSectorMgr.h"
 #include "logger.h"
 #include "test_config.h"
-
-/*
- * @brief read from file into given buffer
- * @param buffer the buffer to load content into
- * @param file_name the fully qualified file path
- */
-void read_file(char* buffer, const char* file_name) {
-    // open the input file; file should already exist
-    FILE* inputFile = fopen(file_name, "r+");
-    // read the input file
-    fread(buffer, sizeof(char), MAX_INPUT, inputFile);
-    fclose(inputFile);
-    inputFile = Null;
-}
+#include "utils.h"
 
 /*
  * @brief Opens an input file, creates the file system and processes input.

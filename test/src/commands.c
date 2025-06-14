@@ -11,18 +11,10 @@
 #include "fileSectorMgr.h"
 #include "gDefinitions.h"
 #include "logger.h"
+#include "utils.h"
 
 // buffer for holding block information
 static unsigned int buffer[600 * (MAX_BLOCK_SIZE / 4)];
-
-// Helper function to advance an index through a buffer
-int advance_to_char(char* buffer, char c, int i) {
-    char* p = strchr(&buffer[i], c);
-    if (p != NULL) {
-        i = p - buffer;  // i now points to the '\n'
-    }
-    return i;
-}
 
 int init_command(int _argc, char** _argv, char* driver, FileSectorMgr* fsm, int i) {
     // vars for holding the disk, block, iNode, iNode-block, iNode-count sizes for the file system
