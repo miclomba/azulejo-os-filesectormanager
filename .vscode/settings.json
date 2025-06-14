@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "config.h": "c"
+        "config.h": "c",
+        "gdefinitions.h": "c"
     }
 }
