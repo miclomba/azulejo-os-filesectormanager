@@ -30,11 +30,10 @@ void end_command(FileSectorMgr* fsm, Bool* loop);
  *
  * @param driver buffer for input read, has a maximum input of 10,000 characters
  * @param fsm The FileSectorMgr reference
- * @param inodeNumF buffer for holding an iNode number dealing with files
  * @param i the driver buffer current index
  * @return an updated driver buffer index
  */
-int info_command(char* driver, FileSectorMgr* fsm, unsigned int* inodeNumF, int i);
+int info_command(char* driver, FileSectorMgr* fsm, int i);
 
 /*
  * @brief A filesystem print command
@@ -52,13 +51,10 @@ int print_command(char* driver, FileSectorMgr* fsm, int i);
  * @param driver buffer for input read, has a maximum input of 10,000 characters
  * @param fsm The FileSectorMgr reference
  * @param name buffer used when renaming files
- * @param inodeNumD buffer for holding an iNode number dealing with directories
- * @param inodeNumF buffer for holding an iNode number dealing with files
  * @param i the driver buffer current index
  * @return an updated driver buffer index
  */
-int create_command(char* driver, FileSectorMgr* fsm, unsigned int* name, unsigned int* inodeNumD,
-                   unsigned int* inodeNumF, int i);
+int create_command(char* driver, FileSectorMgr* fsm, unsigned int* name, int i);
 
 /*
  * @brief A filesystem rename command
@@ -66,13 +62,10 @@ int create_command(char* driver, FileSectorMgr* fsm, unsigned int* name, unsigne
  * @param driver buffer for input read, has a maximum input of 10,000 characters
  * @param fsm The FileSectorMgr reference
  * @param name buffer used when renaming files
- * @param inodeNumD buffer for holding an iNode number dealing with directories
- * @param inodeNumF buffer for holding an iNode number dealing with files
  * @param i the driver buffer current index
  * @return an updated driver buffer index
  */
-int rename_command(char* driver, FileSectorMgr* fsm, unsigned int* name, unsigned int* inodeNumD,
-                   unsigned int* inodeNumF, int i);
+int rename_command(char* driver, FileSectorMgr* fsm, unsigned int* name, int i);
 
 /*
  * @brief A filesystem write command
@@ -80,12 +73,10 @@ int rename_command(char* driver, FileSectorMgr* fsm, unsigned int* name, unsigne
  * @param driver buffer for input read, has a maximum input of 10,000 characters
  * @param fsm The FileSectorMgr reference
  * @param buffer for holding block information
- * @param inodeNumF buffer for holding an iNode number dealing with files
  * @param i the driver buffer current index
  * @return an updated driver buffer index
  */
-int write_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsigned int* inodeNumF,
-                  int i);
+int write_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, int i);
 
 /*
  * @brief A filesystem read command
@@ -93,25 +84,20 @@ int write_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsign
  * @param driver buffer for input read, has a maximum input of 10,000 characters
  * @param fsm The FileSectorMgr reference
  * @param buffer for holding block information
- * @param inodeNumF buffer for holding an iNode number dealing with files
  * @param i the driver buffer current index
  * @return an updated driver buffer index
  */
-int read_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsigned int* inodeNumF,
-                 int i);
+int read_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, int i);
 
 /*
  * @brief A filesystem remove command
  *
  * @param driver buffer for input read, has a maximum input of 10,000 characters
  * @param fsm The FileSectorMgr reference
- * @param inodeNumD buffer for holding an iNode number dealing with directories
- * @param inodeNumF buffer for holding an iNode number dealing with files
  * @param i the driver buffer current index
  * @return an updated driver buffer index
  */
-int remove_command(char* driver, FileSectorMgr* fsm, unsigned int* inodeNumD,
-                   unsigned int* inodeNumF, int i);
+int remove_command(char* driver, FileSectorMgr* fsm, int i);
 
 /*
  * @brief A filesystem remove test command
@@ -130,11 +116,9 @@ int remove_test_command(char* driver, FileSectorMgr* fsm, int i);
  * @param fsm The FileSectorMgr reference
  * @param buffer for holding block information
  * @param name buffer used when renaming files
- * @param inodeNumF buffer for holding an iNode number dealing with files
  * @param i the driver buffer current index
  * @return an updated driver buffer index
  */
-int list_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsigned int* name,
-                 unsigned int* inodeNumF, int i);
+int list_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsigned int* name, int i);
 
 #endif  // COMMANDS_H

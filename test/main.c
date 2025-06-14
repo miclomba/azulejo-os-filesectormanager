@@ -48,30 +48,6 @@
                 unsigned int name[2]
                 := buffer for holding temporary values
 
-                char *charBuffer;
-                := buffer for holding contents from blocks
-
-                unsigned int inodeNumF
-                := buffer for holding an iNode number dealing with files
-
-                unsigned int inodeNumD
-                := buffer for holding an iNode number dealing with directories
-
-                unsigned int _DISK_SIZE
-                := buffer for holding disk size parameter for file system
-
-                unsigned int _BLOCK_SIZE
-                := buffer for holding block size parameter for file system
-
-                unsigned int _INODE_SIZE
-                := buffer for holding iNode size parameter for file system
-
-                unsigned int _INODE_BLOCKS
-                := buffer for holding iNode blocks parameter for file system
-
-                unsigned int _INODE_COUNT
-                := buffer for holding iNode count parameter for file system
-
                 unsigned int buffer[600*(MAX_BLOCK_SIZE/4)]
                 := buffer for holding block information
 
@@ -104,10 +80,6 @@ int main(int _argc, char* _argv[]) {
     char driver[MAX_INPUT];
     // buffer used when renaming files
     unsigned int name[2];
-    // buffer for holding an iNode number dealing with files
-    unsigned int inodeNumF;
-    // buffer for holding an iNode number dealing with directories
-    unsigned int inodeNumD;
     // buffer for holding block information
     unsigned int buffer[600 * (MAX_BLOCK_SIZE / 4)];
     // buffer for holding block information
@@ -159,23 +131,23 @@ int main(int _argc, char* _argv[]) {
             switch (driver[i]) {
                 // case 'I' displays the information of a file
                 case 'I':
-                    i = info_command(driver, fsm, &inodeNumF, i);
+                    i = info_command(driver, fsm, i);
                     break;
                 // case 'N' renames a file
                 case 'N':
-                    i = rename_command(driver, fsm, name, &inodeNumD, &inodeNumF, i);
+                    i = rename_command(driver, fsm, name, i);
                     break;
                 // case 'W' will write data to a file
                 case 'W':
-                    i = write_command(driver, fsm, buffer, &inodeNumF, i);
+                    i = write_command(driver, fsm, buffer, i);
                     break;
                 // case 'R' will read a file
                 case 'R':
-                    i = read_command(driver, fsm, buffer2, &inodeNumF, i);
+                    i = read_command(driver, fsm, buffer2, i);
                     break;
                 // case 'V' removes a file from a folder
                 case 'V':
-                    i = remove_command(driver, fsm, &inodeNumD, &inodeNumF, i);
+                    i = remove_command(driver, fsm, i);
                     break;
                 // case 'T' tests the removal of a file or directory
                 case 'T':
@@ -183,11 +155,11 @@ int main(int _argc, char* _argv[]) {
                     break;
                 // case 'L' lists the contents of a directory
                 case 'L':
-                    i = list_command(driver, fsm, buffer2, name, &inodeNumF, i);
+                    i = list_command(driver, fsm, buffer2, name, i);
                     break;
                 // case 'C' should create either a file or directory
                 case 'C':
-                    i = create_command(driver, fsm, name, &inodeNumD, &inodeNumF, i);
+                    i = create_command(driver, fsm, name, i);
                     break;
                 // case 'M' creates the filesystem
                 case 'M':

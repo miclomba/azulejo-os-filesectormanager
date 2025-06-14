@@ -104,7 +104,9 @@ void end_command(FileSectorMgr* fsm, Bool* loop) {
     rmfs(fsm);
 }
 
-int info_command(char* driver, FileSectorMgr* fsm, unsigned int* inodeNumF, int i) {
+int info_command(char* driver, FileSectorMgr* fsm, int i) {
+    // iNode number dealing with files
+    unsigned int inodeNumF;
     // move to retrieve the iNode number
     i += 2;
     // ensure that the character is a digit
@@ -112,9 +114,9 @@ int info_command(char* driver, FileSectorMgr* fsm, unsigned int* inodeNumF, int 
     // if the character is a digit, attempt to locate iNode
     if (digit > 0) {
         // convert the character to a digit
-        *inodeNumF = atoi(&driver[i]);
+        inodeNumF = atoi(&driver[i]);
         // attempt to open the file located at inodeNumF
-        Bool success = openFile(fsm, *inodeNumF);
+        Bool success = openFile(fsm, inodeNumF);
         // if the iNode was successfully opened, print the
         // appropriate message
         if (success == True) {
@@ -149,8 +151,9 @@ int print_command(char* driver, FileSectorMgr* fsm, int i) {
     return i;
 }
 
-int create_command(char* driver, FileSectorMgr* fsm, unsigned int* name, unsigned int* inodeNumD,
-                   unsigned int* inodeNumF, int i) {
+int create_command(char* driver, FileSectorMgr* fsm, unsigned int* name, int i) {
+    // iNode number dealing with files and directories
+    unsigned int inodeNumF, inodeNumD = 0;
     // move to retrieve character
     i += 2;
     // store character value
@@ -164,18 +167,18 @@ int create_command(char* driver, FileSectorMgr* fsm, unsigned int* name, unsigne
     // if the character is a digit, proceed
     if (digit > 0) {
         // convert the character to a digit
-        *inodeNumD = atoi(&driver[i]);
+        inodeNumD = atoi(&driver[i]);
         // for debugging purposes, string of characters in buffer
         strcpy((char*)name, "my name");
         // if character is 'F', create a file
         if (c == 'F') {
             // call to createFile with parameter for file
-            *inodeNumF = createFile(fsm, 0, name, *inodeNumD);
+            inodeNumF = createFile(fsm, 0, name, inodeNumD);
         }  // end if (c == 'F')
         // if character is 'D', create a directory
         else if (c == 'D') {
             // call to createFile with parameter for directory
-            *inodeNumF = createFile(fsm, 1, name, *inodeNumD);
+            inodeNumF = createFile(fsm, 1, name, inodeNumD);
         }  // end if (c == 'D')
         // find next input
         i = advance_to_char(driver, ':', i);
@@ -189,33 +192,33 @@ int create_command(char* driver, FileSectorMgr* fsm, unsigned int* name, unsigne
             i++;
         }  // end for (k = 0; k < 8; k++)
         // call to renameFile
-        renameFile(fsm, *inodeNumF, name, *inodeNumD);
+        renameFile(fsm, inodeNumF, name, inodeNumD);
     }  // end if (digit > 0)
     // print debug information
     printf("DEBUG_LEVEL > 0:\n");
     // if a folder was created, print respective output
     if (c == 'F') {
         // print input information
-        printf("//Create a File (\'%s\') in Folder (Inode %d)\n", (char*)name, *inodeNumD);
+        printf("//Create a File (\'%s\') in Folder (Inode %d)\n", (char*)name, inodeNumD);
     }  // end if (c == 'F')
     // if a directory was created, print respective output
     else if (c == 'D') {
         // print input information
         printf("//Create a Directory ");
-        printf("(\'%s\') in Folder (Inode %d)\n", (char*)name, *inodeNumD);
+        printf("(\'%s\') in Folder (Inode %d)\n", (char*)name, inodeNumD);
     }  // end else if (c == 'D')
     // print input information
-    printf("//C:%c:%d:%s\n\n", c, *inodeNumD, (char*)name);
+    printf("//C:%c:%d:%s\n\n", c, inodeNumD, (char*)name);
     // print more information based on type
     if (c == 'D') {
-        printf("-> Used (Inode %d) to create a Directory.\n", *inodeNumF);
+        printf("-> Used (Inode %d) to create a Directory.\n", inodeNumF);
         printf("** Expected Result: 1 Inode allocated in ");
         printf("the Inode Map\n");
         printf("** Expected Result: 1 Block allocated in the ");
         printf("Aloc/Free Map\n");
     }  // end if (c == 'D')
     else if (c == 'F') {
-        printf("-> Used (Inode %d) to create a File.\n", *inodeNumF);
+        printf("-> Used (Inode %d) to create a File.\n", inodeNumF);
         printf("** Expected Result: 1 Inode allocated in ");
         printf("the Inode Map\n");
         printf("** Expected Result: 0 Blocks allocated in the ");
@@ -229,8 +232,9 @@ int create_command(char* driver, FileSectorMgr* fsm, unsigned int* name, unsigne
     return i;
 }
 
-int rename_command(char* driver, FileSectorMgr* fsm, unsigned int* name, unsigned int* inodeNumD,
-                   unsigned int* inodeNumF, int i) {
+int rename_command(char* driver, FileSectorMgr* fsm, unsigned int* name, int i) {
+    // iNode number dealing with files and directories
+    unsigned int inodeNumF, inodeNumD;
     // move to retrieve the file's iNode
     i += 2;
     // ensure that the character is a digit
@@ -238,7 +242,7 @@ int rename_command(char* driver, FileSectorMgr* fsm, unsigned int* name, unsigne
     // if the character is a digit, proceed
     if (digit > 0) {
         // convert the character to a digit
-        *inodeNumF = atoi(&driver[i]);
+        inodeNumF = atoi(&driver[i]);
         // find next input
         i = advance_to_char(driver, ':', i);
         // move to after semi-colon
@@ -248,7 +252,7 @@ int rename_command(char* driver, FileSectorMgr* fsm, unsigned int* name, unsigne
         // if the character is a digit, proceed
         if (digit > 0) {
             // convert the character to a digit
-            *inodeNumD = atoi(&driver[i]);
+            inodeNumD = atoi(&driver[i]);
             // find next input
             i = advance_to_char(driver, ':', i);
             // move to after semi-colon
@@ -264,13 +268,13 @@ int rename_command(char* driver, FileSectorMgr* fsm, unsigned int* name, unsigne
             printf("\nDEBUG_LEVEL > 0:\n");
             // print that the file will be renamed
             printf("//Renaming File (Inode ");
-            printf("%d), in Folder (Inode %d), to \"%s\"\n", *inodeNumF, *inodeNumD, (char*)name);
+            printf("%d), in Folder (Inode %d), to \"%s\"\n", inodeNumF, inodeNumD, (char*)name);
             // print input information
-            printf("//N:%d:%d:%s\n\n", *inodeNumF, *inodeNumD, (char*)name);
+            printf("//N:%d:%d:%s\n\n", inodeNumF, inodeNumD, (char*)name);
             // call renameFile
-            renameFile(fsm, *inodeNumF, name, *inodeNumD);
+            renameFile(fsm, inodeNumF, name, inodeNumD);
             // print success in renaming file
-            printf("-> Renamed File (Inode %d) to \'%s\'\n", *inodeNumF, (char*)name);
+            printf("-> Renamed File (Inode %d) to \'%s\'\n", inodeNumF, (char*)name);
             // print section break
             printf("- - - - - - - - - - - - - - - - - - - - - - -");
             printf(" - - - - - - - - - - - - -\n\n");
@@ -281,8 +285,9 @@ int rename_command(char* driver, FileSectorMgr* fsm, unsigned int* name, unsigne
     return i;
 }
 
-int write_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsigned int* inodeNumF,
-                  int i) {
+int write_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, int i) {
+    // iNode number dealing with files
+    unsigned int inodeNumF;
     // move to retrieve the iNode number
     i += 2;
     // ensure that the character is a digit
@@ -290,7 +295,7 @@ int write_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsign
     // if the digit is a character, proceed
     if (digit > 0) {
         // convert the character to a digit
-        *inodeNumF = atoi(&driver[i]);
+        inodeNumF = atoi(&driver[i]);
         // find next input
         i = advance_to_char(driver, ':', i);
         // move to after semi-colon
@@ -302,9 +307,9 @@ int write_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsign
             // print debug information
             printf("\nDEBUG_LEVEL > 0:\n");
             // print that file will be written to
-            printf("//Writing %d bytes to File (Inode %d)\n", atoi(&driver[i]), *inodeNumF);
+            printf("//Writing %d bytes to File (Inode %d)\n", atoi(&driver[i]), inodeNumF);
             // print input information
-            printf("//W:%d:%d\n\n", *inodeNumF, atoi(&driver[i]));
+            printf("//W:%d:%d\n\n", inodeNumF, atoi(&driver[i]));
             // initialize input buffer to 0
             for (unsigned int j = 0; j < 600 * (BLOCK_SIZE / 4); j++) {
                 // array slot will have value of 0
@@ -314,9 +319,9 @@ int write_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsign
             buffer[14 * (BLOCK_SIZE / 4) + 23] = 77;
             buffer[266 * (BLOCK_SIZE / 4) + 56] = 113;
             // call to writeToFile
-            writeToFile(fsm, *inodeNumF, buffer, atoi(&driver[i]));
+            writeToFile(fsm, inodeNumF, buffer, atoi(&driver[i]));
             // print file had been written to
-            printf("-> Wrote %d bytes to File (Inode %d)\n", atoi(&driver[i]), *inodeNumF);
+            printf("-> Wrote %d bytes to File (Inode %d)\n", atoi(&driver[i]), inodeNumF);
             printf("** Expected Result: 0 Inodes allocated in the");
             printf(" Inode Map\n");
             printf("** Expected Result: ");
@@ -333,8 +338,9 @@ int write_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsign
     return i;
 }
 
-int read_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsigned int* inodeNumF,
-                 int i) {
+int read_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, int i) {
+    // iNode number dealing with files
+    unsigned int inodeNumF;
     // move to retrieve the iNode number of the file to be read
     i += 2;
     // check to see if character is a digit
@@ -342,7 +348,7 @@ int read_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsigne
     // if the character is a digit, proceed
     if (digit > 0) {
         // convert the character to a number
-        *inodeNumF = atoi(&driver[i]);
+        inodeNumF = atoi(&driver[i]);
         // find the next input
         i = advance_to_char(driver, ':', i);
         // move to after the semi-colon, size of bytes to be read
@@ -354,13 +360,13 @@ int read_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsigne
             // print debug information
             printf("\nDEBUG_LEVEL > 0:\n");
             // print that file will be read
-            printf("//Reading %d bytes from file at Inode %d\n", atoi(&driver[i]), *inodeNumF);
+            printf("//Reading %d bytes from file at Inode %d\n", atoi(&driver[i]), inodeNumF);
             // print input information
-            printf("//R:%d:%d\n\n", *inodeNumF, atoi(&driver[i]));
+            printf("//R:%d:%d\n\n", inodeNumF, atoi(&driver[i]));
             // call to readFromFile
-            readFromFile(fsm, *inodeNumF, buffer);
+            readFromFile(fsm, inodeNumF, buffer);
             // print that the file had been read
-            printf("-> Read %d bytes from File (Inode %d)\n", atoi(&driver[i]), *inodeNumF);
+            printf("-> Read %d bytes from File (Inode %d)\n", atoi(&driver[i]), inodeNumF);
             printf("** Expected Result: 0 Inodes allocated in the");
             printf(" Inode Map\n");
             printf("** Expected Result: 0 Blocks allocated in the");
@@ -377,8 +383,9 @@ int read_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsigne
     return i;
 }
 
-int remove_command(char* driver, FileSectorMgr* fsm, unsigned int* inodeNumD,
-                   unsigned int* inodeNumF, int i) {
+int remove_command(char* driver, FileSectorMgr* fsm, int i) {
+    // iNode number dealing with files and directories
+    unsigned int inodeNumF, inodeNumD;
     // move to retrieve the file's iNode number
     i += 2;
     // check to see that the character is a digit
@@ -386,7 +393,7 @@ int remove_command(char* driver, FileSectorMgr* fsm, unsigned int* inodeNumD,
     // if the character is a digit, proceed
     if (digit > 0) {
         // convert the character to a digit
-        *inodeNumF = atoi(&driver[i]);
+        inodeNumF = atoi(&driver[i]);
         // find next input
         i = advance_to_char(driver, ':', i);
         // move to after semi-colon, folder's iNode number
@@ -396,25 +403,25 @@ int remove_command(char* driver, FileSectorMgr* fsm, unsigned int* inodeNumD,
         // if the character is a digit, proceed
         if (digit > 0) {
             // convert the character to a digit
-            *inodeNumD = atoi(&driver[i]);
+            inodeNumD = atoi(&driver[i]);
             // print debug information
             printf("\nDEBUG_LEVEL > 0:\n");
             // print that file will be removed
             printf("//Removing File (Inode ");
-            printf("%d) from Folder (Inode %d)\n", *inodeNumF, *inodeNumD);
+            printf("%d) from Folder (Inode %d)\n", inodeNumF, inodeNumD);
             // print input information
-            printf("//V:%d:%d\n\n", *inodeNumF, *inodeNumD);
+            printf("//V:%d:%d\n\n", inodeNumF, inodeNumD);
             // print that file has been removed
             printf("-> Removed File (Inode ");
-            printf("%d) from Folder (Inode %d).\n", *inodeNumF, *inodeNumD);
+            printf("%d) from Folder (Inode %d).\n", inodeNumF, inodeNumD);
             // call to openFile to ensure file has been removed
-            openFile(fsm, *inodeNumF);
+            openFile(fsm, inodeNumF);
             // if removing a folder, recursively remove all
             // subdirectories and files
             if (fsm->inode.fileType == 2) {
                 // print all subdirectories and files will be deleted
                 printf("** Expected Result: Recursively removing ");
-                printf("all Files in Folder (Inode %d)\n", *inodeNumD);
+                printf("all Files in Folder (Inode %d)\n", inodeNumD);
             }  // end if (fsm->inode.fileType == 2)
             // print expected results from rmFile
             printf("** Expected Result: 1 Inode deallocated in ");
@@ -423,7 +430,7 @@ int remove_command(char* driver, FileSectorMgr* fsm, unsigned int* inodeNumD,
             printf("%d Blocks deallocated in the Aloc/Free Map\n",
                    fsm->inode.fileSize / BLOCK_SIZE);
             // call to rmFile
-            rmFile(fsm, *inodeNumF, *inodeNumD);
+            rmFile(fsm, inodeNumF, inodeNumD);
         }  // end if (digit > 0)
         // print section break
         printf("- - - - - - - - - - - - - - - - - - - - - - - - ");
@@ -577,7 +584,9 @@ int remove_test_command(char* driver, FileSectorMgr* fsm, int i) {
 }
 
 int list_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsigned int* name,
-                 unsigned int* inodeNumF, int i) {
+                 int i) {
+    // iNode number dealing with files
+    unsigned int inodeNumF;
     // move to retrieve the iNode number
     i += 2;
     // check to see that the character is a digit
@@ -585,7 +594,7 @@ int list_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsigne
     // if the character is a digit
     if (digit > 0) {
         // convert the character into a digit
-        *inodeNumF = atoi(&driver[i]);
+        inodeNumF = atoi(&driver[i]);
         // find next input
         i = advance_to_char(driver, ':', i);
         // move to after semi-colon
@@ -603,12 +612,12 @@ int list_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsigne
             printf("DEBUG_LEVEL > 0:\n");
             // print that contents of a directory will be listed
             printf("//Listing contents of Directory ('");
-            printf("%s') at (Inode %d)\n", (char*)name, *inodeNumF);
+            printf("%s') at (Inode %d)\n", (char*)name, inodeNumF);
             // print input values
-            printf("//L:%d:%s\n", *inodeNumF, (char*)name);
+            printf("//L:%d:%s\n", inodeNumF, (char*)name);
         }  // end if (DEBUG_LEVEL > 0)
         // call to readFromFile
-        readFromFile(fsm, *inodeNumF, buffer);
+        readFromFile(fsm, inodeNumF, buffer);
         // store values from readFromFile call into a local buffer
         char* charBuffer = (char*)buffer;
         // print all items of the iNode
