@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "config.h": "c",
-        "gdefinitions.h": "c"
+        "gdefinitions.h": "c",
+        "random": "c"
     }
 }

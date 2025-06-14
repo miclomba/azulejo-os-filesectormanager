@@ -94,3 +94,55 @@ int rename_command(char* driver, FileSectorMgr* fsm, unsigned int* name, unsigne
     i = advance_to_char(driver, '\n', i);
     return i;
 }
+
+int write_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, Bool* success,
+                  unsigned int* inodeNumF, int* digit, int i) {
+    // move to retrieve the iNode number
+    i += 2;
+    // ensure that the character is a digit
+    *digit = isdigit(driver[i]);
+    // if the digit is a character, proceed
+    if (*digit > 0) {
+        // convert the character to a digit
+        *inodeNumF = atoi(&driver[i]);
+        // find next input
+        i = advance_to_char(driver, ':', i);
+        // move to after semi-colon
+        i += 1;
+        // ensure that the character is a digit
+        *digit = isdigit(driver[i]);
+        // if the character is a digit, proceed
+        if (*digit > 0) {
+            // print debug information
+            printf("\nDEBUG_LEVEL > 0:\n");
+            // print that file will be written to
+            printf("//Writing %d bytes to File (Inode %d)\n", atoi(&driver[i]), *inodeNumF);
+            // print input information
+            printf("//W:%d:%d\n\n", *inodeNumF, atoi(&driver[i]));
+            // initialize input buffer to 0
+            for (unsigned int j = 0; j < 600 * (BLOCK_SIZE / 4); j++) {
+                // array slot will have value of 0
+                buffer[j] = 0;
+            }  // end for (unsigned int j = 0; j < 600*(BLOCK_SIZE/4);j++)
+            // create test data in a double indirect data block
+            buffer[14 * (BLOCK_SIZE / 4) + 23] = 77;
+            buffer[266 * (BLOCK_SIZE / 4) + 56] = 113;
+            // call to writeToFile
+            *success = writeToFile(fsm, *inodeNumF, buffer, atoi(&driver[i]));
+            // print file had been written to
+            printf("-> Wrote %d bytes to File (Inode %d)\n", atoi(&driver[i]), *inodeNumF);
+            printf("** Expected Result: 0 Inodes allocated in the");
+            printf(" Inode Map\n");
+            printf("** Expected Result: ");
+            printf("%d Blocks allocated in the Aloc/Free Map\n", atoi(&driver[i]) / BLOCK_SIZE);
+            printf("** Note: value of WRITE buffer at byte ");
+            printf("(272608) = %d\n\n", buffer[266 * (BLOCK_SIZE / 4) + 56]);
+        }  // end if (*digit > 0)
+        // print section break
+        printf("- - - - - - - - - - - - - - - - - - - - - - - - ");
+        printf("- - - - - - - - - - - -\n\n");
+    }  // end if (*digit > 0)
+    // find next line of input
+    i = advance_to_char(driver, '\n', i);
+    return i;
+}
