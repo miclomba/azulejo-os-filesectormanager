@@ -45,9 +45,9 @@ typedef struct {
  * @return void
  * @date 2010-04-12 First implementation.
  */
-void mkfs(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE,
-          unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT,
-          int _initSsmMaps);
+void mk_fs(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE,
+           unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT,
+           int _initSsmMaps);
 
 /**
  * @brief Closes the file system and releases associated resources.

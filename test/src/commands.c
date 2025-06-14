@@ -66,10 +66,10 @@ int init_command(int _argc, char** _argv, char* input, FileSectorMgr* fsm, int i
     // if correct parameters, create the file system
     if (_argc > 1 && atoi(_argv[1]) == 1)
         // call to mkfs, initializing the SSM values
-        mkfs(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 1);
+        mk_fs(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 1);
     else
         // call to mkfs, without initializing SSM values
-        mkfs(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 0);
+        mk_fs(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 0);
     // find next line of input
     i = advance_to_char(input, '\n', i);
     return i;

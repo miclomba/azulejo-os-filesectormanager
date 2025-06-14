@@ -1995,9 +1995,9 @@ static Bool renameFileIn_S_Indirect(FileSectorMgr *_fsm, unsigned int _inodeNumF
     return False;
 }
 
-void mkfs(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE,
-          unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT,
-          int _initSsmMaps) {
+void mk_fs(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE,
+           unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT,
+           int _initSsmMaps) {
     init_fsm_constants(_DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT);
     initFsmMaps(_fsm);
     initFileSectorMgr(_fsm, _initSsmMaps);
