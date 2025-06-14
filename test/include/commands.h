@@ -1,9 +1,20 @@
+/*******************************************************************************
+ * Filesystem Commands
+ * Author: Michael Lombardi
+ *******************************************************************************/
 #ifndef COMMANDS_H
 #define COMMANDS_H
 
 #include "fileSectorMgr.h"
 #include "gDefinitions.h"
 
+/*
+ * @brief Advance the input buffer
+ * @param buffer the input buffer
+ * @param c the character to advance until
+ * @param i the driver buffer current index
+ * @return an updated driver buffer index
+ */
 int advance_to_char(char* buffer, char c, int i);
 
 /*
