@@ -19,74 +19,57 @@ static unsigned int buffer[600 * (MAX_BLOCK_SIZE / 4)];
 int init_command(int _argc, char** _argv, char* input, FileSectorMgr* fsm, int i) {
     // vars for holding the disk, block, iNode, iNode-block, iNode-count sizes for the file system
     unsigned int _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT;
-
     // if debug, print the creation of the file system
-    if (DEBUG_LEVEL > 0) {
+    if (DEBUG_LEVEL > 0)
         // call to logFSM, print creation of the file system
         logFSM(fsm, 21, 0);
-    }  // end if (DEBUG_LEVEL > 0)
     // move to retrieve disk size
     i += 2;
     // check to see that the character is a digit
     int digit = isdigit(input[i]);
     // if the character is a digit, proceed
-    if (digit > 0) {
+    if (digit > 0)
         // first parameter is disk size, store value
         _DISK_SIZE = atoi(&input[i]);
-    }  // end if (digit > 0)
-    // find next input
-    i = advance_to_char(input, ':', i);
     // move to retrieve block size
-    i += 1;
+    i = 1 + advance_to_char(input, ':', i);
     // check to see that the character is a digit
     digit = isdigit(input[i]);
     // if the character is a digit, proceed
-    if (digit > 0) {
+    if (digit > 0)
         // second parameter is block size, store value
         _BLOCK_SIZE = atoi(&input[i]);
-    }  // end if digit (digit > 0)
-    // find next input
-    i = advance_to_char(input, ':', i);
     // move to retrieve iNode size
-    i += 1;
+    i = 1 + advance_to_char(input, ':', i);
     // check to see that the character is a digit
     digit = isdigit(input[i]);
     // if the character is a digit, proceed
-    if (digit > 0) {
+    if (digit > 0)
         // third parameter is iNode size, store value
         _INODE_SIZE = atoi(&input[i]);
-    }  // end if (digit > 0)
-    // find next input
-    i = advance_to_char(input, ':', i);
     // move to retrieve number of iNode blocks
-    i += 1;
+    i = 1 + advance_to_char(input, ':', i);
     // check to see that the character is a digit
     digit = isdigit(input[i]);
     // if the character is a digit, proceed
-    if (digit > 0) {
+    if (digit > 0)
         // fourth parameter is number iNode blocks, store value
         _INODE_BLOCKS = atoi(&input[i]);
-    }  // end if (digit > 0)
-    // find next input
-    i = advance_to_char(input, ':', i);
     // move to retrieve iNodes per block
-    i += 1;
+    i = 1 + advance_to_char(input, ':', i);
     // check to see that the character is a digit
     digit = isdigit(input[i]);
     // if the character is a digit, proceed
-    if (digit > 0) {
+    if (digit > 0)
         // fifth parameter is iNodes per block, store value
         _INODE_COUNT = atoi(&input[i]);
-    }  // end if (digit > 0)
     // if correct parameters, create the file system
-    if (_argc > 1 && atoi(_argv[1]) == 1) {
+    if (_argc > 1 && atoi(_argv[1]) == 1)
         // call to mkfs, initializing the SSM values
         mkfs(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 1);
-    }  // end if
-    else {
+    else
         // call to mkfs, without initializing SSM values
         mkfs(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 0);
-    }  // end else
     // find next line of input
     i = advance_to_char(input, '\n', i);
     return i;
@@ -150,7 +133,8 @@ int print_command(char* input, FileSectorMgr* fsm, int i) {
 
 int create_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i) {
     // iNode number dealing with files and directories
-    unsigned int inodeNumF, inodeNumD = 0;
+    unsigned int inodeNumF = 0;
+    unsigned int inodeNumD = 0;
     // move to retrieve character
     i += 2;
     // store character value
@@ -191,39 +175,22 @@ int create_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i) {
         // call to renameFile
         renameFile(fsm, inodeNumF, name, inodeNumD);
     }  // end if (digit > 0)
-    // print debug information
     printf("DEBUG_LEVEL > 0:\n");
     // if a folder was created, print respective output
     if (c == 'F') {
-        // print input information
         printf("//Create a File (\'%s\') in Folder (Inode %d)\n", (char*)name, inodeNumD);
     }  // end if (c == 'F')
     // if a directory was created, print respective output
     else if (c == 'D') {
-        // print input information
         printf("//Create a Directory ");
         printf("(\'%s\') in Folder (Inode %d)\n", (char*)name, inodeNumD);
     }  // end else if (c == 'D')
-    // print input information
     printf("//C:%c:%d:%s\n\n", c, inodeNumD, (char*)name);
-    // print more information based on type
-    if (c == 'D') {
-        printf("-> Used (Inode %d) to create a Directory.\n", inodeNumF);
-        printf("** Expected Result: 1 Inode allocated in ");
-        printf("the Inode Map\n");
-        printf("** Expected Result: 1 Block allocated in the ");
-        printf("Aloc/Free Map\n");
-    }  // end if (c == 'D')
-    else if (c == 'F') {
-        printf("-> Used (Inode %d) to create a File.\n", inodeNumF);
-        printf("** Expected Result: 1 Inode allocated in ");
-        printf("the Inode Map\n");
-        printf("** Expected Result: 0 Blocks allocated in the ");
-        printf("Aloc/Free Map\n");
-    }  // end if (c == 'F')
-    // print section break
-    printf("- - - - - - - - - - - - - - - - - - - - - - - - - -");
-    printf(" - - - - - - - - - -\n\n\n");
+    printf("-> Used (Inode %d) to create a %s.\n", inodeNumF, c == 'F' ? "File" : "Directory");
+    printf("** Expected Result: 1 Inode allocated in the Inode Map\n");
+    printf("** Expected Result: %d Block%s allocated in the Aloc/Free Map\n", c == 'F' ? 0 : 1,
+           c == 'F' ? "s" : "");
+    printf("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n\n\n");
     // find next line of input
     i = advance_to_char(input, '\n', i);
     return i;
@@ -443,7 +410,6 @@ int remove_test_command(char* input, FileSectorMgr* fsm, int i) {
     unsigned int index[6];
     // buffer for holding block information
     unsigned int block[MAX_BLOCK_SIZE / 4];
-
     // move to retrieve the iNode number
     i += 2;
     // check to see that character is a digit
@@ -531,18 +497,7 @@ int remove_test_command(char* input, FileSectorMgr* fsm, int i) {
             block[m] = 0;
         }  // end for (m = 0; m < BLOCK_SIZE/4; m++)
         // for debugging purposes, assign values in buffer
-        block[0] = 1;
-        block[1] = 1;
-        block[2] = 1;
-        block[3] = 0;
-        block[4] = 1;
-        block[5] = 1;
-        block[6] = 25;
-        block[7] = 1;
-        block[8] = 3;
-        block[9] = 3;
-        block[10] = 1;
-        block[11] = 0;
+        memcpy(block, (int[]){1, 1, 1, 0, 1, 1, 25, 1, 3, 3, 1, 0}, sizeof(unsigned int) * 12);
         // move to the beginning of the file
         fseek(fsm->diskHandle, 0, SEEK_SET);
         // move to the location stored in index
@@ -555,16 +510,8 @@ int remove_test_command(char* input, FileSectorMgr* fsm, int i) {
         // call to rmFileFromDir
         Bool success = rmFileFromDir(fsm, 25, atoi(&input[i]));
         // print respective functions
-        if (success == True) {
-            // print remove was successful
-            printf("\nTRY FUNCTION CALL: rmFileFromDir(fsm,25,");
-            printf("%d);\n\nReturned TRUE\n", atoi(&input[i]));
-        }  // end if (success == True)
-        else {
-            // print remove was unsuccessful
-            printf("\nTRY FUNCTION CALL: rmFileFromDir(fsm,25,");
-            printf("%d);\n\nReturned FALSE\n", atoi(&input[i]));
-        }  // end else
+        printf("\nTRY FUNCTION CALL: rmFileFromDir(fsm,25,");
+        printf("%d);\n\nReturned %s\n", atoi(&input[i]), success ? "TRUE" : "FALSE");
         // call to openFile
         openFile(fsm, atoi(&input[i]));
         // set single indirect to -1
