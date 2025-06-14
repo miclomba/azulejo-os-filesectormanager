@@ -10,47 +10,6 @@
 #include "sectorSpaceMgr.h"
 #include "ssmDefinitions.h"
 
-/**************************** def beg logFSM *************************
-
-        void logFSM(FileSectorMgr *_fsm, int _case, unsigned int _startByte)
-
-        Function
-                Prints debug messages
-
-        Data Environment
-                Parameters
-                        FileSectorMgr *_fsm
-                        := pointer to the fsm
-
-                        int _case
-                        := the debug statement to print
-
-                        int _startByte
-                        := the byte to start at
-
-                Local Variables
-                        int i, j, k
-                        := loop variables
-
-                        int count
-                        := count of a value
-
-                        int sector
-                        := current sector
-
-                        char tmp
-                        := temporary character
-
-                        char byteArray
-                        := Array to temporary hold a byte
-
-        logFSM
-                = returns void for all calls to this function
-
-
-        Change record: 4/12/10 first implemented
-
-***************************** def end logFSM ************************/
 void logFSM(FileSectorMgr *_fsm, int _case, unsigned int _startByte) {
     unsigned int i, j, k;
     int count;
