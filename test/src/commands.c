@@ -247,3 +247,61 @@ int remove_command(char* driver, FileSectorMgr* fsm, Bool* success, unsigned int
     i = advance_to_char(driver, '\n', i);
     return i;
 }
+
+int list_command(char* driver, FileSectorMgr* fsm, unsigned int* buffer, unsigned int* name,
+                 Bool* success, unsigned int* inodeNumF, int* digit, int i) {
+    // move to retrieve the iNode number
+    i += 2;
+    // check to see that the character is a digit
+    *digit = isdigit(driver[i]);
+    // if the character is a digit
+    if (*digit > 0) {
+        // convert the character into a digit
+        *inodeNumF = atoi(&driver[i]);
+        // find next input
+        i = advance_to_char(driver, ':', i);
+        // move to after semi-colon
+        i += 1;
+        // store value in buffer
+        for (int k = 0; k < 8; k++) {
+            // read characters from input buffer
+            *((char*)name + k) = driver[i];
+            // proceed through input buffer
+            i++;
+        }  // end for (k = 0; k < 8; k++)
+        // print debug information
+        if (DEBUG_LEVEL > 0) {
+            // print debug information
+            printf("DEBUG_LEVEL > 0:\n");
+            // print that contents of a directory will be listed
+            printf("//Listing contents of Directory ('");
+            printf("%s') at (Inode %d)\n", (char*)name, *inodeNumF);
+            // print input values
+            printf("//L:%d:%s\n", *inodeNumF, (char*)name);
+        }  // end if (DEBUG_LEVEL > 0)
+        // call to readFromFile
+        *success = readFromFile(fsm, *inodeNumF, buffer);
+        // store values from readFromFile call into a local buffer
+        char* charBuffer = (char*)buffer;
+        // print all items of the iNode
+        for (unsigned int j = 0; j < fsm->inode.fileSize; j += 16) {
+            // if the values are not blank, print them
+            if (*((unsigned int*)(&charBuffer[j + 12])) != 0) {
+                // read value from buffer
+                for (int k = 0; k < 8; k++) {
+                    // copy value over from block
+                    *((char*)name + k) = charBuffer[j + k];
+                }  // end for (k = 0; k < 8; k++)
+                // print the tuple values
+                printf("\n-> Tuple name is: \"%s\"\n", (char*)name);
+                printf("-> Inode number is %d\n", *((unsigned int*)(&charBuffer[j + 8])));
+            }  // end if (*((unsigned int *)(&charBuffer[j+12])) != 0)
+        }  // end for (unsigned int j = 0; j < fsm->inode.fileSize; j += 16)
+        // print section break
+        printf("- - - - - - - - - - - - - - - - - - - - - - - - ");
+        printf("- - - - - - - - - - - -\n\n\n");
+    }  // end if (digit > 0)
+    // find next line of input
+    i = advance_to_char(driver, '\n', i);
+    return i;
+}

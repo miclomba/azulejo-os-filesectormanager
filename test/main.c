@@ -125,8 +125,6 @@ int main(int _argc, char *_argv[]) {
     char action;
     // buffer variable i
     unsigned int i;
-    // buffer variable j
-    unsigned int j;
     // buffer variable k
     unsigned int k;
     // buffer variable m
@@ -145,8 +143,6 @@ int main(int _argc, char *_argv[]) {
     char driver[MAX_INPUT];
     // buffer used when renaming files
     unsigned int name[2];
-    // buffer for holding block contents
-    char *charBuffer;
     // buffer for holding an iNode number dealing with files
     unsigned int inodeNumF;
     // buffer for holding an iNode number dealing with directories
@@ -375,60 +371,7 @@ int main(int _argc, char *_argv[]) {
                     break;
                 // case 'L' lists the contents of a directory
                 case 'L':
-                    // move to retrieve the iNode number
-                    i += 2;
-                    // check to see that the character is a digit
-                    digit = isdigit(driver[i]);
-                    // if the character is a digit
-                    if (digit > 0) {
-                        // convert the character into a digit
-                        inodeNumF = atoi(&driver[i]);
-                        // find next input
-                        i = advance_to_char(driver, ':', i);
-                        // move to after semi-colon
-                        i += 1;
-                        // store value in buffer
-                        for (k = 0; k < 8; k++) {
-                            // read characters from input buffer
-                            *((char *)name + k) = driver[i];
-                            // proceed through input buffer
-                            i++;
-                        }  // end for (k = 0; k < 8; k++)
-                        // print debug information
-                        if (DEBUG_LEVEL > 0) {
-                            // print debug information
-                            printf("DEBUG_LEVEL > 0:\n");
-                            // print that contents of a directory will be listed
-                            printf("//Listing contents of Directory ('");
-                            printf("%s') at (Inode %d)\n", (char *)name, inodeNumF);
-                            // print input values
-                            printf("//L:%d:%s\n", inodeNumF, (char *)name);
-                        }  // end if (DEBUG_LEVEL > 0)
-                        // call to readFromFile
-                        success = readFromFile(fsm, inodeNumF, &buffer2);
-                        // store values from readFromFile call into a local buffer
-                        charBuffer = (char *)buffer2;
-                        // print all items of the iNode
-                        for (j = 0; j < fsm->inode.fileSize; j += 16) {
-                            // if the values are not blank, print them
-                            if (*((unsigned int *)(&charBuffer[j + 12])) != 0) {
-                                // read value from buffer
-                                for (k = 0; k < 8; k++) {
-                                    // copy value over from block
-                                    *((char *)name + k) = charBuffer[j + k];
-                                }  // end for (k = 0; k < 8; k++)
-                                // print the tuple values
-                                printf("\n-> Tuple name is: \"%s\"\n", (char *)name);
-                                printf("-> Inode number is %d\n",
-                                       *((unsigned int *)(&charBuffer[j + 8])));
-                            }  // end if (*((unsigned int *)(&charBuffer[j+12])) != 0)
-                        }  // end for (j = 0; j < fsm->inode.fileSize; j += 16)
-                        // print section break
-                        printf("- - - - - - - - - - - - - - - - - - - - - - - - ");
-                        printf("- - - - - - - - - - - -\n\n\n");
-                    }  // end if (digit > 0)
-                    // find next line of input
-                    i = advance_to_char(driver, '\n', i);
+                    i = list_command(driver, fsm, buffer2, name, &success, &inodeNumF, &digit, i);
                     break;
                 // case 'C' should create either a file or directory
                 case 'C':
