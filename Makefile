@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -g -W -Wall -Iinclude -Itest/include
 
-OBJ = test/main.o test/src/commands.o test/src/utils.o src/fsm.o src/fsmDefinitions.o src/iNode.o src/sectorSpaceMgr.o src/logger.o
+OBJ = test/main.o test/src/commands.o test/src/utils.o src/fsm.o src/fsmDefinitions.o src/iNode.o src/ssm.o src/logger.o
 
 test/fsm: $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $(OBJ) -lm
@@ -21,13 +21,13 @@ src/fsm.o: src/fsm.c include/gDefinitions.h include/config.h
 src/fsmDefinitions.o: src/fsmDefinitions.c include/fsmDefinitions.h include/config.h
 	$(CC) $(CFLAGS) -c src/fsmDefinitions.c -o $@
 
-src/sectorSpaceMgr.o: src/sectorSpaceMgr.c include/sectorSpaceMgr.h include/gDefinitions.h include/ssmDefinitions.h include/config.h
-	$(CC) $(CFLAGS) -c src/sectorSpaceMgr.c -o $@
+src/ssm.o: src/ssm.c include/ssm.h include/gDefinitions.h include/ssmDefinitions.h include/config.h
+	$(CC) $(CFLAGS) -c src/ssm.c -o $@
 
 src/iNode.o: src/iNode.c include/iNode.h include/gDefinitions.h include/ssmDefinitions.h include/config.h
 	$(CC) $(CFLAGS) -c src/iNode.c -o $@
 
-src/logger.o: src/logger.c include/logger.h include/gDefinitions.h include/ssmDefinitions.h include/config.h include/sectorSpaceMgr.h
+src/logger.o: src/logger.c include/logger.h include/gDefinitions.h include/ssmDefinitions.h include/config.h include/ssm.h
 	$(CC) $(CFLAGS) -c src/logger.c -o $@
 
 clean:

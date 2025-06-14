@@ -2,23 +2,24 @@
  *	Sector Space Manager (SSM)
  *	Author: Michael Lombardi
  **********************************/
+#include "ssm.h"
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "config.h"
 #include "gDefinitions.h"
-#include "ssm.h"
 #include "ssmDefinitions.h"
 
 //============================== SSM FUNCTION PROTOTYPES =========================//
-static Bool check_integrity(SecSpaceMgr *_ssm);
-static void is_fragmented(SecSpaceMgr *_ssm) __attribute__((unused));
-static void set_aloc_sector(SecSpaceMgr *_ssm, int _byte, int _bit) __attribute__((unused));
-static void set_free_sector(SecSpaceMgr *_ssm, int _byte, int _bit) __attribute__((unused));
+static Bool check_integrity(SSM *_ssm);
+static void is_fragmented(SSM *_ssm) __attribute__((unused));
+static void set_aloc_sector(SSM *_ssm, int _byte, int _bit) __attribute__((unused));
+static void set_free_sector(SSM *_ssm, int _byte, int _bit) __attribute__((unused));
 
 //============================== SSM FUNCTION DEFINITIONS =========================//
-void ssm_init(SecSpaceMgr *_ssm) {
+void ssm_init(SSM *_ssm) {
     char dbfile[256];
     unsigned int i;
     _ssm->contSectors = 0;
@@ -41,7 +42,7 @@ void ssm_init(SecSpaceMgr *_ssm) {
     _ssm->freeMapHandle = Null;
 }
 
-void ssm_init_maps(SecSpaceMgr *_ssm) {
+void ssm_init_maps(SSM *_ssm) {
     unsigned int i;
     char dbfile[256];
     unsigned char map[SECTOR_BYTES];
@@ -63,7 +64,7 @@ void ssm_init_maps(SecSpaceMgr *_ssm) {
     _ssm->freeMapHandle = Null;
 }
 
-Bool ssm_allocate_sectors(SecSpaceMgr *_ssm) {
+Bool ssm_allocate_sectors(SSM *_ssm) {
     if (_ssm->index[0] != (unsigned int)(-1)) {
         int n;
         unsigned int byte;
@@ -104,7 +105,7 @@ Bool ssm_allocate_sectors(SecSpaceMgr *_ssm) {
     return True;
 }
 
-Bool ssm_deallocate_sectors(SecSpaceMgr *_ssm) {
+Bool ssm_deallocate_sectors(SSM *_ssm) {
     if (_ssm->index[0] != (unsigned int)(-1)) {
         int n;
         unsigned int byte;
@@ -145,7 +146,7 @@ Bool ssm_deallocate_sectors(SecSpaceMgr *_ssm) {
     return True;
 }
 
-Bool ssm_get_sector(int _n, SecSpaceMgr *_ssm) {
+Bool ssm_get_sector(int _n, SSM *_ssm) {
     int i;
     unsigned int mask;
     unsigned int result;
@@ -197,10 +198,10 @@ Bool ssm_get_sector(int _n, SecSpaceMgr *_ssm) {
  * Compares each byte in the free and allocation maps using XOR to identify
  * overlapping or missing sector status entries. Records problematic sectors in
  * `_ssm->badSector[]`.
- * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
+ * @param[in,out] _ssm Pointer to the SSM structure.
  * @return True if all sectors are consistent, False if corruption is detected.
  */
-static Bool check_integrity(SecSpaceMgr *_ssm) {
+static Bool check_integrity(SSM *_ssm) {
     unsigned int i, j;
     int bitShift;
     unsigned char result;
@@ -232,10 +233,10 @@ static Bool check_integrity(SecSpaceMgr *_ssm) {
  * @brief Estimates fragmentation of the free space.
  * Scans the free map and counts transitions between free and used bits to estimate
  * fragmentation. Stores the result in `_ssm->fragmented` as a normalized ratio.
- * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
+ * @param[in,out] _ssm Pointer to the SSM structure.
  * @return void
  */
-static void is_fragmented(SecSpaceMgr *_ssm) {
+static void is_fragmented(SSM *_ssm) {
     int i, j;
     int tmp;
     int result;
@@ -265,12 +266,12 @@ static void is_fragmented(SecSpaceMgr *_ssm) {
  * @brief Flips the allocation bit for a specific sector.
  * Toggles the allocation status of a given sector in the allocation map and persists
  * the updated maps to disk.
- * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
+ * @param[in,out] _ssm Pointer to the SSM structure.
  * @param[in] _byte Byte index of the sector in the map.
  * @param[in] _bit Bit index (0–7) within the byte.
  * @return void
  */
-static void set_aloc_sector(SecSpaceMgr *_ssm, int _byte, int _bit) {
+static void set_aloc_sector(SSM *_ssm, int _byte, int _bit) {
     unsigned char mapByte;
     mapByte = _ssm->alocMap[_byte];
     mapByte >>= (7 - _bit);
@@ -295,12 +296,12 @@ static void set_aloc_sector(SecSpaceMgr *_ssm, int _byte, int _bit) {
  * @brief Flips the free bit for a specific sector.
  * Toggles the free status of a given sector in the free map and writes the
  * updated maps to disk.
- * @param[in,out] _ssm Pointer to the SecSpaceMgr structure.
+ * @param[in,out] _ssm Pointer to the SSM structure.
  * @param[in] _byte Byte index of the sector in the map.
  * @param[in] _bit Bit index (0–7) within the byte.
  * @return void
  */
-static void set_free_sector(SecSpaceMgr *_ssm, int _byte, int _bit) {
+static void set_free_sector(SSM *_ssm, int _byte, int _bit) {
     unsigned char mapByte;
     mapByte = _ssm->freeMap[_byte];
     mapByte >>= (7 - _bit);

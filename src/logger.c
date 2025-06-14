@@ -7,7 +7,7 @@
 #include "config.h"
 #include "fsm.h"
 #include "gDefinitions.h"
-#include "sectorSpaceMgr.h"
+#include "ssm.h"
 #include "ssmDefinitions.h"
 
 void log_fsm(FSM *_fsm, int _case, unsigned int _startByte) {
@@ -346,7 +346,7 @@ void log_fsm(FSM *_fsm, int _case, unsigned int _startByte) {
     }  // end switch (_case)
 }
 
-void log_ssm(SecSpaceMgr *_ssm, int _case, int _startByte) {
+void log_ssm(SSM *_ssm, int _case, int _startByte) {
     int i, j, k;
     int count;
     int sector;
