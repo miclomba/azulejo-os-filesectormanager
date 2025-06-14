@@ -18,7 +18,7 @@
  * @param[in] _startByte Byte offset at which to begin the debug trace.
  * @return void
  */
-void logSSM(SecSpaceMgr *_ssm, int _case, int _startByte);
+void log_ssm(SecSpaceMgr *_ssm, int _case, int _startByte);
 
 /**
  * @brief Prints debug information for the File Sector Manager (FSM).
@@ -28,6 +28,6 @@ void logSSM(SecSpaceMgr *_ssm, int _case, int _startByte);
  * @param[in] _startByte Byte offset at which to begin the debug trace.
  * @return void
  */
-void logFSM(FileSectorMgr *_fsm, int _case, unsigned int _startByte);
+void log_fsm(FileSectorMgr *_fsm, int _case, unsigned int _startByte);
 
 #endif  // LOGGER_H

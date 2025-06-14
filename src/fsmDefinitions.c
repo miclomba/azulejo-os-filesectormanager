@@ -6,9 +6,8 @@
 
 #include "config.h"
 
-void initializeFsmConstants(unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE,
-                            unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS,
-                            unsigned int _INODE_COUNT) {
+void init_fsm_constants(unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE, unsigned int _INODE_SIZE,
+                        unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT) {
     DISK_SIZE = _DISK_SIZE;
     BLOCK_SIZE = _BLOCK_SIZE;
     INODE_SIZE = _INODE_SIZE;

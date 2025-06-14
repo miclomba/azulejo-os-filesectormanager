@@ -44,8 +44,7 @@ unsigned int T_INDIRECT_SIZE;
  * @param[in] _INODE_COUNT Total number of inodes.
  * @return void
  */
-void initializeFsmConstants(unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE,
-                            unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS,
-                            unsigned int _INODE_COUNT);
+void init_fsm_constants(unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE, unsigned int _INODE_SIZE,
+                        unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT);
 
 #endif  // FSM_DEFINITIONS_H

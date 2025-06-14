@@ -21,8 +21,8 @@ int init_command(int _argc, char** _argv, char* input, FileSectorMgr* fsm, int i
     unsigned int _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT;
     // if debug, print the creation of the file system
     if (DEBUG_LEVEL > 0)
-        // call to logFSM, print creation of the file system
-        logFSM(fsm, 21, 0);
+        // call to log_fsm, print creation of the file system
+        log_fsm(fsm, 21, 0);
     // move to retrieve disk size
     i += 2;
     // check to see that the character is a digit
@@ -78,8 +78,8 @@ int init_command(int _argc, char** _argv, char* input, FileSectorMgr* fsm, int i
 void end_command(FileSectorMgr* fsm) {
     // if debug, print the end has been reached
     if (DEBUG_LEVEL > 0) {
-        // call to logFSM, print the end has been reached
-        logFSM(fsm, 14, 0);
+        // call to log_fsm, print the end has been reached
+        log_fsm(fsm, 14, 0);
     }  // end if (DEBUG_LEVEL > 0)
     rmfs(fsm);
 }
@@ -100,8 +100,8 @@ int info_command(char* input, FileSectorMgr* fsm, int i) {
         // if the iNode was successfully opened, print the
         // appropriate message
         if (success == True) {
-            // call to logFSM, print the iNode information
-            logFSM(fsm, 29, 0);
+            // call to log_fsm, print the iNode information
+            log_fsm(fsm, 29, 0);
         }  // if (*success == True)
         // close the iNode by flushing the iNode buffer inside FSM
         closeFile(fsm);
@@ -118,12 +118,12 @@ int print_command(char* input, FileSectorMgr* fsm, int i) {
     int digit = isdigit(input[i]);
     // if the character is a digit, print both FSM and SSM maps
     if (digit > 0) {
-        // if debug, print the call to both logFSM and logSSM
+        // if debug, print the call to both log_fsm and log_ssm
         if (DEBUG_LEVEL > 0) {
-            // call to logFSM
-            logFSM(fsm, 1, 0);
-            // call to logSSM
-            logSSM(fsm->ssm, 1, atoi(&input[i]));
+            // call to log_fsm
+            log_fsm(fsm, 1, 0);
+            // call to log_ssm
+            log_ssm(fsm->ssm, 1, atoi(&input[i]));
         }  // end if (DEBUG_LEVEL > 0)
     }  // end if (digit > 0)
     // discard input until new line
@@ -437,8 +437,8 @@ int remove_test_command(char* input, FileSectorMgr* fsm, int i) {
         index[1] = fsm->ssm->index[1];
         // locate double indirect
         fsm->inode.dIndirect = BLOCK_SIZE * (8 * fsm->ssm->index[0] + fsm->ssm->index[1]);
-        // call to writeInode
-        writeInode(&fsm->inode, atoi(&input[i]), fsm->diskHandle);
+        // call to write_inode
+        write_inode(&fsm->inode, atoi(&input[i]), fsm->diskHandle);
         // call to allocateSectors
         allocateSectors(fsm->ssm);
         // print the block size
@@ -517,7 +517,7 @@ int remove_test_command(char* input, FileSectorMgr* fsm, int i) {
         // set single indirect to -1
         fsm->inode.dIndirect = -1;
         // write iNode to file
-        writeInode(&fsm->inode, atoi(&input[i]), fsm->diskHandle);
+        write_inode(&fsm->inode, atoi(&input[i]), fsm->diskHandle);
         // print section break
         printf("- - - - - - - - - - - - - - - - - - - - - - - - ");
         printf("- - - - - - - - - - - -\n\n\n");
@@ -591,8 +591,8 @@ int default_command(char* input, FileSectorMgr* fsm, int i) {
     i = advance_to_char(input, '\n', i);
     // if debug, print bad input
     if (DEBUG_LEVEL > 0) {
-        // call to logFSM, print bad input
-        logFSM(fsm, 15, 0);
+        // call to log_fsm, print bad input
+        log_fsm(fsm, 15, 0);
     }  // end if (DEBUG_LEVEL > 0)
     return i;
 }

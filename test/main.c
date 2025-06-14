@@ -118,8 +118,8 @@ void process_input_stub() {
     char input[MAX_INPUT];
     // if the debug level is greater than 0, generate stub output
     if (DEBUG_LEVEL > 0) {
-        // call logFSM to print that stub output is being created
-        logFSM(fsm, 18, 0);
+        // call log_fsm to print that stub output is being created
+        log_fsm(fsm, 18, 0);
     }  // end if(DEBUG_LEVEL > 0)
     // open the stub input file, file should already exist
     read_file(input, INPUT_STUB_FILE);
@@ -128,7 +128,7 @@ void process_input_stub() {
     for (unsigned int i = 0; i < MAX_INPUT; i++) {
         // look for the end of the input file, start with character 'E'
         if (i <= 253 && strncmp(&input[i], "END", 3) == 0) {
-            logFSM(fsm, 14, 0);
+            log_fsm(fsm, 14, 0);
             // no need to continue reading input
             break;
         }  // end if 'END'

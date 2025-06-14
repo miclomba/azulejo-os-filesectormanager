@@ -10,7 +10,7 @@
 #include "fsmDefinitions.h"
 #include "gDefinitions.h"
 
-void makeInodes(unsigned int _count, FILE *_fileStream, unsigned int _diskOffset) {
+void make_inodes(unsigned int _count, FILE *_fileStream, unsigned int _diskOffset) {
     // iterators for moving through a buffer during initialization
     unsigned int i, j;
     // store temporarily the return value from fwrite
@@ -59,7 +59,7 @@ void makeInodes(unsigned int _count, FILE *_fileStream, unsigned int _diskOffset
     fseek(_fileStream, 0, SEEK_SET);
 }
 
-void readInode(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream) {
+void read_inode(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream) {
     // iterators for moving through arrays
     int j, k;
     // store the temporary value of the return value from fread
@@ -107,7 +107,7 @@ void readInode(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream) {
     _inode->tIndirect = buffer[19];
 }
 
-void writeInode(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream) {
+void write_inode(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream) {
     // iterators for moving through arrays
     int j, k;
     // store the temporary value returned from fwrite
