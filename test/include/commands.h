@@ -8,124 +8,117 @@
 #include "fileSectorMgr.h"
 #include "gDefinitions.h"
 
-/*
- * @brief A filesystem init command
- * @param _argc the number of arguments passed to program
- # @param _argv an array holding the arguments
- * @param input buffer for input read, has a maximum input of 10,000 characters
- * @param fsm The FileSectorMgr reference
- * @param i the input buffer current index
- * @return an updated input buffer index
+/**
+ * @brief Initializes the file system.
+ * Parses command-line arguments and sets up the file system accordingly.
+ * @param _argc Number of command-line arguments.
+ * @param _argv Array of argument strings.
+ * @param input Input buffer for commands (max 10,000 characters).
+ * @param fsm Pointer to the FileSectorMgr instance.
+ * @param i Current index in the input buffer.
+ * @return Updated input buffer index.
  */
 int init_command(int _argc, char** _argv, char* input, FileSectorMgr* fsm, int i);
 
-/*
- * @brief A filesystem end command
- * @param fsm The FileSectorMgr reference
- * @return an updated input buffer index
+/**
+ * @brief Finalizes the file system and releases resources.
+ * @param fsm Pointer to the FileSectorMgr instance.
+ * @return void
  */
 void end_command(FileSectorMgr* fsm);
 
-/*
- * @brief A filesystem info command
- *
- * @param input buffer for input read, has a maximum input of 10,000 characters
- * @param fsm The FileSectorMgr reference
- * @param i the input buffer current index
- * @return an updated input buffer index
+/**
+ * @brief Prints system metadata and file system statistics.
+ * @param input Input buffer (max 10,000 characters).
+ * @param fsm Pointer to the FileSectorMgr instance.
+ * @param i Current index in the input buffer.
+ * @return Updated input buffer index.
  */
 int info_command(char* input, FileSectorMgr* fsm, int i);
 
-/*
- * @brief A filesystem print command
- *
- * @param input buffer for input read, has a maximum input of 10,000 characters
- * @param fsm The FileSectorMgr reference
- * @param i the input buffer current index
- * @return an updated input buffer index
+/**
+ * @brief Prints data blocks or file contents.
+ * @param input Input buffer (max 10,000 characters).
+ * @param fsm Pointer to the FileSectorMgr instance.
+ * @param i Current index in the input buffer.
+ * @return Updated input buffer index.
  */
 int print_command(char* input, FileSectorMgr* fsm, int i);
 
-/*
- * @brief A filesystem create command
- *
- * @param input buffer for input read, has a maximum input of 10,000 characters
- * @param fsm The FileSectorMgr reference
- * @param name buffer used when renaming files
- * @param i the input buffer current index
- * @return an updated input buffer index
+/**
+ * @brief Creates a new file or directory.
+ * @param input Input buffer (max 10,000 characters).
+ * @param fsm Pointer to the FileSectorMgr instance.
+ * @param name Buffer used to store or assign a file name.
+ * @param i Current index in the input buffer.
+ * @return Updated input buffer index.
  */
 int create_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i);
 
-/*
- * @brief A filesystem rename command
- *
- * @param input buffer for input read, has a maximum input of 10,000 characters
- * @param fsm The FileSectorMgr reference
- * @param name buffer used when renaming files
- * @param i the input buffer current index
- * @return an updated input buffer index
+/**
+ * @brief Renames an existing file or directory.
+ * @param input Input buffer (max 10,000 characters).
+ * @param fsm Pointer to the FileSectorMgr instance.
+ * @param name Buffer containing the new name.
+ * @param i Current index in the input buffer.
+ * @return Updated input buffer index.
  */
 int rename_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i);
 
-/*
- * @brief A filesystem write command
- *
- * @param input buffer for input read, has a maximum input of 10,000 characters
- * @param fsm The FileSectorMgr reference
- * @param i the input buffer current index
- * @return an updated input buffer index
+/**
+ * @brief Writes data to a file.
+ * @param input Input buffer (max 10,000 characters).
+ * @param fsm Pointer to the FileSectorMgr instance.
+ * @param i Current index in the input buffer.
+ * @return Updated input buffer index.
  */
 int write_command(char* input, FileSectorMgr* fsm, int i);
 
-/*
- * @brief A filesystem read command
- *
- * @param input buffer for input read, has a maximum input of 10,000 characters
- * @param fsm The FileSectorMgr reference
- * @param i the input buffer current index
- * @return an updated input buffer index
+/**
+ * @brief Reads data from a file.
+ * @param input Input buffer (max 10,000 characters).
+ * @param fsm Pointer to the FileSectorMgr instance.
+ * @param i Current index in the input buffer.
+ * @return Updated input buffer index.
  */
 int read_command(char* input, FileSectorMgr* fsm, int i);
 
-/*
- * @brief A filesystem remove command
- *
- * @param input buffer for input read, has a maximum input of 10,000 characters
- * @param fsm The FileSectorMgr reference
- * @param i the input buffer current index
- * @return an updated input buffer index
+/**
+ * @brief Removes a file or directory.
+ * @param input Input buffer (max 10,000 characters).
+ * @param fsm Pointer to the FileSectorMgr instance.
+ * @param i Current index in the input buffer.
+ * @return Updated input buffer index.
  */
 int remove_command(char* input, FileSectorMgr* fsm, int i);
 
-/*
- * @brief A filesystem remove test command
- *
- * @param input buffer for input read, has a maximum input of 10,000 characters
- * @param fsm The FileSectorMgr reference
- * @param i the input buffer current index
- * @return an updated input buffer index
+/**
+ * @brief Performs a test removal of a file or directory.
+ * Used for development or validation purposes.
+ * @param input Input buffer (max 10,000 characters).
+ * @param fsm Pointer to the FileSectorMgr instance.
+ * @param i Current index in the input buffer.
+ * @return Updated input buffer index.
  */
 int remove_test_command(char* input, FileSectorMgr* fsm, int i);
 
-/*
- * @brief A filesystem list command
- *
- * @param input buffer for input read, has a maximum input of 10,000 characters
- * @param fsm The FileSectorMgr reference
- * @param name buffer used when renaming files
- * @param i the input buffer current index
- * @return an updated input buffer index
+/**
+ * @brief Lists files and directories within a directory.
+ * @param input Input buffer (max 10,000 characters).
+ * @param fsm Pointer to the FileSectorMgr instance.
+ * @param name Buffer to receive or filter by file name.
+ * @param i Current index in the input buffer.
+ * @return Updated input buffer index.
  */
 int list_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i);
 
-/*
- * @brief A filesystem default command
- *
- * @param input buffer for input read, has a maximum input of 10,000 characters
- * @param fsm The FileSectorMgr reference
- * @param i the input buffer current index
- * @return an updated input buffer index
+/**
+ * @brief Handles unrecognized or default commands.
+ * Fallback mechanism for unknown input.
+ * @param input Input buffer (max 10,000 characters).
+ * @param fsm Pointer to the FileSectorMgr instance.
+ * @param i Current index in the input buffer.
+ * @return Updated input buffer index.
  */
 int default_command(char* input, FileSectorMgr* fsm, int i);
 

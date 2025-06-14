@@ -14,10 +14,14 @@
 #include "test_config.h"
 #include "utils.h"
 
-/*
- * @brief Opens an input file, creates the file system and processes input.
- * @param argc the number of args
- * @param argv the args list
+/**
+ * @brief Processes and executes file system commands from an input file.
+ * Reads all commands from a predefined input file (`INPUT_FILE`) and interprets each command
+ * character to perform corresponding file system operations, including creation, deletion,
+ * reading, writing, renaming, and listing. Commands are executed sequentially using a `switch`
+ * dispatch based on the character at the current buffer index.
+ * @param argc Argument count from the command line.
+ * @param argv Argument vector containing command-line parameters.
  * @return void
  */
 void process_input(int argc, char** argv) {
@@ -100,8 +104,11 @@ void process_input(int argc, char** argv) {
     }  // end while (loop == True)
 }
 
-/*
- * @brief Opens a stub file, creates the file system and processes input stub.
+/**
+ * @brief Outputs stub input for debugging or testing purposes.
+ * Reads input from a predefined stub file (`INPUT_STUB_FILE`) and prints its contents
+ * to standard output. Used primarily for generating traceable debug output when
+ * `DEBUG_LEVEL > 0`. Terminates early upon encountering the "END" marker in the file.
  * @return void
  */
 void process_input_stub() {
@@ -130,10 +137,13 @@ void process_input_stub() {
     }  // end for (i = 0; i < MAX_INPUT; i++)
 }
 
-/*
- * @brief This is the main for our FSM project. Opens either a stub or input file, creates the file
- * system and processes input.
- * @return 0 for success; failure otherwise.
+/**
+ * @brief Entry point for the File Sector Manager test application.
+ * Based on command-line arguments, this function either runs the system in stub mode
+ * (printing input for debugging) or processes full input using `process_input()`.
+ * @param _argc Number of command-line arguments.
+ * @param _argv Array of argument strings.
+ * @return 0 on successful execution, non-zero on error.
  */
 int main(int _argc, char* _argv[]) {
     // if designated by the parameters, run program with stub output
