@@ -66,10 +66,10 @@ int init_command(int _argc, char** _argv, char* input, FileSectorMgr* fsm, int i
     // if correct parameters, create the file system
     if (_argc > 1 && atoi(_argv[1]) == 1)
         // call to mkfs, initializing the SSM values
-        mk_fs(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 1);
+        make_fs(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 1);
     else
         // call to mkfs, without initializing SSM values
-        mk_fs(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 0);
+        make_fs(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 0);
     // find next line of input
     i = advance_to_char(input, '\n', i);
     return i;
@@ -81,7 +81,7 @@ void end_command(FileSectorMgr* fsm) {
         // call to log_fsm, print the end has been reached
         log_fsm(fsm, 14, 0);
     }  // end if (DEBUG_LEVEL > 0)
-    rmfs(fsm);
+    remove_fs(fsm);
 }
 
 int info_command(char* input, FileSectorMgr* fsm, int i) {
@@ -96,7 +96,7 @@ int info_command(char* input, FileSectorMgr* fsm, int i) {
         // convert the character to a digit
         inodeNumF = atoi(&input[i]);
         // attempt to open the file located at inodeNumF
-        Bool success = openFile(fsm, inodeNumF);
+        Bool success = open_file(fsm, inodeNumF);
         // if the iNode was successfully opened, print the
         // appropriate message
         if (success == True) {
@@ -104,7 +104,7 @@ int info_command(char* input, FileSectorMgr* fsm, int i) {
             log_fsm(fsm, 29, 0);
         }  // if (*success == True)
         // close the iNode by flushing the iNode buffer inside FSM
-        closeFile(fsm);
+        close_file(fsm);
     }  // end if (digit > 0)
     // find the next line of input
     i = advance_to_char(input, '\n', i);
@@ -154,12 +154,12 @@ int create_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i) {
         // if character is 'F', create a file
         if (c == 'F') {
             // call to createFile with parameter for file
-            inodeNumF = createFile(fsm, 0, name, inodeNumD);
+            inodeNumF = create_file(fsm, 0, name, inodeNumD);
         }  // end if (c == 'F')
         // if character is 'D', create a directory
         else if (c == 'D') {
             // call to createFile with parameter for directory
-            inodeNumF = createFile(fsm, 1, name, inodeNumD);
+            inodeNumF = create_file(fsm, 1, name, inodeNumD);
         }  // end if (c == 'D')
         // find next input
         i = advance_to_char(input, ':', i);
@@ -173,7 +173,7 @@ int create_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i) {
             i++;
         }  // end for (k = 0; k < 8; k++)
         // call to renameFile
-        renameFile(fsm, inodeNumF, name, inodeNumD);
+        rename_file(fsm, inodeNumF, name, inodeNumD);
     }  // end if (digit > 0)
     printf("DEBUG_LEVEL > 0:\n");
     // if a folder was created, print respective output
@@ -236,7 +236,7 @@ int rename_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i) {
             // print input information
             printf("//N:%d:%d:%s\n\n", inodeNumF, inodeNumD, (char*)name);
             // call renameFile
-            renameFile(fsm, inodeNumF, name, inodeNumD);
+            rename_file(fsm, inodeNumF, name, inodeNumD);
             // print success in renaming file
             printf("-> Renamed File (Inode %d) to \'%s\'\n", inodeNumF, (char*)name);
             // print section break
@@ -283,7 +283,7 @@ int write_command(char* input, FileSectorMgr* fsm, int i) {
             buffer[14 * (BLOCK_SIZE / 4) + 23] = 77;
             buffer[266 * (BLOCK_SIZE / 4) + 56] = 113;
             // call to writeToFile
-            writeToFile(fsm, inodeNumF, buffer, atoi(&input[i]));
+            write_to_file(fsm, inodeNumF, buffer, atoi(&input[i]));
             // print file had been written to
             printf("-> Wrote %d bytes to File (Inode %d)\n", atoi(&input[i]), inodeNumF);
             printf("** Expected Result: 0 Inodes allocated in the");
@@ -328,7 +328,7 @@ int read_command(char* input, FileSectorMgr* fsm, int i) {
             // print input information
             printf("//R:%d:%d\n\n", inodeNumF, atoi(&input[i]));
             // call to readFromFile
-            readFromFile(fsm, inodeNumF, buffer);
+            read_from_file(fsm, inodeNumF, buffer);
             // print that the file had been read
             printf("-> Read %d bytes from File (Inode %d)\n", atoi(&input[i]), inodeNumF);
             printf("** Expected Result: 0 Inodes allocated in the");
@@ -379,7 +379,7 @@ int remove_command(char* input, FileSectorMgr* fsm, int i) {
             printf("-> Removed File (Inode ");
             printf("%d) from Folder (Inode %d).\n", inodeNumF, inodeNumD);
             // call to openFile to ensure file has been removed
-            openFile(fsm, inodeNumF);
+            open_file(fsm, inodeNumF);
             // if removing a folder, recursively remove all
             // subdirectories and files
             if (fsm->inode.fileType == 2) {
@@ -394,7 +394,7 @@ int remove_command(char* input, FileSectorMgr* fsm, int i) {
             printf("%d Blocks deallocated in the Aloc/Free Map\n",
                    fsm->inode.fileSize / BLOCK_SIZE);
             // call to rmFile
-            rmFile(fsm, inodeNumF, inodeNumD);
+            remove_file(fsm, inodeNumF, inodeNumD);
         }  // end if (digit > 0)
         // print section break
         printf("- - - - - - - - - - - - - - - - - - - - - - - - ");
@@ -425,7 +425,7 @@ int remove_test_command(char* input, FileSectorMgr* fsm, int i) {
         // print input information
         printf("//T:%d\n\n", atoi(&input[i]));
         // call to openFile
-        openFile(fsm, atoi(&input[i]));
+        open_file(fsm, atoi(&input[i]));
         // print that iNode has been opened
         printf("Opened Folder (Inode %d)\n", atoi(&input[i]));
         // print that the required data blocks are being allocated
@@ -508,12 +508,12 @@ int remove_test_command(char* input, FileSectorMgr* fsm, int i) {
         printf("Added File-Tuple (Inode 25) to data block at ");
         printf("sector %d\n", index[0] / BLOCK_SIZE);
         // call to rmFileFromDir
-        Bool success = rmFileFromDir(fsm, 25, atoi(&input[i]));
+        Bool success = remove_file_from_dir(fsm, 25, atoi(&input[i]));
         // print respective functions
         printf("\nTRY FUNCTION CALL: rmFileFromDir(fsm,25,");
         printf("%d);\n\nReturned %s\n", atoi(&input[i]), success ? "TRUE" : "FALSE");
         // call to openFile
-        openFile(fsm, atoi(&input[i]));
+        open_file(fsm, atoi(&input[i]));
         // set single indirect to -1
         fsm->inode.dIndirect = -1;
         // write iNode to file
@@ -560,7 +560,7 @@ int list_command(char* input, FileSectorMgr* fsm, unsigned int* name, int i) {
             printf("//L:%d:%s\n", inodeNumF, (char*)name);
         }  // end if (DEBUG_LEVEL > 0)
         // call to readFromFile
-        readFromFile(fsm, inodeNumF, buffer);
+        read_from_file(fsm, inodeNumF, buffer);
         // store values from readFromFile call into a local buffer
         char* charBuffer = (char*)buffer;
         // print all items of the iNode

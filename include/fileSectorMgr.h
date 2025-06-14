@@ -45,9 +45,9 @@ typedef struct {
  * @return void
  * @date 2010-04-12 First implementation.
  */
-void mk_fs(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE,
-           unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT,
-           int _initSsmMaps);
+void make_fs(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE,
+             unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT,
+             int _initSsmMaps);
 
 /**
  * @brief Closes the file system and releases associated resources.
@@ -56,7 +56,7 @@ void mk_fs(FileSectorMgr *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZ
  * @return void
  * @date 2025-06-13 First implementation.
  */
-void rmfs(FileSectorMgr *_fsm);
+void remove_fs(FileSectorMgr *_fsm);
 
 /**
  * @brief Creates a file or directory.
@@ -68,8 +68,8 @@ void rmfs(FileSectorMgr *_fsm);
  * @return Non-zero (true) if successful, 0 (false) otherwise.
  * @date 2010-04-01 First implementation.
  */
-unsigned int createFile(FileSectorMgr *_fsm, int _isDirectory, unsigned int *_name,
-                        unsigned int _inodeNumD);
+unsigned int create_file(FileSectorMgr *_fsm, int _isDirectory, unsigned int *_name,
+                         unsigned int _inodeNumD);
 
 /**
  * @brief Opens a file.
@@ -79,7 +79,7 @@ unsigned int createFile(FileSectorMgr *_fsm, int _isDirectory, unsigned int *_na
  * @return True if the file was successfully opened, false otherwise.
  * @date 2010-04-01 First implementation.
  */
-Bool openFile(FileSectorMgr *_fsm, unsigned int _inodeNum);
+Bool open_file(FileSectorMgr *_fsm, unsigned int _inodeNum);
 
 /**
  * @brief Closes the currently opened file.
@@ -88,7 +88,7 @@ Bool openFile(FileSectorMgr *_fsm, unsigned int _inodeNum);
  * @return void
  * @date 2010-04-01 First implementation.
  */
-void closeFile(FileSectorMgr *_fsm);
+void close_file(FileSectorMgr *_fsm);
 
 /**
  * @brief Removes a file from a directory.
@@ -99,7 +99,7 @@ void closeFile(FileSectorMgr *_fsm);
  * @return True if the file was successfully removed, false if the file could not be accessed.
  * @date 2010-04-01 First implementation.
  */
-Bool rmFileFromDir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int _inodeNumD);
+Bool remove_file_from_dir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int _inodeNumD);
 
 /**
  * @brief Writes data to a file.
@@ -111,8 +111,8 @@ Bool rmFileFromDir(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int _i
  * @return True if the write was successful, false otherwise.
  * @date 2010-04-01 First implementation.
  */
-Bool writeToFile(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer,
-                 long long int _fileSize);
+Bool write_to_file(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer,
+                   long long int _fileSize);
 
 /**
  * @brief Reads a file.
@@ -124,7 +124,7 @@ Bool writeToFile(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer,
  * @return True if the file was read successfully, false otherwise.
  * @date 2010-04-01 First implementation.
  */
-Bool readFromFile(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer);
+Bool read_from_file(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer);
 
 /**
  * @brief Removes a file from the filesystem.
@@ -135,7 +135,7 @@ Bool readFromFile(FileSectorMgr *_fsm, unsigned int _inodeNum, void *_buffer);
  * @return True if the file was removed successfully, false otherwise.
  * @date 2010-04-12 First implementation.
  */
-Bool rmFile(FileSectorMgr *_fsm, unsigned int _inodeNum, unsigned int _inodeNumD);
+Bool remove_file(FileSectorMgr *_fsm, unsigned int _inodeNum, unsigned int _inodeNumD);
 
 /**
  * @brief Renames a file within a directory.
@@ -148,7 +148,7 @@ Bool rmFile(FileSectorMgr *_fsm, unsigned int _inodeNum, unsigned int _inodeNumD
  * @return True if the rename was successful, false otherwise.
  * @date 2010-04-12 First implementation.
  */
-Bool renameFile(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                unsigned int _inodeNumD);
+Bool rename_file(FileSectorMgr *_fsm, unsigned int _inodeNumF, unsigned int *_name,
+                 unsigned int _inodeNumD);
 
 #endif  // FILE_SECTOR_MGR
