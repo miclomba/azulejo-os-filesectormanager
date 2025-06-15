@@ -84,10 +84,10 @@ const Inode *fs_open_file(FSM *_fsm, unsigned int _inodeNum);
  * @brief Closes the currently opened file.
  * Closes the file currently open in the File Sector Manager.
  * @param[in,out] _fsm Pointer to the FSM instance.
- * @return void
+ * @return return True if the file was successfully closed, false otherwise.
  * @date 2010-04-01 First implementation.
  */
-void fs_close_file(FSM *_fsm);
+Bool fs_close_file(FSM *_fsm);
 
 /**
  * @brief Removes a file from a directory.

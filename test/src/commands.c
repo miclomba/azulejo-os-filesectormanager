@@ -109,7 +109,8 @@ int info_command(char* input, FSM* fsm, int i) {
             log_fsm(fsm, 29, 0);
         }  // if (*success == True)
         // close the iNode by flushing the iNode buffer inside FSM
-        fs_close_file(fsm);
+        Bool status = fs_close_file(fsm);
+        if (status == False) printf("Error closing file\n");
     }  // end if (digit > 0)
     // find the next line of input
     i = advance_to_char(input, '\n', i);

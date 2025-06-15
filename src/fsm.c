@@ -230,7 +230,7 @@ const Inode *fs_open_file(FSM *_fsm, unsigned int _inodeNum) {
     return &_fsm->inode;
 }
 
-void fs_close_file(FSM *_fsm) {
+Bool fs_close_file(FSM *_fsm) {
     int i, j;
     // Reset all FSM->Inode variables to defaults
     _fsm->inodeNum = (unsigned int)(-1);
@@ -249,6 +249,7 @@ void fs_close_file(FSM *_fsm) {
     _fsm->inode.sIndirect = (unsigned int)(-1);
     _fsm->inode.dIndirect = (unsigned int)(-1);
     _fsm->inode.tIndirect = (unsigned int)(-1);
+    return True;
 }
 
 Bool fs_read_from_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer) {
@@ -438,6 +439,7 @@ static Bool add_file_to_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_n
     unsigned int diskOffset = 0;
     unsigned int buffer[BLOCK_SIZE / 4];
     unsigned int buffer2[BLOCK_SIZE / 4];
+    Bool status;
     const Inode *inode = fs_open_file(_fsm, _inodeNumD);
     if (inode != NULL) {
         if (_fsm->inode.fileType == 2) {
@@ -460,7 +462,8 @@ static Bool add_file_to_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_n
                             _fsm->sampleCount = fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4,
                                                        _fsm->diskHandle);
                             fseek(_fsm->diskHandle, 0, SEEK_SET);
-                            fs_close_file(_fsm);
+                            status = fs_close_file(_fsm);
+                            if (status == False) printf("Error closing file\n");
                             return True;
                         }  // end if (buffer[j+3] == 0)
                     }  // end or (j = 0; j < BLOCK_SIZE/4; j += 4)
@@ -517,7 +520,8 @@ static Bool add_file_to_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_n
                         fseek(_fsm->diskHandle, 0, SEEK_SET);
                         inode_write(&_fsm->inode, _inodeNumD, _fsm->diskHandle);
                         ssm_allocate_sectors(_fsm->ssm);
-                        fs_close_file(_fsm);
+                        status = fs_close_file(_fsm);
+                        if (status == False) printf("Error closing file\n");
                         return True;
                     }  // end else (_fsm->ssm->index[0] == (unsigned int)(-1))
                 }  // end if (_fsm->inode.directPtr[i] == (unsigned int)(-1))
@@ -814,6 +818,7 @@ static Bool add_file_to_single_indirect(FSM *_fsm, unsigned int _inodeNumF, unsi
     unsigned int diskOffset;
     unsigned int buffer[BLOCK_SIZE / 4];
     diskOffset = _sIndirectOffset;  //_fsm->inode.sIndirect;
+    Bool status;
     // Read indirect block
     fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
     _fsm->sampleCount = fread(indirectBlock, BLOCK_SIZE, 1, _fsm->diskHandle);
@@ -836,7 +841,8 @@ static Bool add_file_to_single_indirect(FSM *_fsm, unsigned int _inodeNumF, unsi
                         _fsm->sampleCount =
                             fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
                         fseek(_fsm->diskHandle, 0, SEEK_SET);
-                        fs_close_file(_fsm);
+                        status = fs_close_file(_fsm);
+                        if (status == False) printf("Error closing file\n");
                         return True;
                     }  // end if (buffer[j+3] == 0)
                 }  // for (j = 0; j < BLOCK_SIZE/4; j += 4)
@@ -871,7 +877,8 @@ static Bool add_file_to_single_indirect(FSM *_fsm, unsigned int _inodeNumF, unsi
                         fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
                     fseek(_fsm->diskHandle, 0, SEEK_SET);
                     ssm_allocate_sectors(_fsm->ssm);
-                    fs_close_file(_fsm);
+                    status = fs_close_file(_fsm);
+                    if (status == False) printf("Error closing file\n");
                     return True;
                 }  // if (_fsm->ssm->index[0] == (unsigned int)(-1))
             }  // if (indirectBlock[i] == (unsigned int)(-1))
