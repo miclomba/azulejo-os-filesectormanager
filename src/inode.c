@@ -76,7 +76,10 @@ void inode_read(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream) {
     fseek(_fileStream, offset, SEEK_SET);
     // read the offset location in the filestream
     size_t res = fread(buffer, sizeof(unsigned int), 20, _fileStream);
-    if (res != 0) return;
+    if (res == 0) {
+        printf("Error reading inode %d from file stream.\n", _inodeNum);
+        return;
+    }
     // move to the start of the filestream
     fseek(_fileStream, 0, SEEK_SET);
     // store buffer for fileType
