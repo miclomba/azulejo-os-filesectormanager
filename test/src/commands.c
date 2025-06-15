@@ -133,7 +133,9 @@ int print_command(char* input, FSM* fsm, int i) {
     return i;
 }
 
-int create_command(char* input, FSM* fsm, char* name, int i) {
+int create_command(char* input, FSM* fsm, int i) {
+    // buffer used when renaming files
+    char name[9];
     // iNode number dealing with files and directories
     unsigned int inodeNumF = 0;
     unsigned int inodeNumD = 0;
@@ -196,7 +198,9 @@ int create_command(char* input, FSM* fsm, char* name, int i) {
     return i;
 }
 
-int rename_command(char* input, FSM* fsm, char* name, int i) {
+int rename_command(char* input, FSM* fsm, int i) {
+    // buffer used when renaming files
+    char name[9];
     // iNode number dealing with files and directories
     unsigned int inodeNumF, inodeNumD;
     // move to retrieve the file's iNode
@@ -524,7 +528,9 @@ int remove_test_command(char* input, FSM* fsm, int i) {
     return i;
 }
 
-int list_command(char* input, FSM* fsm, char* name, int i) {
+int list_command(char* input, FSM* fsm, int i) {
+    // buffer used when renaming files
+    char name[9];
     // iNode number dealing with files
     unsigned int inodeNumF;
     // move to retrieve the iNode number

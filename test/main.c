@@ -14,6 +14,11 @@
 #include "test_config.h"
 #include "utils.h"
 
+// FSM array used for pointer simplicity
+static FSM fsm[1];
+// buffer for input read, has a maximum input of 10,000 characters
+static char input[MAX_INPUT];
+
 /**
  * @brief Processes and executes file system commands from an input file.
  * Reads all commands from a predefined input file (`INPUT_FILE`) and interprets each command
@@ -25,16 +30,10 @@
  * @return void
  */
 void process_input(int argc, char** argv) {
-    // FSM array used for pointer simplicity
-    FSM fsm[1];
     // boolean for state of reading input
     Bool loop = True;
     // placeholder in the buffer array should start at the beginning
     unsigned int i = 0;
-    // buffer for input read, has a maximum input of 10,000 characters
-    char input[MAX_INPUT];
-    // buffer used when renaming files
-    char name[9];
 
     read_file(input, INPUT_FILE);
     // while there is input, process the commands and operate accordingly
@@ -47,7 +46,7 @@ void process_input(int argc, char** argv) {
                 break;
             // case 'N' renames a file
             case 'N':
-                i = rename_command(input, fsm, name, i);
+                i = rename_command(input, fsm, i);
                 break;
             // case 'W' will write data to a file
             case 'W':
@@ -67,11 +66,11 @@ void process_input(int argc, char** argv) {
                 break;
             // case 'L' lists the contents of a directory
             case 'L':
-                i = list_command(input, fsm, name, i);
+                i = list_command(input, fsm, i);
                 break;
             // case 'C' should create either a file or directory
             case 'C':
-                i = create_command(input, fsm, name, i);
+                i = create_command(input, fsm, i);
                 break;
             // case 'M' creates the filesystem
             case 'M':
@@ -112,10 +111,6 @@ void process_input(int argc, char** argv) {
  * @return void
  */
 void process_input_stub() {
-    // FSM array used for pointer simplicity
-    FSM fsm[1];
-    // buffer for input read, has a maximum input of 10,000 characters
-    char input[MAX_INPUT];
     // if the debug level is greater than 0, generate stub output
     if (DEBUG_LEVEL > 0) {
         // call log_fsm to print that stub output is being created

@@ -49,21 +49,19 @@ int print_command(char* input, FSM* fsm, int i);
  * @brief Creates a new file or directory.
  * @param input Input buffer (max 10,000 characters).
  * @param fsm Pointer to the FSM instance.
- * @param name Buffer used to store or assign a file name.
  * @param i Current index in the input buffer.
  * @return Updated input buffer index.
  */
-int create_command(char* input, FSM* fsm, char* name, int i);
+int create_command(char* input, FSM* fsm, int i);
 
 /**
  * @brief Renames an existing file or directory.
  * @param input Input buffer (max 10,000 characters).
  * @param fsm Pointer to the FSM instance.
- * @param name Buffer containing the new name.
  * @param i Current index in the input buffer.
  * @return Updated input buffer index.
  */
-int rename_command(char* input, FSM* fsm, char* name, int i);
+int rename_command(char* input, FSM* fsm, int i);
 
 /**
  * @brief Writes data to a file.
@@ -106,11 +104,10 @@ int remove_test_command(char* input, FSM* fsm, int i);
  * @brief Lists files and directories within a directory.
  * @param input Input buffer (max 10,000 characters).
  * @param fsm Pointer to the FSM instance.
- * @param name Buffer to receive or filter by file name.
  * @param i Current index in the input buffer.
  * @return Updated input buffer index.
  */
-int list_command(char* input, FSM* fsm, char* name, int i);
+int list_command(char* input, FSM* fsm, int i);
 
 /**
  * @brief Handles unrecognized or default commands.
