@@ -2015,7 +2015,7 @@ void fs_make(FSM *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE, unsig
     ssm_allocate_sectors(_fsm->ssm);
     // Create INODE_COUNT Inodes
     int factorsOf_32 = INODE_BLOCKS / 32;
-    int remainder = INODE_BLOCKS % 32;
+    // int remainder = INODE_BLOCKS % 32;
     // get 32 sectors at a time and make them inode sectors
     for (i = 0; i < factorsOf_32; i++) {
         ssm_get_sector(32, _fsm->ssm);
@@ -2024,11 +2024,11 @@ void fs_make(FSM *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE, unsig
         inode_make(32, _fsm->diskHandle, _fsm->diskOffset);
         ssm_allocate_sectors(_fsm->ssm);
     }  // end for (i = 0; i < factorsOf_32; i++)
-    ssm_get_sector(remainder, _fsm->ssm);
-    _fsm->diskOffset = BLOCK_SIZE * ((8 * _fsm->ssm->index[0]) + (_fsm->ssm->index[1]));
-    // take the remaining sectors and make inodes
-    inode_make(remainder, _fsm->diskHandle, _fsm->diskOffset);
-    ssm_allocate_sectors(_fsm->ssm);
+    // ssm_get_sector(remainder, _fsm->ssm);
+    // _fsm->diskOffset = BLOCK_SIZE * ((8 * _fsm->ssm->index[0]) + (_fsm->ssm->index[1]));
+    // // take the remaining sectors and make inodes
+    // inode_make(remainder, _fsm->diskHandle, _fsm->diskOffset);
+    // ssm_allocate_sectors(_fsm->ssm);
     unsigned int name[2];
     // Set inode 0 for boot sector
     fs_create_file(_fsm, 0, name, (unsigned int)(-1));
