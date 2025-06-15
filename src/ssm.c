@@ -7,6 +7,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "config.h"
 #include "global_constants.h"
@@ -170,8 +171,10 @@ Bool ssm_get_sector(int _n, SSM *_ssm) {
         freeMap = _ssm->freeMap;
         _ssm->index[0] = -1;
         _ssm->index[1] = -1;
+        unsigned long long value;
         while (byteCount < SECTOR_BYTES) {
-            subsetMap[0] = *((unsigned long long int *)freeMap);
+            memcpy(&value, freeMap, sizeof(value));
+            subsetMap[0] = value;
             for (i = 0; i < 32; i++) {
                 buff = (unsigned int)subsetMap[0];
                 result = mask & buff;

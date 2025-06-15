@@ -19,6 +19,8 @@ static unsigned int buffer[600 * (MAX_BLOCK_SIZE / 4)];
 int init_command(int _argc, char** _argv, char* input, FSM* fsm, int i) {
     // vars for holding the disk, block, iNode, iNode-block, iNode-count sizes for the file system
     unsigned int _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT;
+    _DISK_SIZE = _BLOCK_SIZE = _INODE_SIZE = _INODE_BLOCKS = _INODE_COUNT = 0;
+
     // if debug, print the creation of the file system
     if (DEBUG_LEVEL > 0)
         // call to log_fsm, print creation of the file system
@@ -151,6 +153,7 @@ int create_command(char* input, FSM* fsm, char* name, int i) {
         inodeNumD = atoi(&input[i]);
         // for debugging purposes, string of characters in buffer
         strcpy(name, "my name");
+        name[7] = '\0';  // ensure null-termination
         // if character is 'F', create a file
         if (c == 'F') {
             // call to createFile with parameter for file
@@ -167,6 +170,7 @@ int create_command(char* input, FSM* fsm, char* name, int i) {
         i += 1;
         // get the name for the new file or directory
         memcpy(name, input + i, 8);
+        name[8] = '\0';  // ensure null-termination
         i += 8;
         // call to renameFile
         fs_rename_file(fsm, inodeNumF, (unsigned int*)name, inodeNumD);
@@ -219,6 +223,7 @@ int rename_command(char* input, FSM* fsm, char* name, int i) {
             i += 1;
             // read the characters for the new file name
             memcpy(name, input + i, 8);
+            name[8] = '\0';  // ensure null-termination
             i += 8;
             // print debug information
             printf("\nDEBUG_LEVEL > 0:\n");
@@ -536,6 +541,7 @@ int list_command(char* input, FSM* fsm, char* name, int i) {
         i += 1;
         // store value in buffer
         memcpy(name, input + i, 8);
+        name[8] = '\0';  // ensure null-termination
         i += 8;
         // print debug information
         if (DEBUG_LEVEL > 0) {
@@ -557,6 +563,7 @@ int list_command(char* input, FSM* fsm, char* name, int i) {
             if (*((unsigned int*)(&charBuffer[j + 12])) != 0) {
                 // read value from buffer
                 memcpy(name, charBuffer + j, 8);
+                name[8] = '\0';  // ensure null-termination
                 // print the tuple values
                 printf("\n-> Tuple name is: \"%s\"\n", name);
                 printf("-> Inode number is %d\n", *((unsigned int*)(&charBuffer[j + 8])));

@@ -34,7 +34,7 @@ void process_input(int argc, char** argv) {
     // buffer for input read, has a maximum input of 10,000 characters
     char input[MAX_INPUT];
     // buffer used when renaming files
-    char name[8];
+    char name[9];
 
     read_file(input, INPUT_FILE);
     // while there is input, process the commands and operate accordingly

@@ -13,7 +13,11 @@ void read_file(char* buffer, const char* file_name) {
     // open the input file; file should already exist
     FILE* inputFile = fopen(file_name, "r+");
     // read the input file
-    fread(buffer, sizeof(char), MAX_INPUT, inputFile);
+    size_t res = fread(buffer, sizeof(char), MAX_INPUT, inputFile);
+    if (res == 0) {
+        printf("Error reading file %s from file stream.\n", file_name);
+        return;
+    }
     fclose(inputFile);
     inputFile = Null;
 }

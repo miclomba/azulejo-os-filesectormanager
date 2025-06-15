@@ -1,6 +1,6 @@
 MEM = -O1 -fsanitize=address,undefined
 CC = gcc
-CFLAGS = -g -W -Wall -Iinclude -Itest/include
+CFLAGS = -g -W -Wall $(MEM) -Iinclude -Itest/include
 
 OBJ = test/main.o test/src/commands.o test/src/utils.o src/fsm.o src/fsm_constants.o src/inode.o src/ssm.o src/logger.o
 
