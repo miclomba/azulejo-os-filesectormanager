@@ -104,7 +104,7 @@ static void init_file_sector_mgr(FSM *_fsm, int _initSsmMaps) {
     _fsm->inode.tIndirect = -1;
     _fsm->inodeNum = (unsigned int)-1;
     // Open file stream for iMap
-    sprintf(dbfile, "./fs/iMap");
+    snprintf(dbfile, sizeof(dbfile), "./fs/iMap");
     _fsm->iMapHandle = fopen(dbfile, "r+");
     // Read in INODE_BLOCKS number of items from iMap to iMapHandle
     _fsm->sampleCount = fread(_fsm->iMap, 1, INODE_BLOCKS, _fsm->iMapHandle);
@@ -112,7 +112,7 @@ static void init_file_sector_mgr(FSM *_fsm, int _initSsmMaps) {
     fclose(_fsm->iMapHandle);
     _fsm->iMapHandle = Null;
     // Open file stream for the disk
-    sprintf(dbfile, "./fs/hardDisk");
+    snprintf(dbfile, sizeof(dbfile), "./fs/hardDisk");
     // Open binary form of file for reading and writing
     _fsm->diskHandle = fopen(dbfile, "rb+");
 }
@@ -130,7 +130,7 @@ static void init_fsm_maps(FSM *_fsm) {
     unsigned char map[INODE_BLOCKS];  // SECTOR_BYTES
     unsigned char disk[DISK_SIZE];
     // Load iMap from file and place in iMapHandle
-    sprintf(dbfile, "./fs/iMap");
+    snprintf(dbfile, sizeof(dbfile), "./fs/iMap");
     _fsm->iMapHandle = fopen(dbfile, "r+");
     // Initialize all map elements to 255
     for (i = 0; i < INODE_BLOCKS; i++) {
@@ -141,7 +141,7 @@ static void init_fsm_maps(FSM *_fsm) {
     // close the file
     fclose(_fsm->iMapHandle);
     _fsm->iMapHandle = Null;
-    sprintf(dbfile, "./fs/hardDisk");
+    snprintf(dbfile, sizeof(dbfile), "./fs/hardDisk");
     _fsm->diskHandle = fopen(dbfile, "rb+");
     // Initialize all disk elements to 0
     for (i = 0; i < DISK_SIZE; i++) {
@@ -2084,7 +2084,7 @@ static Bool allocate_inode(FSM *_fsm) {
     _fsm->contInodes = 0;
     // Write the newly allocated inode to the iMapHandler
     char dbfile[256];
-    sprintf(dbfile, "./fs/iMap");
+    snprintf(dbfile, sizeof(dbfile), "./fs/iMap");
     _fsm->iMapHandle = fopen(dbfile, "r+");
     _fsm->sampleCount = fwrite(_fsm->iMap, 1, INODE_BLOCKS, _fsm->iMapHandle);
     fclose(_fsm->iMapHandle);
@@ -2125,7 +2125,7 @@ static Bool deallocate_inode(FSM *_fsm) {
     _fsm->contInodes = 0;
     // Write iMap to its Handler
     char dbfile[256];
-    sprintf(dbfile, "./fs/iMap");
+    snprintf(dbfile, sizeof(dbfile), "./fs/iMap");
     _fsm->iMapHandle = fopen(dbfile, "r+");
     _fsm->sampleCount = fwrite(_fsm->iMap, 1, INODE_BLOCKS, _fsm->iMapHandle);
     fclose(_fsm->iMapHandle);

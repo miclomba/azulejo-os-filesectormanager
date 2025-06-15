@@ -30,9 +30,9 @@ void ssm_init(SSM *_ssm) {
         _ssm->badSector[i][1] = (unsigned int)(-1);
     }
     _ssm->fragmented = 0;
-    sprintf(dbfile, "./fs/aMap");
+    snprintf(dbfile, sizeof(dbfile), "./fs/aMap");
     _ssm->alocMapHandle = fopen(dbfile, "r+");
-    sprintf(dbfile, "./fs/fMap");
+    snprintf(dbfile, sizeof(dbfile), "./fs/fMap");
     _ssm->freeMapHandle = fopen(dbfile, "r+");
     _ssm->sampleCount = fread(_ssm->alocMap, 1, SECTOR_BYTES, _ssm->alocMapHandle);
     _ssm->sampleCount = fread(_ssm->freeMap, 1, SECTOR_BYTES, _ssm->freeMapHandle);
@@ -46,9 +46,9 @@ void ssm_init_maps(SSM *_ssm) {
     unsigned int i;
     char dbfile[256];
     unsigned char map[SECTOR_BYTES];
-    sprintf(dbfile, "./fs/aMap");
+    snprintf(dbfile, sizeof(dbfile), "./fs/aMap");
     _ssm->alocMapHandle = fopen(dbfile, "r+");
-    sprintf(dbfile, "./fs/fMap");
+    snprintf(dbfile, sizeof(dbfile), "./fs/fMap");
     _ssm->freeMapHandle = fopen(dbfile, "r+");
     for (i = 0; i < SECTOR_BYTES; i++) {
         map[i] = 0;
@@ -92,9 +92,9 @@ Bool ssm_allocate_sectors(SSM *_ssm) {
     _ssm->index[1] = (unsigned int)(-1);
     _ssm->contSectors = 0;
     char dbfile[256];
-    sprintf(dbfile, "./fs/aMap");
+    snprintf(dbfile, sizeof(dbfile), "./fs/aMap");
     _ssm->alocMapHandle = fopen(dbfile, "r+");
-    sprintf(dbfile, "./fs/fMap");
+    snprintf(dbfile, sizeof(dbfile), "./fs/fMap");
     _ssm->freeMapHandle = fopen(dbfile, "r+");
     _ssm->sampleCount = fwrite(_ssm->alocMap, 1, SECTOR_BYTES, _ssm->alocMapHandle);
     _ssm->sampleCount = fwrite(_ssm->freeMap, 1, SECTOR_BYTES, _ssm->freeMapHandle);
@@ -133,9 +133,9 @@ Bool ssm_deallocate_sectors(SSM *_ssm) {
     _ssm->index[1] = (unsigned int)(-1);
     _ssm->contSectors = 0;
     char dbfile[256];
-    sprintf(dbfile, "./fs/aMap");
+    snprintf(dbfile, sizeof(dbfile), "./fs/aMap");
     _ssm->alocMapHandle = fopen(dbfile, "r+");
-    sprintf(dbfile, "./fs/fMap");
+    snprintf(dbfile, sizeof(dbfile), "./fs/fMap");
     _ssm->freeMapHandle = fopen(dbfile, "r+");
     _ssm->sampleCount = fwrite(_ssm->alocMap, 1, SECTOR_BYTES, _ssm->alocMapHandle);
     _ssm->sampleCount = fwrite(_ssm->freeMap, 1, SECTOR_BYTES, _ssm->freeMapHandle);
@@ -280,9 +280,9 @@ static void set_aloc_sector(SSM *_ssm, int _byte, int _bit) {
     else
         _ssm->alocMap[_byte] -= pow(2, _bit);
     char dbfile[256];
-    sprintf(dbfile, "./fs/aMap");
+    snprintf(dbfile, sizeof(dbfile), "./fs/aMap");
     _ssm->alocMapHandle = fopen(dbfile, "r+");
-    sprintf(dbfile, "./fs/fMap");
+    snprintf(dbfile, sizeof(dbfile), "./fs/fMap");
     _ssm->freeMapHandle = fopen(dbfile, "r+");
     _ssm->sampleCount = fwrite(_ssm->alocMap, 1, SECTOR_BYTES, _ssm->alocMapHandle);
     _ssm->sampleCount = fwrite(_ssm->freeMap, 1, SECTOR_BYTES, _ssm->freeMapHandle);
@@ -310,9 +310,9 @@ static void set_free_sector(SSM *_ssm, int _byte, int _bit) {
     else
         _ssm->freeMap[_byte] -= pow(2, _bit);
     char dbfile[256];
-    sprintf(dbfile, "./fs/aMap");
+    snprintf(dbfile, sizeof(dbfile), "./fs/aMap");
     _ssm->alocMapHandle = fopen(dbfile, "r+");
-    sprintf(dbfile, "./fs/fMap");
+    snprintf(dbfile, sizeof(dbfile), "./fs/fMap");
     _ssm->freeMapHandle = fopen(dbfile, "r+");
     _ssm->sampleCount = fwrite(_ssm->alocMap, 1, SECTOR_BYTES, _ssm->alocMapHandle);
     _ssm->sampleCount = fwrite(_ssm->freeMap, 1, SECTOR_BYTES, _ssm->freeMapHandle);
