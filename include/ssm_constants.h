@@ -8,7 +8,7 @@
 #include "config.h"
 
 #ifndef SECTOR_BYTES
-#define SECTOR_BYTES (700)
+#define SECTOR_BYTES (704)
 #endif
 
 #ifndef NUM_SECTORS

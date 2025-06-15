@@ -166,12 +166,8 @@ int create_command(char* input, FSM* fsm, unsigned int* name, int i) {
         // move to after the semi-colon
         i += 1;
         // get the name for the new file or directory
-        for (int k = 0; k < 8; k++) {
-            // copy values from the input buffer
-            *((char*)name + k) = input[i];
-            // proceed through input buffer
-            i++;
-        }  // end for (k = 0; k < 8; k++)
+        memcpy(name, input + i, 8);
+        i += 8;
         // call to renameFile
         fs_rename_file(fsm, inodeNumF, name, inodeNumD);
     }  // end if (digit > 0)
@@ -222,12 +218,8 @@ int rename_command(char* input, FSM* fsm, unsigned int* name, int i) {
             // move to after semi-colon
             i += 1;
             // read the characters for the new file name
-            for (int k = 0; k < 8; k++) {
-                // store the character from the buffer
-                *((char*)name + k) = input[i];
-                // proceed through input buffer
-                i++;
-            }  // end for (k = 0; k < 8; k++)
+            memcpy(name, input + i, 8);
+            i += 8;
             // print debug information
             printf("\nDEBUG_LEVEL > 0:\n");
             // print that the file will be renamed
@@ -543,12 +535,8 @@ int list_command(char* input, FSM* fsm, unsigned int* name, int i) {
         // move to after semi-colon
         i += 1;
         // store value in buffer
-        for (int k = 0; k < 8; k++) {
-            // read characters from input buffer
-            *((char*)name + k) = input[i];
-            // proceed through input buffer
-            i++;
-        }  // end for (k = 0; k < 8; k++)
+        memcpy(name, input + i, 8);
+        i += 8;
         // print debug information
         if (DEBUG_LEVEL > 0) {
             // print debug information
@@ -568,10 +556,7 @@ int list_command(char* input, FSM* fsm, unsigned int* name, int i) {
             // if the values are not blank, print them
             if (*((unsigned int*)(&charBuffer[j + 12])) != 0) {
                 // read value from buffer
-                for (int k = 0; k < 8; k++) {
-                    // copy value over from block
-                    *((char*)name + k) = charBuffer[j + k];
-                }  // end for (k = 0; k < 8; k++)
+                memcpy(name, charBuffer + j, 8);
                 // print the tuple values
                 printf("\n-> Tuple name is: \"%s\"\n", (char*)name);
                 printf("-> Inode number is %d\n", *((unsigned int*)(&charBuffer[j + 8])));

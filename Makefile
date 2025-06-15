@@ -1,3 +1,4 @@
+MEM = -O1 -fsanitize=address,undefined
 CC = gcc
 CFLAGS = -g -W -Wall -Iinclude -Itest/include
 
