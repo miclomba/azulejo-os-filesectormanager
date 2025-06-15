@@ -20,46 +20,47 @@ A Unix file can be a directory (containing other files and directories); or a da
 
 A file has exactly one inode, but can have many physical disk blocks (disk sectors).
 
-1. The physical disk is segmented into disk blocks.
+### The physical disk is segmented into disk blocks.
 
 - Disk block 0 is the boot block or boot sector. Unix treats the boot block as a file, with an inode (inode 0) associated with it.
 - Disk block 1 is the superblock (also called the filesystem header), with information about the filesystem (e.g. disk block size, inode size, number of inodes for the filesystem, etc). Unix treats the superblock as a file, with an inode (inode 1) associated with it.
 - Disk block 2 through disk block N make up the inode-block.
 - The remaining disk blocks (N+1 through the last block) are data blocks available for use.
 
-2. The inode block has the inodes, numbered 0, 1, 2, ..., with following structure.
+### The inode block has the inodes, numbered 0, 1, 2, ..., with following structure.
 
 - Inode 0 is the inode for the boot block file.
 - Inode 1 is the inode for the superblock file.
 - Inode 2 is the inode for the root directory (/) file.
 
-3. An inode for a file has the following structure:
+### An inode for a file has the following structure:
 
-- File information:
+#### File information:
 
-* file type (directory, link ...)
-* owner
-* length
-* creation date
-* number of links,
-* etc.
+- file type (directory, link ...)
+- owner
+- length
+- creation date
+- number of links,
+- etc.
 
-- 13 disk block pointers:
+#### 13 disk block pointers:
 
-* 10 direct
-* 1 indirect
-* 1 double indirect
-* 1 triple indirect.
+- 10 direct
+- 1 indirect
+- 1 double indirect
+- 1 triple indirect.
 
-- Note: However, the file name is not kept in the file’s inode.
+#### Note: However, the file name is not kept in the file’s inode.
 
-4. A Unix filesystem has a file directory to keep track of files within it.
+### A Unix filesystem has a file directory to keep track of files within it.
 
-- A directory is also a file.
-- The “data” for a directory entry consists of 2-tuple entries:
+#### A directory is also a file.
 
-* The file name
-* The inode for the file
+#### The “data” for a directory entry consists of 2-tuple entries:
+
+- The file name
+- The inode for the file
 
 ## File Sector Manager (FSM)
 
@@ -79,16 +80,16 @@ or Allocated. A lesser known, essential function is the maintenance of the physi
 
 ## System Calls
 
-void fs_make(FSM\* \_fsm, unsigned int \_DISK_SIZE, unsigned int \_BLOCK_SIZE, unsigned int \_INODE_SIZE, unsigned int \_INODE_BLOCKS, unsigned int \_INODE_COUNT, int \_init_ssm_maps);
-void fs_remove(FSM\* \_fsm);
-Bool fs_create_file(FSM\* \_fsm, int \_is_dir, unsigned int\* \_file_name, unsigned int \_dir_inode_num);
-Bool fs_open_file(FSM\* \_fsm, unsigned int \_file_inode_num);
-void fs_close_file(FSM\* \_fsm);
-Bool fs_remove_file_from_dir(FSM\* \_fsm, unsigned int \_file_inode_num, unsigned int \_dir_inode_num);
-Bool fs_write_to_file(FSM\* \_fsm, unsigned int \_file_inode_num, void\* \_write_buffer, long long int \_file_size);
-Bool fs_read_from_file(FSM\* \_fsm, unsigned int \_file_inode_num, void\* \_read_buffer);
-Bool fs_remove_file(FSM\* \_fsm, unsigned int \_file_inode_num, unsigned int \_dir_inode_num);
-Bool fs_rename_file(FSM\* \_fsm, unsigned int \_file_inode_num, unsigned int\* \_file_name, unsigned int \_dir_inode_num);
+- void fs_make(FSM\* \_fsm, unsigned int \_DISK_SIZE, unsigned int \_BLOCK_SIZE, unsigned int \_INODE_SIZE, unsigned int \_INODE_BLOCKS, unsigned int \_INODE_COUNT, int \_init_ssm_maps);
+- void fs_remove(FSM\* \_fsm);
+- Bool fs_create_file(FSM\* \_fsm, int \_is_dir, unsigned int\* \_file_name, unsigned int \_dir_inode_num);
+- Bool fs_open_file(FSM\* \_fsm, unsigned int \_file_inode_num);
+- void fs_close_file(FSM\* \_fsm);
+- Bool fs_remove_file_from_dir(FSM\* \_fsm, unsigned int \_file_inode_num, unsigned int \_dir_inode_num);
+- Bool fs_write_to_file(FSM\* \_fsm, unsigned int \_file_inode_num, void\* \_write_buffer, long long int \_file_size);
+- Bool fs_read_from_file(FSM\* \_fsm, unsigned int \_file_inode_num, void\* \_read_buffer);
+- Bool fs_remove_file(FSM\* \_fsm, unsigned int \_file_inode_num, unsigned int \_dir_inode_num);
+- Bool fs_rename_file(FSM\* \_fsm, unsigned int \_file_inode_num, unsigned int\* \_file_name, unsigned int \_dir_inode_num);
 
 ## Sample Input
 
