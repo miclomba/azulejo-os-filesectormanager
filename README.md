@@ -158,3 +158,68 @@ I:3
 //End of input.
 E
 ```
+
+## Sample Output
+
+```
+DEBUG_LEVEL > 0:
+//Making the File System.
+//Disk = 3000000, Block = 1024, Inode = 128, Inode Block = 32 blocks...
+//M
+
+-> Allocating Boot Block, Super Block, 32 Inode Blocks, and Root (Inode 2)...
+** Expected Result: 3 Inodes allocated in the Inode Map
+** Expected Result: 35 Blocks allocated in the Aloc/Free Map
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+DEBUG_LEVEL > 0:
+//Listing contents of Directory ('ROOT_DIR') at (Inode 2)
+//L:2:ROOT_DIR
+
+-> Tuple name is: "."
+-> Inode number is 2
+
+-> Tuple name is: ".."
+-> Inode number is -1
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+
+DEBUG_LEVEL > 0:
+//Print 128 contiguous Inodes from Inode Map starting at Inode (0).
+//P:0
+
+=======================================================================
+
+INODE MAP
+00011111 11111111 11111111 11111111 11111111 11111111 11111111 11111111
+0        8        16       24       32       40       48       56
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111
+64       72       80       88       96       104      112      120
+
+=======================================================================
+
+//Print 128 contiguous Sectors from Free/Aloc Map starting at Sector (0).
+=======================================================================
+FREE MAP
+00000000 00000000 00000000 00000000 00011111 11111111 11111111 11111111
+0        8        16       24       32       40       48       56
+11111111 11111111 11111111 11111111 11111111 11111111 11111111 11111111
+64       72       80       88       96       104      112      120
+
+ALLOCATED MAP
+11111111 11111111 11111111 11111111 11100000 00000000 00000000 00000000
+0        8        16       24       32       40       48       56
+00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+64       72       80       88       96       104      112      120
+=======================================================================
+
+
+DEBUG_LEVEL > 0:
+//Create a Directory ('DirL1-01') in Folder (Inode 2)
+//C:D:2:DirL1-01
+
+-> Used (Inode 3) to create a Directory.
+** Expected Result: 1 Inode allocated in the Inode Map
+** Expected Result: 1 Block allocated in the Aloc/Free Map
+```
