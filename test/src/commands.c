@@ -131,7 +131,7 @@ int print_command(char* input, FSM* fsm, int i) {
     return i;
 }
 
-int create_command(char* input, FSM* fsm, unsigned int* name, int i) {
+int create_command(char* input, FSM* fsm, char* name, int i) {
     // iNode number dealing with files and directories
     unsigned int inodeNumF = 0;
     unsigned int inodeNumD = 0;
@@ -150,16 +150,16 @@ int create_command(char* input, FSM* fsm, unsigned int* name, int i) {
         // convert the character to a digit
         inodeNumD = atoi(&input[i]);
         // for debugging purposes, string of characters in buffer
-        strcpy((char*)name, "my name");
+        strcpy(name, "my name");
         // if character is 'F', create a file
         if (c == 'F') {
             // call to createFile with parameter for file
-            inodeNumF = fs_create_file(fsm, 0, name, inodeNumD);
+            inodeNumF = fs_create_file(fsm, 0, (unsigned int*)name, inodeNumD);
         }  // end if (c == 'F')
         // if character is 'D', create a directory
         else if (c == 'D') {
             // call to createFile with parameter for directory
-            inodeNumF = fs_create_file(fsm, 1, name, inodeNumD);
+            inodeNumF = fs_create_file(fsm, 1, (unsigned int*)name, inodeNumD);
         }  // end if (c == 'D')
         // find next input
         i = advance_to_char(input, ':', i);
@@ -169,19 +169,19 @@ int create_command(char* input, FSM* fsm, unsigned int* name, int i) {
         memcpy(name, input + i, 8);
         i += 8;
         // call to renameFile
-        fs_rename_file(fsm, inodeNumF, name, inodeNumD);
+        fs_rename_file(fsm, inodeNumF, (unsigned int*)name, inodeNumD);
     }  // end if (digit > 0)
     printf("DEBUG_LEVEL > 0:\n");
     // if a folder was created, print respective output
     if (c == 'F') {
-        printf("//Create a File (\'%s\') in Folder (Inode %d)\n", (char*)name, inodeNumD);
+        printf("//Create a File (\'%s\') in Folder (Inode %d)\n", name, inodeNumD);
     }  // end if (c == 'F')
     // if a directory was created, print respective output
     else if (c == 'D') {
         printf("//Create a Directory ");
-        printf("(\'%s\') in Folder (Inode %d)\n", (char*)name, inodeNumD);
+        printf("(\'%s\') in Folder (Inode %d)\n", name, inodeNumD);
     }  // end else if (c == 'D')
-    printf("//C:%c:%d:%s\n\n", c, inodeNumD, (char*)name);
+    printf("//C:%c:%d:%s\n\n", c, inodeNumD, name);
     printf("-> Used (Inode %d) to create a %s.\n", inodeNumF, c == 'F' ? "File" : "Directory");
     printf("** Expected Result: 1 Inode allocated in the Inode Map\n");
     printf("** Expected Result: %d Block%s allocated in the Aloc/Free Map\n", c == 'F' ? 0 : 1,
@@ -192,7 +192,7 @@ int create_command(char* input, FSM* fsm, unsigned int* name, int i) {
     return i;
 }
 
-int rename_command(char* input, FSM* fsm, unsigned int* name, int i) {
+int rename_command(char* input, FSM* fsm, char* name, int i) {
     // iNode number dealing with files and directories
     unsigned int inodeNumF, inodeNumD;
     // move to retrieve the file's iNode
@@ -224,13 +224,13 @@ int rename_command(char* input, FSM* fsm, unsigned int* name, int i) {
             printf("\nDEBUG_LEVEL > 0:\n");
             // print that the file will be renamed
             printf("//Renaming File (Inode ");
-            printf("%d), in Folder (Inode %d), to \"%s\"\n", inodeNumF, inodeNumD, (char*)name);
+            printf("%d), in Folder (Inode %d), to \"%s\"\n", inodeNumF, inodeNumD, name);
             // print input information
-            printf("//N:%d:%d:%s\n\n", inodeNumF, inodeNumD, (char*)name);
+            printf("//N:%d:%d:%s\n\n", inodeNumF, inodeNumD, name);
             // call renameFile
-            fs_rename_file(fsm, inodeNumF, name, inodeNumD);
+            fs_rename_file(fsm, inodeNumF, (unsigned int*)name, inodeNumD);
             // print success in renaming file
-            printf("-> Renamed File (Inode %d) to \'%s\'\n", inodeNumF, (char*)name);
+            printf("-> Renamed File (Inode %d) to \'%s\'\n", inodeNumF, name);
             // print section break
             printf("- - - - - - - - - - - - - - - - - - - - - - -");
             printf(" - - - - - - - - - - - - -\n\n");
@@ -519,7 +519,7 @@ int remove_test_command(char* input, FSM* fsm, int i) {
     return i;
 }
 
-int list_command(char* input, FSM* fsm, unsigned int* name, int i) {
+int list_command(char* input, FSM* fsm, char* name, int i) {
     // iNode number dealing with files
     unsigned int inodeNumF;
     // move to retrieve the iNode number
@@ -543,9 +543,9 @@ int list_command(char* input, FSM* fsm, unsigned int* name, int i) {
             printf("DEBUG_LEVEL > 0:\n");
             // print that contents of a directory will be listed
             printf("//Listing contents of Directory ('");
-            printf("%s') at (Inode %d)\n", (char*)name, inodeNumF);
+            printf("%s') at (Inode %d)\n", name, inodeNumF);
             // print input values
-            printf("//L:%d:%s\n", inodeNumF, (char*)name);
+            printf("//L:%d:%s\n", inodeNumF, name);
         }  // end if (DEBUG_LEVEL > 0)
         // call to readFromFile
         fs_read_from_file(fsm, inodeNumF, buffer);
@@ -558,7 +558,7 @@ int list_command(char* input, FSM* fsm, unsigned int* name, int i) {
                 // read value from buffer
                 memcpy(name, charBuffer + j, 8);
                 // print the tuple values
-                printf("\n-> Tuple name is: \"%s\"\n", (char*)name);
+                printf("\n-> Tuple name is: \"%s\"\n", name);
                 printf("-> Inode number is %d\n", *((unsigned int*)(&charBuffer[j + 8])));
             }  // end if (*((unsigned int *)(&charBuffer[j+12])) != 0)
         }  // end for (unsigned int j = 0; j < fsm->inode.fileSize; j += 16)

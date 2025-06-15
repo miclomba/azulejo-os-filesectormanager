@@ -53,7 +53,7 @@ int print_command(char* input, FSM* fsm, int i);
  * @param i Current index in the input buffer.
  * @return Updated input buffer index.
  */
-int create_command(char* input, FSM* fsm, unsigned int* name, int i);
+int create_command(char* input, FSM* fsm, char* name, int i);
 
 /**
  * @brief Renames an existing file or directory.
@@ -63,7 +63,7 @@ int create_command(char* input, FSM* fsm, unsigned int* name, int i);
  * @param i Current index in the input buffer.
  * @return Updated input buffer index.
  */
-int rename_command(char* input, FSM* fsm, unsigned int* name, int i);
+int rename_command(char* input, FSM* fsm, char* name, int i);
 
 /**
  * @brief Writes data to a file.
@@ -110,7 +110,7 @@ int remove_test_command(char* input, FSM* fsm, int i);
  * @param i Current index in the input buffer.
  * @return Updated input buffer index.
  */
-int list_command(char* input, FSM* fsm, unsigned int* name, int i);
+int list_command(char* input, FSM* fsm, char* name, int i);
 
 /**
  * @brief Handles unrecognized or default commands.
