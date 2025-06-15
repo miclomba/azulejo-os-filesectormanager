@@ -19,6 +19,8 @@ static unsigned int buffer[600 * (MAX_BLOCK_SIZE / 4)];
 int init_command(int _argc, char** _argv, char* input, FSM* fsm, int i) {
     // vars for holding the disk, block, iNode, iNode-block, iNode-count sizes for the file system
     unsigned int _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT;
+    _DISK_SIZE = _BLOCK_SIZE = _INODE_SIZE = _INODE_BLOCKS = _INODE_COUNT = 0;
+
     // if debug, print the creation of the file system
     if (DEBUG_LEVEL > 0)
         // call to log_fsm, print creation of the file system

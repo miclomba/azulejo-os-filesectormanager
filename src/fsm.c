@@ -439,7 +439,7 @@ static Bool add_file_to_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_n
                             unsigned int _inodeNumD) {
     Bool success;
     unsigned int i, j;
-    unsigned int diskOffset;
+    unsigned int diskOffset = 0;
     unsigned int buffer[BLOCK_SIZE / 4];
     unsigned int buffer2[BLOCK_SIZE / 4];
     success = fs_open_file(_fsm, _inodeNumD);
