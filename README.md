@@ -23,7 +23,7 @@ A file has exactly one inode, but can have many physical disk blocks (disk secto
 1. The physical disk is segmented into disk blocks.
 
 - Disk block 0 is the boot block or boot sector. Unix treats the boot block as a file, with an inode (inode 0) associated with it.
-- Disk block 1 is the superblock (also called the filesystem header), with information about the filesystem, e.g. disk block size, inode size, number of inodes for the filesystem, etc. Unix treats the superblock as a file, with an inode (inode 1) associated with it.
+- Disk block 1 is the superblock (also called the filesystem header), with information about the filesystem (e.g. disk block size, inode size, number of inodes for the filesystem, etc). Unix treats the superblock as a file, with an inode (inode 1) associated with it.
 - Disk block 2 through disk block N make up the inode-block.
 - The remaining disk blocks (N+1 through the last block) are data blocks available for use.
 
@@ -35,8 +35,23 @@ A file has exactly one inode, but can have many physical disk blocks (disk secto
 
 3. An inode for a file has the following structure:
 
-- File information: file type (directory, link ...), owner, length, creation date, number of links, etc. However, the file name is not kept in the file’s inode.
-- 13 disk block pointers: 10 direct, 1 indirect, 1 double indirect, and 1 triple indirect.
+- File information:
+
+* file type (directory, link ...)
+* owner
+* length
+* creation date
+* number of links,
+* etc.
+
+- 13 disk block pointers:
+
+* 10 direct
+* 1 indirect
+* 1 double indirect
+* 1 triple indirect.
+
+- Note: However, the file name is not kept in the file’s inode.
 
 4. A Unix filesystem has a file directory to keep track of files within it.
 
@@ -52,35 +67,32 @@ The File Sector Manager (FSM) manages the inode block and the inodes. It also us
 
 ### Assumptions
 
-Assume that all file names in the filesystem are 8 characters or less. You can decide on reasonable system parameters such as: inode size, number of inodes, file directory size, etc.
+- Assume that all file names in the filesystem are 8 characters or less.
+- You can decide on reasonable system parameters such as: inode size, number of inodes, file directory size, etc.
 
 ## Sector Space Manager (SSM)
 
 The Sector Space Manager (SSM) controls the allocation of physical disk blocks (sectors or clusters). The same manager can be used also to control the allocation of physical blocks of any random access mass storage media (hard disk, DVD, CD, flash memory, main memory...). The disk blocks are called sectors. (Main memory managers use practically identical basic physical space manager for blocks or pages of physical space.)
 
 SSM provides the lowest level of physical space management to track the disk sector availability. Its function is basically a simple 1 column binary score board with values of Free
-or Allocated.
-
-A lesser known, essential function is the maintenance of the physical space management integrity. For example, it can be disastrous if a sector is allocated to 2 or more files.
-
-SSM is a software component that is basically independent of other functions that use it. As such, it can be designed and implemented while the file system is being designed.
+or Allocated. A lesser known, essential function is the maintenance of the physical space management integrity.
 
 ## System Calls
 
-The deliverables for an OS are the system calls (fd (file descriptor) is a number, beginning with 0 (zero)):
-
-- Disk formatting or initialization utility: mkfs(“disk name”, disk size, number of disk blocks, size of an inode, number of inodes, etc.)
-- fd = mkinode(filename, etc.) or fd = create(filename, etc.) to create a new file
-- fd =openfile(filename, etc.)
-- status = close(fd)
-- bytes_read = read(fd, buffer, nbytes, etc.)
-- bytes_written = write(fd, buffer, nbytes, etc.)
-- status = fileinfo(fd, where_to_return_status, etc.)
-- status = rename(oldname, newname)
-- status = mkdir(dirname, etc.)
-- status = rmdir(dirname, etc.)
+void fs_make(FSM\* \_fsm, unsigned int \_DISK_SIZE, unsigned int \_BLOCK_SIZE, unsigned int \_INODE_SIZE, unsigned int \_INODE_BLOCKS, unsigned int \_INODE_COUNT, int \_init_ssm_maps);
+void fs_remove(FSM\* \_fsm);
+Bool fs_create_file(FSM\* \_fsm, int \_is_dir, unsigned int\* \_file_name, unsigned int \_dir_inode_num);
+Bool fs_open_file(FSM\* \_fsm, unsigned int \_file_inode_num);
+void fs_close_file(FSM\* \_fsm);
+Bool fs_remove_file_from_dir(FSM\* \_fsm, unsigned int \_file_inode_num, unsigned int \_dir_inode_num);
+Bool fs_write_to_file(FSM\* \_fsm, unsigned int \_file_inode_num, void\* \_write_buffer, long long int \_file_size);
+Bool fs_read_from_file(FSM\* \_fsm, unsigned int \_file_inode_num, void\* \_read_buffer);
+Bool fs_remove_file(FSM\* \_fsm, unsigned int \_file_inode_num, unsigned int \_dir_inode_num);
+Bool fs_rename_file(FSM\* \_fsm, unsigned int \_file_inode_num, unsigned int\* \_file_name, unsigned int \_dir_inode_num);
 
 ## Sample Input
+
+Example input file with `//` as comments:
 
 ```
 //Make the file system
@@ -222,4 +234,6 @@ DEBUG_LEVEL > 0:
 -> Used (Inode 3) to create a Directory.
 ** Expected Result: 1 Inode allocated in the Inode Map
 ** Expected Result: 1 Block allocated in the Aloc/Free Map
+
+...
 ```
