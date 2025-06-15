@@ -198,18 +198,15 @@ unsigned int fs_create_file(FSM *_fsm, int _isDirectory, unsigned int *_name,
     return inodeNum;
 }
 
-Bool fs_open_file(FSM *_fsm, unsigned int _inodeNum) {
+const Inode *fs_open_file(FSM *_fsm, unsigned int _inodeNum) {
     int i, j;
     if (_inodeNum == (unsigned int)(-1)) {
-        return False;
+        return NULL;
     }  // end if (_inodeNum == (unsigned int)(-1)) {
     inode_read(&_fsm->inode, _inodeNum, _fsm->diskHandle);
     _fsm->inodeNum = _inodeNum;
     // Return true if file loaded correctly
-    if (_fsm->inode.fileType > 0) {
-        return True;
-    }  // end if (_fsm->inode.fileType > 0)
-    else {
+    if (_fsm->inode.fileType <= 0) {
         // If file not loaded, create a default inode and return False
         _fsm->inode.fileType = 0;
         _fsm->inode.fileSize = 0;
@@ -230,6 +227,7 @@ Bool fs_open_file(FSM *_fsm, unsigned int _inodeNum) {
         // Return False if file did not open correctly
         return False;
     }  // end else (_fsm->inode.fileType > 0)
+    return &_fsm->inode;
 }
 
 void fs_close_file(FSM *_fsm) {
@@ -255,9 +253,8 @@ void fs_close_file(FSM *_fsm) {
 
 Bool fs_read_from_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer) {
     // Open file at Inode _inodeNum for reading
-    Bool success;
-    success = fs_open_file(_fsm, _inodeNum);
-    if (success == False) {
+    const Inode *success = fs_open_file(_fsm, _inodeNum);
+    if (success == NULL) {
         return False;
     }  // end if (success == False)
     void *buffer;
@@ -293,10 +290,9 @@ Bool fs_read_from_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer) {
 }
 
 Bool fs_write_to_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer, long long int _fileSize) {
-    Bool success;
     // return false if openFile fails
-    success = fs_open_file(_fsm, _inodeNum);
-    if (success == False) {
+    const Inode *success = fs_open_file(_fsm, _inodeNum);
+    if (success == NULL) {
         return False;
     }  // end if (success == False)
     // set fileSize and inode fileSize
@@ -442,8 +438,8 @@ static Bool add_file_to_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_n
     unsigned int diskOffset = 0;
     unsigned int buffer[BLOCK_SIZE / 4];
     unsigned int buffer2[BLOCK_SIZE / 4];
-    success = fs_open_file(_fsm, _inodeNumD);
-    if (success == True) {
+    const Inode *inode = fs_open_file(_fsm, _inodeNumD);
+    if (inode != NULL) {
         if (_fsm->inode.fileType == 2) {
             // Read file's direct pointers from disk
             for (i = 0; i < 10; i++) {
@@ -891,8 +887,8 @@ Bool fs_remove_file_from_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int _i
     unsigned int buffer[BLOCK_SIZE / 4];
     unsigned int sectorNum;
     // open file, return false if access error
-    success = fs_open_file(_fsm, _inodeNumD);
-    if (success == True) {
+    const Inode *inode = fs_open_file(_fsm, _inodeNumD);
+    if (inode != NULL) {
         if (_fsm->inode.fileType == 2) {  // type 2 is directory
             for (i = 0; i < 10; i++) {
                 if (_fsm->inode.directPtr[i] != (unsigned int)(-1)) {
@@ -1567,9 +1563,8 @@ static void write_to_single_indirect_blocks(FSM *_fsm, unsigned int _baseOffset,
 
 Bool fs_remove_file(FSM *_fsm, unsigned int _inodeNum, unsigned int _inodeNumD) {
     // Open file at Inode _inodeNum for reading
-    Bool success;
-    success = fs_open_file(_fsm, _inodeNum);
-    if (success == False) {
+    const Inode *inode = fs_open_file(_fsm, _inodeNum);
+    if (inode == NULL) {
         return False;
     }  // end if (success == False)
     unsigned int directPtrs[10];
@@ -1650,9 +1645,9 @@ Bool fs_remove_file(FSM *_fsm, unsigned int _inodeNum, unsigned int _inodeNumD) 
         }  // end else if (fileType == 2)
     }  // end if (diskOffset != (unsigned int)(-1))
     // Open inode, assign to success whether opening worked
-    success = fs_open_file(_fsm, _inodeNum);
+    inode = fs_open_file(_fsm, _inodeNum);
     // If inode didn't open, return false
-    if (success == False) {
+    if (inode == NULL) {
         return False;
     }  // end if (success == False)
     // Clear the inode
@@ -1836,8 +1831,8 @@ Bool fs_rename_file(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_name,
     unsigned int diskOffset;
     unsigned int buffer[BLOCK_SIZE / 4];
     // Attempt to open directory
-    success = fs_open_file(_fsm, _inodeNumD);
-    if (success == True) {
+    const Inode *inode = fs_open_file(_fsm, _inodeNumD);
+    if (inode != NULL) {
         if (_fsm->inode.fileType == 2) {
             for (i = 0; i < 10; i++) {
                 if (_fsm->inode.directPtr[i] != (unsigned int)(-1)) {
@@ -2004,7 +1999,7 @@ static Bool rename_file_in_single_indirect(FSM *_fsm, unsigned int _inodeNumF, u
     return False;
 }
 
-void fs_make(FSM *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE, unsigned int _INODE_SIZE,
+Bool fs_make(FSM *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE, unsigned int _INODE_SIZE,
              unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT, int _initSsmMaps) {
     init_fsm_constants(_DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT);
     init_fsm_maps(_fsm);
@@ -2032,23 +2027,27 @@ void fs_make(FSM *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE, unsig
     unsigned int name[2];
     // Set inode 0 for boot sector
     fs_create_file(_fsm, 0, name, (unsigned int)(-1));
-    fs_open_file(_fsm, 0);
+    const Inode *inode = fs_open_file(_fsm, 0);
+    if (inode == NULL) printf("Corruption during file system creation");  // Failed to open inode 0
     _fsm->inode.directPtr[0] = 0;
     inode_write(&_fsm->inode, 0, _fsm->diskHandle);
     // Set inode 1 for super block
     fs_create_file(_fsm, 0, name, (unsigned int)(-1));
-    fs_open_file(_fsm, 1);
+    inode = fs_open_file(_fsm, 1);
+    if (inode == NULL) printf("Corruption during file system creation");  // Failed to open inode 0
     _fsm->inode.directPtr[0] = BLOCK_SIZE * (1);
     inode_write(&_fsm->inode, 1, _fsm->diskHandle);
     // make root directory with inode 2
     fs_create_file(_fsm, 1, name, (unsigned int)(-1));
+    return True;
 }
 
-void fs_remove(FSM *_fsm) {
+Bool fs_remove(FSM *_fsm) {
     if (_fsm->diskHandle) {
         fclose(_fsm->diskHandle);
         _fsm->diskHandle = Null;
     }
+    return True;
 }
 
 /**

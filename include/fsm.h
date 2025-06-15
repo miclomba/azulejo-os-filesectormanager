@@ -42,20 +42,20 @@ typedef struct {
  * @param[in] _INODE_BLOCKS Number of blocks reserved for inodes.
  * @param[in] _INODE_COUNT Total number of inodes to initialize.
  * @param[in] _initSsmMaps Flag indicating whether to initialize the SSM maps.
- * @return void
+ * @return True if the FSM was successfully created, false otherwise.
  * @date 2010-04-12 First implementation.
  */
-void fs_make(FSM *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE, unsigned int _INODE_SIZE,
+Bool fs_make(FSM *_fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE, unsigned int _INODE_SIZE,
              unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT, int _initSsmMaps);
 
 /**
  * @brief Closes the file system and releases associated resources.
  * Finalizes the file system by closing the disk handle if it is open.
  * @param[in,out] _fsm Pointer to the FSM structure.
- * @return void
+ * @return True if the FSM was successfully removed, false otherwise.
  * @date 2025-06-13 First implementation.
  */
-void fs_remove(FSM *_fsm);
+Bool fs_remove(FSM *_fsm);
 
 /**
  * @brief Creates a file or directory.
@@ -75,10 +75,10 @@ unsigned int fs_create_file(FSM *_fsm, int _isDirectory, unsigned int *_name,
  * Opens a file identified by the given inode number within the File Sector Manager.
  * @param[in,out] _fsm Pointer to the FSM instance.
  * @param[in] _inodeNum Inode number of the file to open.
- * @return True if the file was successfully opened, false otherwise.
+ * @return The inode of the file, NULL otherwise.
  * @date 2010-04-01 First implementation.
  */
-Bool fs_open_file(FSM *_fsm, unsigned int _inodeNum);
+const Inode *fs_open_file(FSM *_fsm, unsigned int _inodeNum);
 
 /**
  * @brief Closes the currently opened file.

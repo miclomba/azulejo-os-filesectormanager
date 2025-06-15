@@ -66,12 +66,14 @@ int init_command(int _argc, char** _argv, char* input, FSM* fsm, int i) {
         // fifth parameter is iNodes per block, store value
         _INODE_COUNT = atoi(&input[i]);
     // if correct parameters, create the file system
+    Bool status = True;
     if (_argc > 1 && atoi(_argv[1]) == 1)
         // call to mkfs, initializing the SSM values
-        fs_make(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 1);
+        status = fs_make(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 1);
     else
         // call to mkfs, without initializing SSM values
-        fs_make(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 0);
+        status = fs_make(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 0);
+    if (status == False) printf("Error: Could not create file system.\n");
     // find next line of input
     i = advance_to_char(input, '\n', i);
     return i;
@@ -83,7 +85,8 @@ void end_command(FSM* fsm) {
         // call to log_fsm, print the end has been reached
         log_fsm(fsm, 14, 0);
     }  // end if (DEBUG_LEVEL > 0)
-    fs_remove(fsm);
+    Bool status = fs_remove(fsm);
+    if (status == False) printf("Error: Could not remove file system.\n");
 }
 
 int info_command(char* input, FSM* fsm, int i) {
@@ -98,10 +101,10 @@ int info_command(char* input, FSM* fsm, int i) {
         // convert the character to a digit
         inodeNumF = atoi(&input[i]);
         // attempt to open the file located at inodeNumF
-        Bool success = fs_open_file(fsm, inodeNumF);
+        const Inode* inode = fs_open_file(fsm, inodeNumF);
         // if the iNode was successfully opened, print the
         // appropriate message
-        if (success == True) {
+        if (inode != NULL) {
             // call to log_fsm, print the iNode information
             log_fsm(fsm, 29, 0);
         }  // if (*success == True)
@@ -380,7 +383,8 @@ int remove_command(char* input, FSM* fsm, int i) {
             printf("-> Removed File (Inode ");
             printf("%d) from Folder (Inode %d).\n", inodeNumF, inodeNumD);
             // call to openFile to ensure file has been removed
-            fs_open_file(fsm, inodeNumF);
+            const Inode* inode = fs_open_file(fsm, inodeNumF);
+            if (inode == NULL) printf("Filesystem corruption during remove command.\n");
             // if removing a folder, recursively remove all
             // subdirectories and files
             if (fsm->inode.fileType == 2) {
@@ -426,7 +430,8 @@ int remove_test_command(char* input, FSM* fsm, int i) {
         // print input information
         printf("//T:%d\n\n", atoi(&input[i]));
         // call to openFile
-        fs_open_file(fsm, atoi(&input[i]));
+        const Inode* inode = fs_open_file(fsm, atoi(&input[i]));
+        if (inode == NULL) printf("Filesystem corruption during remove test command.\n");
         // print that iNode has been opened
         printf("Opened Folder (Inode %d)\n", atoi(&input[i]));
         // print that the required data blocks are being allocated
@@ -514,7 +519,8 @@ int remove_test_command(char* input, FSM* fsm, int i) {
         printf("\nTRY FUNCTION CALL: rmFileFromDir(fsm,25,");
         printf("%d);\n\nReturned %s\n", atoi(&input[i]), success ? "TRUE" : "FALSE");
         // call to openFile
-        fs_open_file(fsm, atoi(&input[i]));
+        inode = fs_open_file(fsm, atoi(&input[i]));
+        if (inode == NULL) printf("Filesystem corruption during remove test command.\n");
         // set single indirect to -1
         fsm->inode.dIndirect = -1;
         // write iNode to file
