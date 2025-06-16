@@ -20,7 +20,7 @@ static char byteArray[8];
 /**
  * @brief Prints INODE and FREE maps 8 bit sections.
  * For example: 00011111
- * @param[in,out] k Byte offset at which to begin the map.
+ * @param[in,out] k bit offset within the byte.
  * @return next byte offset after printing
  */
 static int print_8_bits(int k) {
@@ -36,7 +36,12 @@ static int print_8_bits(int k) {
  * @brief Prints INODE and FREE maps 8 bit sections.
  * For example: 00011111 11111111 11111111 11111111 11111111 11111111 11111111 11111111
  *              00011111 11111111 11111111 11111111 11111111 11111111 11111111 11111111
- * @param[in,out] k Byte offset at which to begin the map.
+ * @param[in] map inode or free map.
+ * @param[in] _startByte Byte offset at which to begin the debug trace.
+ * @param[in] block_count block count
+ * @param[in,out] byte_array buffer
+ * @param[in,out] k index into byte
+ * @param[in,out] i byte index
  * @return next byte offset after printing
  */
 static void print_128_bits(unsigned char* map, unsigned int _startByte, unsigned int block_count,
@@ -61,7 +66,7 @@ static void print_128_bits(unsigned char* map, unsigned int _startByte, unsigned
  * @brief Prints SSM maps.
  * @param[in] _ssm the Sector Space Manager
  * @param[in] _startByte the start byte of the maps
- * @param[in,out] byteArray
+ * @param[in,out] byte_array buffer
  * @return void
  */
 static void print_ssm_maps(SSM* _ssm, unsigned int _startByte, char* byte_array) {
