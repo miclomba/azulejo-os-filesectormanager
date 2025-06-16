@@ -60,42 +60,39 @@ static void print_128_bits(unsigned char* map, unsigned int _startByte, unsigned
 /**
  * @brief Prints SSM maps.
  * @param[in] _ssm the Sector Space Manager
- * @param[in,out] k Byte offset in the sector
- * @param[in,out] i
  * @param[in] _startByte the start byte of the maps
  * @param[in,out] byteArray
  * @return void
  */
-static void print_ssm_maps(SSM* _ssm, unsigned int* k, unsigned int* i, unsigned int _startByte,
-                           char* byte_array) {
+static void print_ssm_maps(SSM* _ssm, unsigned int _startByte, char* byte_array) {
     printf("//Print 128 contiguous Sectors from Free/Aloc Map starting at Sector (%d).\n",
            _startByte * 8);
     // printf("//P:%d\n\n",_startByte);
     printf("=======================================================================\n");
     printf("FREE MAP\n");
-    *k = _startByte;
-    print_128_bits(_ssm->freeMap, _startByte, SECTOR_BYTES, byte_array, k, i);
+    unsigned int k = _startByte;
+    unsigned int i = 0;
+    print_128_bits(_ssm->freeMap, _startByte, SECTOR_BYTES, byte_array, &k, &i);
     printf("\n");
     printf("ALLOCATED MAP\n");
-    *k = _startByte;
-    print_128_bits(_ssm->alocMap, _startByte, SECTOR_BYTES, byte_array, k, i);
+    k = _startByte;
+    print_128_bits(_ssm->alocMap, _startByte, SECTOR_BYTES, byte_array, &k, &i);
     printf("=======================================================================\n\n\n");
 }
 
 /**
  * @brief Prints sector allocation failure message.
- * @param[in,out] k Byte offset in the sector
  * @param[in] badArray sector table
  * @param[in] message the error message
  * @return void
  */
-static void print_sector_failure(unsigned int* k, unsigned int badArray[][2], const char* message) {
+static void print_sector_failure(unsigned int badArray[][2], const char* message) {
     printf("DEBUG_LEVEL > 0:\n");
-    for (*k = 0; *k < MAX_INPUT; (*k)++) {
-        if (badArray[*k][0] == (unsigned int)(-1)) {
+    for (unsigned int k = 0; k < MAX_INPUT; k++) {
+        if (badArray[k][0] == (unsigned int)(-1)) {
             break;
         }
-        int sector = 8 * badArray[*k][0] + badArray[*k][1];
+        int sector = 8 * badArray[k][0] + badArray[k][1];
         printf("%s %d\n", message, sector);
     }
     printf("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
@@ -188,14 +185,11 @@ static void print_message(const char* message) {
 /**
  * @brief Prints Inode map.
  * @param[in] _fsm the File Sector Manager
- * @param[in,out] k Byte offset in the sector
- * @param[in,out] i
  * @param[in] _startByte the start byte of the maps
  * @param[in,out] byte_array
  * @return void
  */
-static void print_inode_map(FSM* _fsm, unsigned int* k, unsigned int* i, unsigned int _startByte,
-                            char* byte_array) {
+static void print_inode_map(FSM* _fsm, unsigned int _startByte, char* byte_array) {
     printf("DEBUG_LEVEL > 0:\n");
     printf("//Print 128 contiguous Inodes from Inode Map ");
     printf("starting at Inode (%d).\n", _startByte * 8);
@@ -203,8 +197,9 @@ static void print_inode_map(FSM* _fsm, unsigned int* k, unsigned int* i, unsigne
     printf("===================================");
     printf("====================================\n\n");
     printf("INODE MAP\n");
-    *k = _startByte;
-    print_128_bits(_fsm->iMap, _startByte, INODE_BLOCKS, byte_array, k, i);
+    unsigned int k = _startByte;
+    unsigned int i = 0;
+    print_128_bits(_fsm->iMap, _startByte, INODE_BLOCKS, byte_array, &k, &i);
     printf("\n");
     printf("===================================");
     printf("====================================\n\n");
@@ -227,7 +222,6 @@ static void print_making_fs(void) {
 }
 
 void log_fsm(FSM* _fsm, int _case, unsigned int _startByte) {
-    unsigned int i, k;
     switch (_case) {
         // Print Initialization Message
         case 0:
@@ -235,7 +229,7 @@ void log_fsm(FSM* _fsm, int _case, unsigned int _startByte) {
             break;
         // Print Inode Map
         case 1:
-            print_inode_map(_fsm, &k, &i, _startByte, byteArray);
+            print_inode_map(_fsm, _startByte, byteArray);
             break;
         case 2:
             snprintf(msg, sizeof(msg),
@@ -251,7 +245,7 @@ void log_fsm(FSM* _fsm, int _case, unsigned int _startByte) {
             break;
         // Print Allocate Failure method
         case 4:
-            print_sector_failure(&k, _fsm->badInode, "Failed to allocate inodes at sector\n");
+            print_sector_failure(_fsm->badInode, "Failed to allocate inodes at sector\n");
             break;
         case 5:
             break;
@@ -267,11 +261,11 @@ void log_fsm(FSM* _fsm, int _case, unsigned int _startByte) {
             break;
         // Print deallocation failure message
         case 7:
-            print_sector_failure(&k, _fsm->badInode, "Failed to deallocate inode\n");
+            print_sector_failure(_fsm->badInode, "Failed to deallocate inode\n");
             break;
         // Print integrity check failure message
         case 8:
-            print_sector_failure(&k, _fsm->badInode, "Failed integrity check at sector\n\n");
+            print_sector_failure(_fsm->badInode, "Failed integrity check at sector\n\n");
             break;
         // Print integrity check pass message
         case 9:
@@ -377,13 +371,12 @@ void log_fsm(FSM* _fsm, int _case, unsigned int _startByte) {
 }
 
 void log_ssm(SSM* _ssm, int _case, int _startByte) {
-    unsigned int i, k;
     switch (_case) {
         case 0:
             print_message("Initializing SSM maps...");
             break;
         case 1:
-            print_ssm_maps(_ssm, &k, &i, (unsigned int)_startByte, byteArray);
+            print_ssm_maps(_ssm, (unsigned int)_startByte, byteArray);
             break;
         case 2:
             snprintf(msg, sizeof(msg),
@@ -397,7 +390,7 @@ void log_ssm(SSM* _ssm, int _case, int _startByte) {
             print_message("Initializing SSM...");
             break;
         case 4:
-            print_sector_failure(&k, _ssm->badSector, "Failed to allocate sectors at sector");
+            print_sector_failure(_ssm->badSector, "Failed to allocate sectors at sector");
             break;
         case 5:
             snprintf(msg, sizeof(msg),
@@ -416,10 +409,10 @@ void log_ssm(SSM* _ssm, int _case, int _startByte) {
             print_message(msg);
             break;
         case 7:
-            print_sector_failure(&k, _ssm->badSector, "Failed to deallocate sector");
+            print_sector_failure(_ssm->badSector, "Failed to deallocate sector");
             break;
         case 8:
-            print_sector_failure(&k, _ssm->badSector, "Failed integrity check at sector");
+            print_sector_failure(_ssm->badSector, "Failed integrity check at sector");
             printf("\n");
             break;
         case 9:
