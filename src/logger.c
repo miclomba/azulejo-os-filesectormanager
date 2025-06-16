@@ -2,6 +2,8 @@
  *	Sector Space Manager (SSM)
  *	Author: Michael Lombardi
  **********************************/
+#include "logger.h"
+
 #include <stdio.h>
 
 #include "config.h"

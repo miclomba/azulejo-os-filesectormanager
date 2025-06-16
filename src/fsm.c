@@ -268,19 +268,19 @@ Bool fs_read_from_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer) {
         if (diskOffset != (unsigned int)(-1)) {
             fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
             _fsm->sampleCount = fread(buffer, BLOCK_SIZE, 1, _fsm->diskHandle);
-            buffer += BLOCK_SIZE;
+            buffer = (char *)buffer + BLOCK_SIZE;
         }  // end if (diskOffset != (unsigned int)(-1))
     }  // end for (i = 0; i < 10; i++)
     // Read data from single indirect pointer into buffer _buffer
     diskOffset = _fsm->inode.sIndirect;
     if (diskOffset != (unsigned int)(-1)) {
         read_from_single_indirect_blocks(_fsm, buffer, diskOffset);
-        buffer += BLOCK_SIZE * S_INDIRECT_BLOCKS;
+        buffer = (char *)buffer + BLOCK_SIZE * S_INDIRECT_BLOCKS;
     }  // end if (diskOffset != (unsigned int)(-1))
     diskOffset = _fsm->inode.dIndirect;
     if (diskOffset != (unsigned int)(-1)) {
         read_from_double_indirect_blocks(_fsm, buffer, diskOffset);
-        buffer += BLOCK_SIZE * D_INDIRECT_BLOCKS;
+        buffer = (char *)buffer + BLOCK_SIZE * D_INDIRECT_BLOCKS;
     }  // end if (diskOffset != (unsigned int)(-1))
     diskOffset = _fsm->inode.tIndirect;
     if (diskOffset != (unsigned int)(-1)) {
@@ -332,7 +332,7 @@ Bool fs_write_to_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer, long lon
                 fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
                 _fsm->sampleCount = fwrite(buffer, BLOCK_SIZE, 1, _fsm->diskHandle);
                 ssm_allocate_sectors(_fsm->ssm);
-                buffer += BLOCK_SIZE;
+                buffer = (char *)buffer + BLOCK_SIZE;
             }  // end else (_fsm->ssm->index[0] == (unsigned int)(-1))
         }  // end if (diskOffset == (unsigned int)(-1))
         else {
@@ -340,7 +340,7 @@ Bool fs_write_to_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer, long lon
             fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
             // Overwrite the data at that location
             _fsm->sampleCount = fwrite(buffer, BLOCK_SIZE, 1, _fsm->diskHandle);
-            buffer += BLOCK_SIZE;
+            buffer = (char *)buffer + BLOCK_SIZE;
         }  // end else (diskOffset == (unsigned int)(-1))
     }  // end for (i = 0; i < directPtrs; i++)
     unsigned int sIndirectPtrs = 0;
@@ -361,11 +361,11 @@ Bool fs_write_to_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer, long lon
             // Write to single indirect blocks
             baseOffset = _fsm->inode.sIndirect;
             write_to_single_indirect_blocks(_fsm, baseOffset, buffer, sIndirectPtrs);
-            buffer += BLOCK_SIZE * S_INDIRECT_BLOCKS;
+            buffer = (char *)buffer + BLOCK_SIZE * S_INDIRECT_BLOCKS;
             // Write to double indirect blocks
             baseOffset = _fsm->inode.dIndirect;
             write_to_double_indirect_blocks(_fsm, baseOffset, buffer, dIndirectPtrs);
-            buffer += BLOCK_SIZE * D_INDIRECT_BLOCKS;
+            buffer = (char *)buffer + BLOCK_SIZE * D_INDIRECT_BLOCKS;
             // Calculate remaining filesize
             fileSize = fileSize + (10 * BLOCK_SIZE) - D_INDIRECT_SIZE;
             // Calculate number of triple Indirect pointers needed
@@ -388,7 +388,7 @@ Bool fs_write_to_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer, long lon
             // Write to single Indirect pointers
             baseOffset = _fsm->inode.sIndirect;
             write_to_single_indirect_blocks(_fsm, baseOffset, buffer, sIndirectPtrs);
-            buffer += BLOCK_SIZE * S_INDIRECT_BLOCKS;
+            buffer = (char *)buffer + BLOCK_SIZE * S_INDIRECT_BLOCKS;
             // Calculate Remaining filesize
             fileSize = fileSize + (10 * BLOCK_SIZE) - S_INDIRECT_SIZE;
             // Calculate number of double Indirect Pointrs needed
@@ -1214,7 +1214,7 @@ static void read_from_triple_indirect_blocks(FSM *_fsm, void *_buffer, unsigned 
         if (indirectBlock[i] != (unsigned int)(-1)) {
             diskOffset = indirectBlock[i];
             read_from_double_indirect_blocks(_fsm, buffer, diskOffset);
-            buffer += BLOCK_SIZE * D_INDIRECT_BLOCKS;
+            buffer = (char *)buffer + BLOCK_SIZE * D_INDIRECT_BLOCKS;
         }  // end if (indirectBlock[i] != (unsigned int)(-1))
     }  // end for (i = 0; i < BLOCK_SIZE/4; i++)
 }
@@ -1242,7 +1242,7 @@ static void read_from_double_indirect_blocks(FSM *_fsm, void *_buffer, unsigned 
         if (indirectBlock[i] != (unsigned int)(-1)) {
             diskOffset = indirectBlock[i];
             read_from_single_indirect_blocks(_fsm, buffer, diskOffset);
-            buffer += BLOCK_SIZE * S_INDIRECT_BLOCKS;
+            buffer = (char *)buffer + BLOCK_SIZE * S_INDIRECT_BLOCKS;
         }  // end if (indirectBlock[i] != (unsigned int)(-1))
     }  // end for (i = 0; i < BLOCK_SIZE/4; i++)
 }
@@ -1271,7 +1271,7 @@ static void read_from_single_indirect_blocks(FSM *_fsm, void *_buffer, unsigned 
             diskOffset = indirectBlock[i];
             fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
             _fsm->sampleCount = fread(buffer, BLOCK_SIZE, 1, _fsm->diskHandle);
-            buffer += BLOCK_SIZE;
+            buffer = (char *)buffer + BLOCK_SIZE;
         }  // end if (indirectBlock[i] != (unsigned int)(-1))
     }  // end for (i = 0; i < BLOCK_SIZE/4; i++)
 }
@@ -1458,19 +1458,19 @@ static void write_to_triple_indirect_blocks(FSM *_fsm, unsigned int _baseOffset,
             if (tIndirectPtrs - D_INDIRECT_BLOCKS > 0) {
                 // write a dindirect worth of blocks then continue looping
                 write_to_double_indirect_blocks(_fsm, diskOffset, buffer, D_INDIRECT_BLOCKS);
-                buffer += BLOCK_SIZE * D_INDIRECT_BLOCKS;
+                buffer = (char *)buffer + BLOCK_SIZE * D_INDIRECT_BLOCKS;
                 tIndirectPtrs -= D_INDIRECT_BLOCKS;
             }  // end if (tIndirectPtrs - D_INDIRECT_BLOCKS > 0)
             else if (tIndirectPtrs - D_INDIRECT_BLOCKS == 0) {
                 // write the rest into a dindirect block
                 write_to_double_indirect_blocks(_fsm, diskOffset, buffer, D_INDIRECT_BLOCKS);
-                buffer += BLOCK_SIZE * D_INDIRECT_BLOCKS;
+                buffer = (char *)buffer + BLOCK_SIZE * D_INDIRECT_BLOCKS;
                 tIndirectPtrs -= D_INDIRECT_BLOCKS;
                 break;
             } else {
                 // write the rest into a dindirect block
                 write_to_double_indirect_blocks(_fsm, diskOffset, buffer, tIndirectPtrs);
-                buffer += BLOCK_SIZE * tIndirectPtrs;
+                buffer = (char *)buffer + BLOCK_SIZE * tIndirectPtrs;
                 tIndirectPtrs = 0;
                 break;
             }  // end else
@@ -1511,20 +1511,20 @@ static void write_to_double_indirect_blocks(FSM *_fsm, unsigned int _baseOffset,
             // write a sindirect block at a time
             if (dIndirectPtrs - S_INDIRECT_BLOCKS > 0) {
                 write_to_single_indirect_blocks(_fsm, diskOffset, buffer, S_INDIRECT_BLOCKS);
-                buffer += BLOCK_SIZE * S_INDIRECT_BLOCKS;
+                buffer = (char *)buffer + BLOCK_SIZE * S_INDIRECT_BLOCKS;
                 dIndirectPtrs -= S_INDIRECT_BLOCKS;
             }  // end if (dIndirectPtrs - S_INDIRECT_BLOCKS > 0)
             // write the rest into a sindirect block
             else if (dIndirectPtrs - S_INDIRECT_BLOCKS == 0) {
                 write_to_single_indirect_blocks(_fsm, diskOffset, buffer, S_INDIRECT_BLOCKS);
-                buffer += BLOCK_SIZE * S_INDIRECT_BLOCKS;
+                buffer = (char *)buffer + BLOCK_SIZE * S_INDIRECT_BLOCKS;
                 dIndirectPtrs -= S_INDIRECT_BLOCKS;
                 break;
             }  // end else if (dIndirectPtrs - S_INDIRECT_BLOCKS == 0)
             // write the rest into a sindirect block
             else {
                 write_to_single_indirect_blocks(_fsm, diskOffset, buffer, dIndirectPtrs);
-                buffer += BLOCK_SIZE * dIndirectPtrs;
+                buffer = (char *)buffer + BLOCK_SIZE * dIndirectPtrs;
                 dIndirectPtrs = 0;
                 break;
             }  // end else
@@ -1563,7 +1563,7 @@ static void write_to_single_indirect_blocks(FSM *_fsm, unsigned int _baseOffset,
         } else {
             fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
             _fsm->sampleCount = fwrite(buffer, BLOCK_SIZE, 1, _fsm->diskHandle);
-            buffer += BLOCK_SIZE;  // increment buffer
+            buffer = (char *)buffer + BLOCK_SIZE;  // increment buffer
         }  // end else
     }  // end for (i = 0; i < _sIndirectPtrs; i++)
 }

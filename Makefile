@@ -1,6 +1,21 @@
-MEM = -O1 -fsanitize=address,undefined
+# Include debug symbols and disable optimization for easier stepping.
+DEBUG = -g -O0
+
+# Turn on almost all sensible warnings (including pedantic ISO-C).
+SENSIBLE_W = -W -Wall -Wextra -Wpedantic
+# Warn on implicit conversions that may change sign or width.
+CONV_W = -Wconversion -Wsign-conversion
+# Ensure all functions are properly prototyped, catch old-style (K&R) defs.
+PROTO_W = -Wstrict-prototypes -Wmissing-prototypes -Wold-style-definition
+#Catch shadowed variables, questionable pointer arithmetic, and alignment casts.
+PTR_ALIGN_W = -Wshadow -Wpointer-arith #-Wcast-align
+# At runtime, detect buffer overflows, use-after-free, integer overflows, invalid casts, etc.
+MEM_W = -fsanitize=address,undefined
+# Improves backtraces under ASan/UBSan.
+BACKTRACE_W = -fno-omit-frame-pointer
+
 CC = gcc
-CFLAGS = -g -W -Wall $(MEM) -Iinclude -Itest/include
+CFLAGS = -g $(SENSIBLE_W) $(MEM_W) $(PROTO_W) $(PTR_ALIGN_W) $(BACKTRACE_W) $(DEBUG) -Iinclude -Itest/include
 
 OBJ = test/main.o test/src/commands.o test/src/utils.o src/fsm.o src/fsm_constants.o src/inode.o src/ssm.o src/logger.o
 

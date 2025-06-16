@@ -19,6 +19,15 @@ static FSM fsm[1];
 // buffer for input read, has a maximum input of 10,000 characters
 static char input[MAX_INPUT];
 
+// PROTOTYPES
+/**
+ * @brief Outputs stub input for debugging or testing purposes.
+ * Reads input from a predefined stub file (`INPUT_STUB_FILE`) and prints its contents
+ * to standard output. Used primarily for generating traceable debug output when
+ * `DEBUG_LEVEL > 0`. Terminates early upon encountering the "END" marker in the file.
+ * @return void
+ */
+void process_input_stub(void);
 /**
  * @brief Processes and executes file system commands from an input file.
  * Reads all commands from a predefined input file (`INPUT_FILE`) and interprets each command
@@ -29,6 +38,8 @@ static char input[MAX_INPUT];
  * @param argv Argument vector containing command-line parameters.
  * @return void
  */
+void process_input(int argc, char** argv);
+
 void process_input(int argc, char** argv) {
     // boolean for state of reading input
     Bool loop = True;
@@ -110,7 +121,7 @@ void process_input(int argc, char** argv) {
  * `DEBUG_LEVEL > 0`. Terminates early upon encountering the "END" marker in the file.
  * @return void
  */
-void process_input_stub() {
+void process_input_stub(void) {
     // if the debug level is greater than 0, generate stub output
     if (DEBUG_LEVEL > 0) {
         // call log_fsm to print that stub output is being created

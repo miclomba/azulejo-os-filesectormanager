@@ -5,51 +5,31 @@
 #include "inode.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include "config.h"
 #include "fsm_constants.h"
 #include "global_constants.h"
 
 void inode_make(unsigned int _count, FILE *_fileStream, unsigned int _diskOffset) {
-    // iterators for moving through a buffer during initialization
-    unsigned int i, j;
-    // store temporarily the return value from fwrite
-    // unsigned int sampleCount;
     // before writing default iNodes, store values in a buffer
     unsigned int buffer[_count][32];
+    typedef unsigned int UI;
     // initialize all struct values to their default values
     // 0 for data, -1 for pointers
-    for (i = 0; i < _count; i++) {
-        // value location for fileType
-        buffer[i][0] = 0;
-        // value location for fileSize
-        buffer[i][1] = 0;
-        // value location for permissions
-        buffer[i][2] = 0;
-        // value location for linkCount
-        buffer[i][3] = 0;
-        // value location for dataBlocks
-        buffer[i][4] = 0;
-        // value location for tModified
-        buffer[i][5] = 0;
-        // value location for status
-        buffer[i][6] = 0;
-        // initialize all direct pointers to values of -1
-        for (j = 7; j < 17; j++) {
-            // direct pointer to -1
-            buffer[i][j] = -1;
-        }  // end for (k = 7; j < 17; j++)
-        // single indirect pointer to -1
-        buffer[i][17] = -1;
-        // double indirect pointer to -1
-        buffer[i][18] = -1;
-        // triple indirect pointer to -1
-        buffer[i][19] = -1;
-        // add padding to the buffer
-        for (j = 20; j < 32; j++) {
-            // set to -3 to differentiate
-            buffer[i][j] = -3;
-        }  // end for (j = 20; j < 32; j++)
+    for (unsigned int i = 0; i < _count; i++) {
+        // value loc for fileType, fileSize, permissions, linkCount, dataBlocks, tModified, status
+        memcpy(&buffer[i], (unsigned int[]){0, 0, 0, 0, 0, 0, 0}, sizeof(unsigned int) * 7);
+        // initialize all 10 direct pointers, 1 single idirect, 1 double indirect, 1 triple indirect
+        memcpy(&buffer[i][7],
+               (unsigned int[]){(UI)-1, (UI)-1, (UI)-1, (UI)-1, (UI)-1, (UI)-1, (UI)-1, (UI)-1,
+                                (UI)-1, (UI)-1, (UI)-1, (UI)-1, (UI)-1},
+               sizeof(unsigned int) * 13);
+        // add pading to the buffer
+        memcpy(&buffer[i][20],
+               (unsigned int[]){(UI)-3, (UI)-3, (UI)-3, (UI)-3, (UI)-3, (UI)-3, (UI)-3, (UI)-3,
+                                (UI)-3, (UI)-3, (UI)-3, (UI)-3},
+               sizeof(unsigned int) * 12);
     }  // end for (i = 0; i < _count; i++)
     // locate the requested offset within the disk file
     fseek(_fileStream, _diskOffset, SEEK_SET);

@@ -2,14 +2,15 @@
  * File Sector Manager (FSM)
  * Author: Michael Lombardi
  *******************************************************************************/
-#include "config.h"
 #include "fsm_constants.h"
 
-unsigned int DISK_SIZE     = MAX_DISK_SIZE;
-unsigned int BLOCK_SIZE    = MAX_BLOCK_SIZE;
-unsigned int INODE_SIZE    = (MAX_BLOCK_SIZE / 8);
-unsigned int INODE_BLOCKS  = MAX_INODE_BLOCKS;
-unsigned int INODE_COUNT   = (8 * MAX_INODE_BLOCKS);
+#include "config.h"
+
+unsigned int DISK_SIZE = MAX_DISK_SIZE;
+unsigned int BLOCK_SIZE = MAX_BLOCK_SIZE;
+unsigned int INODE_SIZE = (MAX_BLOCK_SIZE / 8);
+unsigned int INODE_BLOCKS = MAX_INODE_BLOCKS;
+unsigned int INODE_COUNT = (8 * MAX_INODE_BLOCKS);
 
 unsigned int PTRS_PER_BLOCK;
 unsigned int S_INDIRECT_BLOCKS;
