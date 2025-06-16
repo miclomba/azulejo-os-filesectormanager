@@ -216,17 +216,118 @@ static void print_making_fs(void) {
     printf("\n");
 }
 
-void log_fsm(FSM* _fsm, int _case, unsigned int _startByte) {
+/**
+ * @brief Prints debug information for the File Sector Manager (FSM) file operations.
+ * Logs diagnostic output based on the specified debug case and byte offset.
+ * @param[in] _fsm Pointer to the fsm structure.
+ * @param[in] _case Identifier for the type of debug information to print.
+ * @return void
+ */
+static void log_fsm_file(FSM* _fsm, int _case) {
     switch (_case) {
-        // Print Initialization Message
-        case 0:
-            print_message("Initializing FSM maps...");
+        case FSM_FILE_CREATE:
+            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
+                     "//Create a file\n//C:0\n\nCreated a file...");
+            print_message(MESSAGE_BUFFER);
             break;
+        // Print opened file
+        case FSM_FILE_OPEN:
+            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
+                     "//Open a file\n//O:%d\n\nOpenned file at inode %d...\n", _fsm->inodeNum,
+                     _fsm->inodeNum);
+            print_message(MESSAGE_BUFFER);
+            break;
+        // Print write to file
+        case FSM_FILE_WRITE:
+            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
+                     "//Write to file\n//W:%d\n\nWrote to file at inode %d...", _fsm->inodeNum,
+                     _fsm->inodeNum);
+            print_message(MESSAGE_BUFFER);
+            break;
+        // Print read from file
+        case FSM_FILE_READ:
+            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
+                     "//Read from file\n//R:%d\n\nRead from file at inode %d..", _fsm->inodeNum,
+                     _fsm->inodeNum);
+            print_message(MESSAGE_BUFFER);
+            break;
+        // Print create directory
+        case FSM_FILE_MKDIR:
+            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
+                     "//Create a directory\n//C:1\n\nCreated a directory...");
+            print_message(MESSAGE_BUFFER);
+            break;
+        // Print testing root
+        case FSM_FILE_ROOT_TEST:
+            print_message("//Testing root directory\n//T:2\n");
+            break;
+        case FSM_FILE_ROOT_LS:
+            print_message("//Listing root directory\n//L:2\n");
+            break;
+    }
+}
+
+/**
+ * @brief Prints debug information for the File Sector Manager (FSM) inode operations.
+ * Logs diagnostic output based on the specified debug case and byte offset.
+ * @param[in] _fsm Pointer to the fsm structure.
+ * @param[in] _case Identifier for the type of debug information to print.
+ * @return void
+ */
+static void log_fsm_inode(FSM* _fsm, int _case, unsigned int _startByte) {
+    switch (_case) {
         // Print Inode Map
-        case 1:
+        case FSM_INODE_MAP:
             print_inode_map(_fsm, _startByte);
             break;
-        case 2:
+        // Print Set inode sector message
+        case FSM_INODE_SET:
+            snprintf(
+                MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
+                "//Set inode map sector (%d*8 + %d).\n//X:%d:%d\n\nSetting inode map sector %d",
+                _fsm->index[0], _fsm->index[1], _fsm->index[0], _fsm->index[1],
+                get_sector_number(_fsm->index));
+            print_message(MESSAGE_BUFFER);
+            break;
+        // Print unable to find contiguous inodes message
+        case FSM_INODE_NOT_FOUND:
+            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER), "Could not find %d contiguous inodes.",
+                     _fsm->contInodes);
+            print_message(MESSAGE_BUFFER);
+            break;
+        // Print getting inodes message
+        case FSM_INODE_GET:
+            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
+                     "//Get %d contiguous inodes\n//G:%d\n\nThere are %d contiguous inodes at "
+                     "sector %d.",
+                     _fsm->contInodes, _fsm->contInodes, _fsm->contInodes,
+                     get_sector_number(_fsm->index));
+            print_message(MESSAGE_BUFFER);
+            break;
+        // Print created a file
+        case FSM_INODE_PRINT:
+            print_inode(_fsm);
+            break;
+        // Print variable information
+        case FSM_INFO:
+            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
+                     "Variable information:\ncontInodes = %d\nindex[0] = %d\nindex[1] = %d",
+                     _fsm->contInodes, _fsm->index[0], _fsm->index[1]);
+            print_message(MESSAGE_BUFFER);
+            break;
+    }
+}
+
+/**
+ * @brief Prints debug information for the File Sector Manager (FSM) alloc operations.
+ * Logs diagnostic output based on the specified debug case and byte offset.
+ * @param[in] _fsm Pointer to the fsm structure.
+ * @param[in] _case Identifier for the type of debug information to print.
+ * @return void
+ */
+static void log_fsm_alloc(FSM* _fsm, int _case) {
+    switch (_case) {
+        case FSM_ALLOC_INODES:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Allocate %d contiguous inodes.\n//A:%d\n\nAllocating %d contiguous inodes "
                      "at sector %d",
@@ -234,18 +335,12 @@ void log_fsm(FSM* _fsm, int _case, unsigned int _startByte) {
                      get_sector_number(_fsm->index));
             print_message(MESSAGE_BUFFER);
             break;
-        // Print Initializing FSM message
-        case 3:
-            print_message("Initializing FSM...");
-            break;
         // Print Allocate Failure method
-        case 4:
+        case FSM_ALLOC_FAIL:
             print_sector_failure(_fsm->badInode, "Failed to allocate inodes at sector\n");
             break;
-        case 5:
-            break;
         // Print deallocation message
-        case 6:
+        case FSM_DEALLOC_INODES:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Deallocate %d contiguous inodes starting at sector "
                      "%d\n//D:%d:%d:%d\n\nDeallocating %d contiguous inodes at sector %d",
@@ -255,131 +350,104 @@ void log_fsm(FSM* _fsm, int _case, unsigned int _startByte) {
             print_message(MESSAGE_BUFFER);
             break;
         // Print deallocation failure message
-        case 7:
+        case FSM_DEALLOC_FAIL:
             print_sector_failure(_fsm->badInode, "Failed to deallocate inode\n");
             break;
+    }
+}
+
+/**
+ * @brief Prints debug information for the File Sector Manager (FSM) integrity operations.
+ * Logs diagnostic output based on the specified debug case and byte offset.
+ * @param[in] _fsm Pointer to the fsm structure.
+ * @param[in] _case Identifier for the type of debug information to print.
+ * @return void
+ */
+static void log_fsm_integrity(FSM* _fsm, int _case) {
+    switch (_case) {
         // Print integrity check failure message
-        case 8:
+        case FSM_INTEG_FAIL:
             print_sector_failure(_fsm->badInode, "Failed integrity check at sector\n\n");
             break;
         // Print integrity check pass message
-        case 9:
+        case FSM_INTEG_PASS:
             print_message("Passed integrity check.");
             break;
         // Print integrity check message
-        case 10:
+        case FSM_INTEG_CHECK:
             print_message("//Check for integrity.\n//I\n\nChecking integrity of inode map...");
             break;
-        case 11:
+    }
+}
+
+/**
+ * @brief Prints debug information for the File Sector Manager (FSM) init operations.
+ * Logs diagnostic output based on the specified debug case and byte offset.
+ * @param[in] _case Identifier for the type of debug information to print.
+ * @return void
+ */
+static void log_fsm_init(int _case) {
+    switch (_case) {
+        // Print Initialization Message
+        case FSM_INIT_MAPS:
+            print_message("Initializing FSM maps...");
             break;
-        // Print Set inode sector message
-        case 12:
-            snprintf(
-                MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                "//Set inode map sector (%d*8 + %d).\n//X:%d:%d\n\nSetting inode map sector %d",
-                _fsm->index[0], _fsm->index[1], _fsm->index[0], _fsm->index[1],
-                get_sector_number(_fsm->index));
-            print_message(MESSAGE_BUFFER);
+        // Print Initializing FSM message
+        case FSM_INIT:
+            print_message("Initializing FSM...");
             break;
-        case 13:
+        // Print making file system message
+        case FSM_MAKE:
+            print_making_fs();
             break;
+    }
+}
+
+/**
+ * @brief Prints debug information for the File Sector Manager (FSM) io operations.
+ * Logs diagnostic output based on the specified debug case and byte offset.
+ * @param[in] _case Identifier for the type of debug information to print.
+ * @return void
+ */
+static void log_fsm_io(int _case) {
+    switch (_case) {
         // End of input
-        case 14:
+        case FSM_END:
             printf("\nEND");
             break;
         // Print bad input message
-        case 15:
+        case FSM_INVALID_INPUT:
             print_message("Bad input...");
             break;
-        // Print unable to find contiguous inodes message
-        case 16:
-            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER), "Could not find %d contiguous inodes.",
-                     _fsm->contInodes);
-            print_message(MESSAGE_BUFFER);
-            break;
         // Print read input message
-        case 17:
+        case FSM_INPUT:
             print_message("Reading input file...");
             break;
         // Print create stub output message
-        case 18:
+        case FSM_OUTPUT_STUB:
             print_message("Creating stub output...");
             break;
-        // Print variable information
-        case 19:
-            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "Variable information:\ncontInodes = %d\nindex[0] = %d\nindex[1] = %d",
-                     _fsm->contInodes, _fsm->index[0], _fsm->index[1]);
-            print_message(MESSAGE_BUFFER);
-            break;
-        // Print getting inodes message
-        case 20:
-            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Get %d contiguous inodes\n//G:%d\n\nThere are %d contiguous inodes at "
-                     "sector %d.",
-                     _fsm->contInodes, _fsm->contInodes, _fsm->contInodes,
-                     get_sector_number(_fsm->index));
-            print_message(MESSAGE_BUFFER);
-            break;
-        // Print making file system message
-        case 21:
-            print_making_fs();
-            break;
-        // Print created a file
-        case 22:
-            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Create a file\n//C:0\n\nCreated a file...");
-            print_message(MESSAGE_BUFFER);
-            break;
-        // Print opened file
-        case 23:
-            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Open a file\n//O:%d\n\nOpenned file at inode %d...\n", _fsm->inodeNum,
-                     _fsm->inodeNum);
-            print_message(MESSAGE_BUFFER);
-            break;
-        // Print write to file
-        case 24:
-            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Write to file\n//W:%d\n\nWrote to file at inode %d...", _fsm->inodeNum,
-                     _fsm->inodeNum);
-            print_message(MESSAGE_BUFFER);
-            break;
-        // Print read from file
-        case 25:
-            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Read from file\n//R:%d\n\nRead from file at inode %d..", _fsm->inodeNum,
-                     _fsm->inodeNum);
-            print_message(MESSAGE_BUFFER);
-            break;
-        // Print create directory
-        case 26:
-            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Create a directory\n//C:1\n\nCreated a directory...");
-            print_message(MESSAGE_BUFFER);
-            break;
-        // Print testing root
-        case 27:
-            print_message("//Testing root directory\n//T:2\n");
-            break;
-        case 28:
-            print_message("//Listing root directory\n//L:2\n");
-            break;
-        case 29:
-            print_inode(_fsm);
-            break;
-    }  // end switch (_case)
+    }
+}
+
+void log_fsm(FSM* _fsm, int _case, unsigned int _startByte) {
+    log_fsm_file(_fsm, _case);
+    log_fsm_inode(_fsm, _case, _startByte);
+    log_fsm_alloc(_fsm, _case);
+    log_fsm_integrity(_fsm, _case);
+    log_fsm_init(_case);
+    log_fsm_io(_case);
 }
 
 void log_ssm(SSM* _ssm, int _case, int _startByte) {
     switch (_case) {
-        case 0:
+        case SSM_INIT_MAPS:
             print_message("Initializing SSM maps...");
             break;
-        case 1:
+        case SSM_MAPS_PRINT:
             print_ssm_maps(_ssm, (unsigned int)_startByte);
             break;
-        case 2:
+        case SSM_MAPS_ALLOC:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Allocate %d contiguous sectors.\n//A:%d\n\nAllocating %d contiguous "
                      "sectors at sector %d...",
@@ -387,20 +455,20 @@ void log_ssm(SSM* _ssm, int _case, int _startByte) {
                      get_sector_number(_ssm->index));
             print_message(MESSAGE_BUFFER);
             break;
-        case 3:
+        case SSM_INIT:
             print_message("Initializing SSM...");
             break;
-        case 4:
+        case SSM_MAPS_ALLOC_FAIL:
             print_sector_failure(_ssm->badSector, "Failed to allocate sectors at sector");
             break;
-        case 5:
+        case SSM_FRAGMENTATION:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Check for degree of fragmentation.\n//F\n\nThe degree of memory "
                      "fragmentation is %10.10f ",
                      _ssm->fragmented);
             print_message(MESSAGE_BUFFER);
             break;
-        case 6:
+        case SSM_MAPS_DEALLOC:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Deallocate %d contiguous sectors starting at sector %d\n//D:%d:%d:%d\n\n"
                      "Deallocating %d contiguous sectors at sector %d...",
@@ -409,54 +477,54 @@ void log_ssm(SSM* _ssm, int _case, int _startByte) {
                      get_sector_number(_ssm->index));
             print_message(MESSAGE_BUFFER);
             break;
-        case 7:
+        case SSM_MAPS_DEALLOC_FAIL:
             print_sector_failure(_ssm->badSector, "Failed to deallocate sector");
             break;
-        case 8:
+        case SSM_MAPS_INTEGRITY_FAIL:
             print_sector_failure(_ssm->badSector, "Failed integrity check at sector");
             printf("\n");
             break;
-        case 9:
+        case SSM_MAPS_INTEGRITY_PASS:
             print_message("Passed integrity check.");
             break;
-        case 10:
+        case SSM_MAPS_INTEGRITY:
             print_message("//Check for integrity.\n//I\n\nChecking integrity of the maps...");
             break;
-        case 11:
+        case SSM_FRAGMENTATION_MSG:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "The memory sectors are %f percent fragmented.\n", _ssm->fragmented);
             print_message(MESSAGE_BUFFER);
             break;
-        case 12:
+        case SSM_MAPS_SET:
             print_set_map_sector(_ssm, ALLOCATED);
             break;
-        case 13:
+        case SSM_MAPS_UNSET:
             print_set_map_sector(_ssm, FREE);
             break;
-        case 14:
+        case SSM_END:
             printf("\nEND");
             break;
-        case 15:
+        case SSM_INVALID_INPUT:
             print_message("Bad input...");
             break;
-        case 16:
+        case SSM_SECTORS_NOT_FOUND:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "Could not find %d contiguous sectors.\n", _ssm->contSectors);
             print_message(MESSAGE_BUFFER);
             break;
-        case 17:
+        case SSM_FILE_OPEN:
             print_message("Reading input file...");
             break;
-        case 18:
+        case SSM_FILE_STUB_OUTPUT:
             print_message("Creating stub output...");
             break;
-        case 19:
+        case SSM_INFO:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "Variable information:\ncontSectors = %d\nindex[0] = %d\nindex[1] = %d",
                      _ssm->contSectors, _ssm->index[0], _ssm->index[1]);
             print_message(MESSAGE_BUFFER);
             break;
-        case 20:
+        case SSM_MAPS_GET:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Get %d contiguous sectors.\n//G:%d\n\nThere are %d contiguous sectors at "
                      "sector %d.",
