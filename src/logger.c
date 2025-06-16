@@ -12,7 +12,13 @@
 #include "ssm.h"
 #include "ssm_constants.h"
 
-static int print_map_markers(int k) {
+/**
+ * @brief Prints INODE and FREE maps 8 bit sections.
+ * For example: 00011111
+ * @param[in,out] k Byte offset at which to begin the map.
+ * @return next byte offset after printing
+ */
+static int print_8_bits(int k) {
     enum { FIELD_WIDTH = 9 };
 
     printf("\n");
@@ -23,11 +29,54 @@ static int print_map_markers(int k) {
     return k;
 }
 
-void log_fsm(FSM *_fsm, int _case, unsigned int _startByte) {
-    unsigned int i, j, k;
-    int count;
+/**
+ * @brief Prints INODE and FREE maps 8 bit sections.
+ * For example: 00011111 11111111 11111111 11111111 11111111 11111111 11111111 11111111
+ *              00011111 11111111 11111111 11111111 11111111 11111111 11111111 11111111
+ * @param[in,out] k Byte offset at which to begin the map.
+ * @return next byte offset after printing
+ */
+static void print_128_bits(unsigned char* map, unsigned int _startByte, unsigned int block_count,
+                           char* byteArray, unsigned int* k, unsigned int* i) {
+    int count = 0;
+    for (*i = _startByte; *i < block_count && *i < _startByte + 16; (*i)++) {
+        unsigned char tmp = map[*i];
+        for (int j = 0; j < 8; j++) {
+            byteArray[j] = tmp % 2 == 1 ? '1' : '0';
+            tmp /= 2;
+        }  // end for (j = 0; j < 8; j++)
+        for (int j = 0; j < 8; j++) printf("%c", byteArray[j]);
+        printf(" ");
+        if ((count + 1) % 8 == 0 || *i + 1 == block_count) {
+            *k = print_8_bits(*k);
+        }  // end if(count+1) % 8 = 0 | i+1 = block_count)
+        count++;
+    }
+}
+
+/**
+ * @brief Prints sector allocation failure message.
+ * @param[in,out] k Byte offset in the sector
+ * @param[in] _ssm sector space manager
+ * @param[in,out] sector the sector number
+ * @param[in] msg the error message
+ * @return void
+ */
+static void print_sector_failure(unsigned int* k, SSM* _ssm, int* sector, const char* msg) {
+    printf("DEBUG_LEVEL > 0:\n");
+    for (*k = 0; *k < MAX_INPUT; (*k)++) {
+        if (_ssm->badSector[*k][0] == (unsigned int)(-1)) {
+            break;
+        }
+        *sector = 8 * _ssm->badSector[*k][0] + _ssm->badSector[*k][1];
+        printf("%s %d\n", msg, *sector);
+    }
+    printf("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
+}
+
+void log_fsm(FSM* _fsm, int _case, unsigned int _startByte) {
+    unsigned int i, k;
     int sector;
-    unsigned char tmp;
     char byteArray[8];
     switch (_case) {
         // Print Initialization Message
@@ -47,24 +96,7 @@ void log_fsm(FSM *_fsm, int _case, unsigned int _startByte) {
             printf("====================================\n\n");
             printf("INODE MAP\n");
             k = _startByte;
-            count = 0;
-            for (i = _startByte; i < INODE_BLOCKS && i < _startByte + 16; i++) {
-                tmp = _fsm->iMap[i];
-                for (j = 0; j < 8; j++) {
-                    if (tmp % 2 == 1)
-                        byteArray[j] = '1';
-                    else
-                        byteArray[j] = '0';
-                    tmp /= 2;
-                }  // end for (j = 0; j < 8; j++)
-                for (j = 0; j < 8; j++) printf("%c", byteArray[j]);
-                printf(" ");
-                if ((count + 1) % 8 == 0 || i + 1 == INODE_BLOCKS) {
-                    k = print_map_markers(k);
-                }  // end if(count+1) % 8 = 0 | i+1 = INODE_BLOCKS)
-                count++;
-            } /*for (i = _startByte; i < INODE_BLOCKS &&
-                                              i < _startByte + 16; i++)*/
+            print_128_bits(_fsm->iMap, _startByte, INODE_BLOCKS, byteArray, &k, &i);
             printf("\n");
             printf("===================================");
             printf("====================================\n\n");
@@ -339,11 +371,9 @@ void log_fsm(FSM *_fsm, int _case, unsigned int _startByte) {
     }  // end switch (_case)
 }
 
-void log_ssm(SSM *_ssm, int _case, int _startByte) {
-    int i, j, k;
-    int count;
+void log_ssm(SSM* _ssm, int _case, int _startByte) {
+    unsigned int i, k;
     int sector;
-    unsigned char tmp;
     char byteArray[8];
     switch (_case) {
         case 0:
@@ -359,43 +389,13 @@ void log_ssm(SSM *_ssm, int _case, int _startByte) {
             printf("=======================================================================\n");
             printf("FREE MAP\n");
             k = _startByte;
-            count = 0;
-            for (i = _startByte; i < SECTOR_BYTES && i < _startByte + 16; i++) {
-                tmp = _ssm->freeMap[i];
-                for (j = 0; j < 8; j++) {
-                    if (tmp % 2 == 1)
-                        byteArray[j] = '1';
-                    else
-                        byteArray[j] = '0';
-                    tmp /= 2;
-                }
-                for (j = 0; j < 8; j++) printf("%c", byteArray[j]);
-                printf(" ");
-                if ((count + 1) % 8 == 0 || i + 1 == SECTOR_BYTES) {
-                    k = print_map_markers(k);
-                }
-                count++;
-            }
+            print_128_bits(_ssm->freeMap, (unsigned int)_startByte, SECTOR_BYTES, byteArray, &k,
+                           &i);
             printf("\n");
             printf("ALLOCATED MAP\n");
             k = _startByte;
-            count = 0;
-            for (i = _startByte; i < SECTOR_BYTES && i < _startByte + 16; i++) {
-                tmp = _ssm->alocMap[i];
-                for (j = 0; j < 8; j++) {
-                    if (tmp % 2 == 1)
-                        byteArray[j] = '1';
-                    else
-                        byteArray[j] = '0';
-                    tmp /= 2;
-                }
-                for (j = 0; j < 8; j++) printf("%c", byteArray[j]);
-                printf(" ");
-                if ((count + 1) % 8 == 0 || i + 1 == SECTOR_BYTES) {
-                    k = print_map_markers(k);
-                }
-                count++;
-            }
+            print_128_bits(_ssm->alocMap, (unsigned int)_startByte, SECTOR_BYTES, byteArray, &k,
+                           &i);
             printf("=======================================================================\n\n\n");
             break;
         case 2:
@@ -412,15 +412,7 @@ void log_ssm(SSM *_ssm, int _case, int _startByte) {
             printf("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n\n");
             break;
         case 4:
-            printf("DEBUG_LEVEL > 0:\n");
-            for (k = 0; k < MAX_INPUT; k++) {
-                if (_ssm->badSector[k][0] == (unsigned int)(-1)) {
-                    break;
-                }
-                sector = 8 * _ssm->badSector[k][0] + _ssm->badSector[k][1];
-                printf("Failed to allocate sectors at sector %d\n", sector);
-            }
-            printf("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n\n");
+            print_sector_failure(&k, _ssm, &sector, "Failed to allocate sectors at sector");
             break;
         case 5:
             printf("DEBUG_LEVEL > 0:\n");
@@ -440,26 +432,10 @@ void log_ssm(SSM *_ssm, int _case, int _startByte) {
             printf("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n\n");
             break;
         case 7:
-            printf("DEBUG_LEVEL > 0:\n");
-            for (k = 0; k < MAX_INPUT; k++) {
-                if (_ssm->badSector[k][0] == (unsigned int)(-1)) {
-                    break;
-                }
-                sector = 8 * _ssm->badSector[k][0] + _ssm->badSector[k][1];
-                printf("Failed to deallocate sector %d\n", sector);
-            }
-            printf("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n\n");
+            print_sector_failure(&k, _ssm, &sector, "Failed to deallocate sector");
             break;
         case 8:
-            printf("DEBUG_LEVEL > 0:\n");
-            for (k = 0; k < MAX_INPUT; k++) {
-                if (_ssm->badSector[k][0] == (unsigned int)(-1)) {
-                    break;
-                }
-                sector = 8 * _ssm->badSector[k][0] + _ssm->badSector[k][1];
-                printf("Failed integrity check at sector %d\n", sector);
-            }
-            printf("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n");
+            print_sector_failure(&k, _ssm, &sector, "Failed integrity check at sector");
             printf("\n");
             break;
         case 9:
