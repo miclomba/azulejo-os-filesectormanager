@@ -12,6 +12,17 @@
 #include "ssm.h"
 #include "ssm_constants.h"
 
+static int print_map_markers(int k) {
+    enum { FIELD_WIDTH = 9 };
+
+    printf("\n");
+    for (int j = 0; j < 8; ++j) {
+        printf("%-*d", FIELD_WIDTH, k++ * 8);
+    }  // end for (j = 0; j < 8; j++)
+    printf("\n");
+    return k;
+}
+
 void log_fsm(FSM *_fsm, int _case, unsigned int _startByte) {
     unsigned int i, j, k;
     int count;
@@ -49,27 +60,7 @@ void log_fsm(FSM *_fsm, int _case, unsigned int _startByte) {
                 for (j = 0; j < 8; j++) printf("%c", byteArray[j]);
                 printf(" ");
                 if ((count + 1) % 8 == 0 || i + 1 == INODE_BLOCKS) {
-                    printf("\n");
-                    for (j = 0; j < 8; j++) {
-                        if (k * 8 < 10)
-                            printf("%d        ", k * 8);
-                        else if (k * 8 < 100)
-                            printf("%d       ", k * 8);
-                        else if (k * 8 < 1000)
-                            printf("%d      ", k * 8);
-                        else if (k * 8 < 10000)
-                            printf("%d     ", k * 8);
-                        else if (k * 8 < 100000)
-                            printf("%d    ", k * 8);
-                        else if (k * 8 < 1000000)
-                            printf("%d   ", k * 8);
-                        else if (k * 8 < 10000000)
-                            printf("%d  ", k * 8);
-                        else if (k * 8 < 100000000)
-                            printf("%d ", k * 8);
-                        k++;
-                    }  // end for (j = 0; j < 8; j++)
-                    printf("\n");
+                    k = print_map_markers(k);
                 }  // end if(count+1) % 8 = 0 | i+1 = INODE_BLOCKS)
                 count++;
             } /*for (i = _startByte; i < INODE_BLOCKS &&
@@ -381,27 +372,7 @@ void log_ssm(SSM *_ssm, int _case, int _startByte) {
                 for (j = 0; j < 8; j++) printf("%c", byteArray[j]);
                 printf(" ");
                 if ((count + 1) % 8 == 0 || i + 1 == SECTOR_BYTES) {
-                    printf("\n");
-                    for (j = 0; j < 8; j++) {
-                        if (k * 8 < 10)
-                            printf("%d        ", k * 8);
-                        else if (k * 8 < 100)
-                            printf("%d       ", k * 8);
-                        else if (k * 8 < 1000)
-                            printf("%d      ", k * 8);
-                        else if (k * 8 < 10000)
-                            printf("%d     ", k * 8);
-                        else if (k * 8 < 100000)
-                            printf("%d    ", k * 8);
-                        else if (k * 8 < 1000000)
-                            printf("%d   ", k * 8);
-                        else if (k * 8 < 10000000)
-                            printf("%d  ", k * 8);
-                        else if (k * 8 < 100000000)
-                            printf("%d ", k * 8);
-                        k++;
-                    }
-                    printf("\n");
+                    k = print_map_markers(k);
                 }
                 count++;
             }
@@ -421,27 +392,7 @@ void log_ssm(SSM *_ssm, int _case, int _startByte) {
                 for (j = 0; j < 8; j++) printf("%c", byteArray[j]);
                 printf(" ");
                 if ((count + 1) % 8 == 0 || i + 1 == SECTOR_BYTES) {
-                    printf("\n");
-                    for (j = 0; j < 8; j++) {
-                        if (k * 8 < 10)
-                            printf("%d        ", k * 8);
-                        else if (k * 8 < 100)
-                            printf("%d       ", k * 8);
-                        else if (k * 8 < 1000)
-                            printf("%d      ", k * 8);
-                        else if (k * 8 < 10000)
-                            printf("%d     ", k * 8);
-                        else if (k * 8 < 100000)
-                            printf("%d    ", k * 8);
-                        else if (k * 8 < 1000000)
-                            printf("%d   ", k * 8);
-                        else if (k * 8 < 10000000)
-                            printf("%d  ", k * 8);
-                        else if (k * 8 < 100000000)
-                            printf("%d ", k * 8);
-                        k++;
-                    }
-                    printf("\n");
+                    k = print_map_markers(k);
                 }
                 count++;
             }
