@@ -752,9 +752,9 @@ static Bool add_file_to_double_indirect(FSM *_fsm, unsigned int _inodeNumF, unsi
     diskOffset = _dIndirectOffset;
     fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
     _fsm->sampleCount = fread(indirectBlock, BLOCK_SIZE, 1, _fsm->diskHandle);
-    unsigned int i;
+
     // Add file to a double indirect pointer
-    for (i = 0; i < BLOCK_SIZE / 4; i++) {
+    for (unsigned int i = 0; i < BLOCK_SIZE / 4; i++) {
         if (indirectBlock[i] != (unsigned int)(-1)) {
             diskOffset = indirectBlock[i];
             success = add_file_to_single_indirect(_fsm, _inodeNumF, _name, diskOffset, _allocate);
@@ -764,20 +764,18 @@ static Bool add_file_to_double_indirect(FSM *_fsm, unsigned int _inodeNumF, unsi
         }  // if (indirectBlock[i] != (unsigned int)(-1))
     }  // for (i = 0; i < BLOCK_SIZE/4; i++)
     if (_allocate == True) {
-        for (i = 0; i < BLOCK_SIZE / 4; i++) {
+        for (unsigned int i = 0; i < BLOCK_SIZE / 4; i++) {
             if (indirectBlock[i] == (unsigned int)(-1)) {
                 ssm_get_sector(1, _fsm->ssm);
                 if (_fsm->ssm->index[0] == (unsigned int)(-1)) {
                     return False;
                 }  // end if (_fsm->ssm->index[0] == (unsigned int)(-1))
                 else {
-                    indirectBlock[i] =
-                        BLOCK_SIZE * ((8 * _fsm->ssm->index[0]) + (_fsm->ssm->index[1]));
+                    indirectBlock[i] = BLOCK_SIZE * ((BITS_PER_BYTE * _fsm->ssm->index[0]) +
+                                                     (_fsm->ssm->index[1]));
                     fseek(_fsm->diskHandle, _dIndirectOffset, SEEK_SET);
                     _fsm->sampleCount = fwrite(indirectBlock, BLOCK_SIZE, 1, _fsm->diskHandle);
-                    for (i = 0; i < BLOCK_SIZE / 4; i++) {
-                        buffer[i] = (unsigned int)(-1);
-                    }  // end for (i = 0; i < BLOCK_SIZE/4; i++)
+                    memset(buffer, 0xFF, BLOCK_SIZE);
                     fseek(_fsm->diskHandle, indirectBlock[i], SEEK_SET);
                     _fsm->sampleCount =
                         fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
@@ -793,6 +791,51 @@ static Bool add_file_to_double_indirect(FSM *_fsm, unsigned int _inodeNumF, unsi
         }  // end for (i = 0; i < BLOCK_SIZE/4; i++)
     }  // end if (_allocate == True)
     return False;
+}
+
+/**
+ * @brief Adds a file to a single indirect pointer without allocation.
+ * Inserts a file at the specified single indirect offset, optionally allocating space if required.
+ * @param[in,out] _fsm Pointer to the FSM instance.
+ * @param[in] _indirectBlock an indirect block buffer
+ * @param[in,out] buffer disk buffer
+ * @param[in] _inodeNumF Inode number of the file to be added.
+ * @param[in] _name Pointer to the name of the file.
+ * @param[in,out] diskOffset Offset within the single indirect block.
+ * @return True if the file was added successfully, false otherwise.
+ * @date 2010-04-01 First implementation.
+ */
+static Bool add_file_to_single_indirect_no_alloc(FSM *_fsm, unsigned int *buffer,
+                                                 unsigned int *indirectBlock,
+                                                 unsigned int _inodeNumF, unsigned int *_name,
+                                                 unsigned int *diskOffset) {
+    Bool status = False;
+    unsigned int j = 0;
+    for (unsigned int i = 0; i < BLOCK_SIZE / 4; i++) {
+        if (indirectBlock[i] != (unsigned int)(-1)) {
+            *diskOffset = indirectBlock[i];
+            fseek(_fsm->diskHandle, *diskOffset, SEEK_SET);
+            _fsm->sampleCount = fread(buffer, BLOCK_SIZE, 1, _fsm->diskHandle);
+            for (j = 0; j < BLOCK_SIZE / 4; j += 4) {
+                if (buffer[j + 3] == 0) {
+                    buffer[j + 3] = 1;
+                    buffer[j] = _name[0];
+                    buffer[j + 1] = _name[1];
+                    buffer[j + 2] = _inodeNumF;
+                    _fsm->inode.linkCount += 1;
+                    fseek(_fsm->diskHandle, 0, SEEK_SET);
+                    fseek(_fsm->diskHandle, *diskOffset, SEEK_SET);
+                    _fsm->sampleCount =
+                        fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
+                    fseek(_fsm->diskHandle, 0, SEEK_SET);
+                    status = fs_close_file(_fsm);
+                    if (status == False) printf("Error closing file\n");
+                    return True;
+                }  // end if (buffer[j+3] == 0)
+            }  // for (j = 0; j < BLOCK_SIZE/4; j += 4)
+        }  // if (indirectBlock[i] != (unsigned int)(-1))
+    }  // for (i = 0; i < BLOCK_SIZE/4; i++)
+    return status;
 }
 
 /**
@@ -816,49 +859,26 @@ static Bool add_file_to_single_indirect(FSM *_fsm, unsigned int _inodeNumF, unsi
     // Read indirect block
     fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
     _fsm->sampleCount = fread(indirectBlock, BLOCK_SIZE, 1, _fsm->diskHandle);
-    unsigned int i, j;
+
     if (_allocate == False) {
-        for (i = 0; i < BLOCK_SIZE / 4; i++) {
-            if (indirectBlock[i] != (unsigned int)(-1)) {
-                diskOffset = indirectBlock[i];
-                fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
-                _fsm->sampleCount = fread(buffer, BLOCK_SIZE, 1, _fsm->diskHandle);
-                for (j = 0; j < BLOCK_SIZE / 4; j += 4) {
-                    if (buffer[j + 3] == 0) {
-                        buffer[j + 3] = 1;
-                        buffer[j] = _name[0];
-                        buffer[j + 1] = _name[1];
-                        buffer[j + 2] = _inodeNumF;
-                        _fsm->inode.linkCount += 1;
-                        fseek(_fsm->diskHandle, 0, SEEK_SET);
-                        fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
-                        _fsm->sampleCount =
-                            fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
-                        fseek(_fsm->diskHandle, 0, SEEK_SET);
-                        status = fs_close_file(_fsm);
-                        if (status == False) printf("Error closing file\n");
-                        return True;
-                    }  // end if (buffer[j+3] == 0)
-                }  // for (j = 0; j < BLOCK_SIZE/4; j += 4)
-            }  // if (indirectBlock[i] != (unsigned int)(-1))
-        }  // for (i = 0; i < BLOCK_SIZE/4; i++)
+        status = add_file_to_single_indirect_no_alloc(_fsm, buffer, indirectBlock, _inodeNumF,
+                                                      _name, &diskOffset);
     }  // if (_allocate == False)
     else {
         // Allocate space then write
-        for (i = 0; i < BLOCK_SIZE / 4; i++) {
+        for (unsigned int i = 0; i < BLOCK_SIZE / 4; i++) {
             if (indirectBlock[i] == (unsigned int)(-1)) {
                 ssm_get_sector(1, _fsm->ssm);
                 if (_fsm->ssm->index[0] == (unsigned int)(-1)) {
                     return False;
                 }  // end if(_fsm->ssm->index[0] == (unsigned int)(-1))
                 else {
-                    indirectBlock[i] =
-                        BLOCK_SIZE * ((8 * _fsm->ssm->index[0]) + (_fsm->ssm->index[1]));
+                    indirectBlock[i] = BLOCK_SIZE * ((BITS_PER_BYTE * _fsm->ssm->index[0]) +
+                                                     (_fsm->ssm->index[1]));
                     fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
                     _fsm->sampleCount = fwrite(indirectBlock, BLOCK_SIZE, 1, _fsm->diskHandle);
-                    for (j = 0; j < BLOCK_SIZE / 4; j++) {
-                        buffer[j] = 0;
-                    }  // end for (j = 0; j < BLOCK_SIZE/4; j++)
+                    memset(buffer, 0, BLOCK_SIZE);
+
                     buffer[3] = 1;
                     buffer[0] = _name[0];
                     buffer[1] = _name[1];
