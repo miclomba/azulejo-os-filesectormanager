@@ -223,7 +223,7 @@ static void print_making_fs(void) {
  * @param[in] _case Identifier for the type of debug information to print.
  * @return void
  */
-static void log_fsm_file(FSM* _fsm, int _case) {
+static void log_fsm_file(FSM* _fsm, LoggerFSMOption _case) {
     switch (_case) {
         case FSM_FILE_CREATE:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
@@ -264,6 +264,8 @@ static void log_fsm_file(FSM* _fsm, int _case) {
         case FSM_FILE_ROOT_LS:
             print_message("//Listing root directory\n//L:2\n");
             break;
+        default:
+            break;
     }
 }
 
@@ -274,7 +276,7 @@ static void log_fsm_file(FSM* _fsm, int _case) {
  * @param[in] _case Identifier for the type of debug information to print.
  * @return void
  */
-static void log_fsm_inode(FSM* _fsm, int _case, unsigned int _startByte) {
+static void log_fsm_inode(FSM* _fsm, LoggerFSMOption _case, unsigned int _startByte) {
     switch (_case) {
         // Print Inode Map
         case FSM_INODE_MAP:
@@ -315,6 +317,8 @@ static void log_fsm_inode(FSM* _fsm, int _case, unsigned int _startByte) {
                      _fsm->contInodes, _fsm->index[0], _fsm->index[1]);
             print_message(MESSAGE_BUFFER);
             break;
+        default:
+            break;
     }
 }
 
@@ -325,7 +329,7 @@ static void log_fsm_inode(FSM* _fsm, int _case, unsigned int _startByte) {
  * @param[in] _case Identifier for the type of debug information to print.
  * @return void
  */
-static void log_fsm_alloc(FSM* _fsm, int _case) {
+static void log_fsm_alloc(FSM* _fsm, LoggerFSMOption _case) {
     switch (_case) {
         case FSM_ALLOC_INODES:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
@@ -353,6 +357,8 @@ static void log_fsm_alloc(FSM* _fsm, int _case) {
         case FSM_DEALLOC_FAIL:
             print_sector_failure(_fsm->badInode, "Failed to deallocate inode\n");
             break;
+        default:
+            break;
     }
 }
 
@@ -363,7 +369,7 @@ static void log_fsm_alloc(FSM* _fsm, int _case) {
  * @param[in] _case Identifier for the type of debug information to print.
  * @return void
  */
-static void log_fsm_integrity(FSM* _fsm, int _case) {
+static void log_fsm_integrity(FSM* _fsm, LoggerFSMOption _case) {
     switch (_case) {
         // Print integrity check failure message
         case FSM_INTEG_FAIL:
@@ -377,6 +383,8 @@ static void log_fsm_integrity(FSM* _fsm, int _case) {
         case FSM_INTEG_CHECK:
             print_message("//Check for integrity.\n//I\n\nChecking integrity of inode map...");
             break;
+        default:
+            break;
     }
 }
 
@@ -386,7 +394,7 @@ static void log_fsm_integrity(FSM* _fsm, int _case) {
  * @param[in] _case Identifier for the type of debug information to print.
  * @return void
  */
-static void log_fsm_init(int _case) {
+static void log_fsm_init(LoggerFSMOption _case) {
     switch (_case) {
         // Print Initialization Message
         case FSM_INIT_MAPS:
@@ -400,6 +408,8 @@ static void log_fsm_init(int _case) {
         case FSM_MAKE:
             print_making_fs();
             break;
+        default:
+            break;
     }
 }
 
@@ -409,7 +419,7 @@ static void log_fsm_init(int _case) {
  * @param[in] _case Identifier for the type of debug information to print.
  * @return void
  */
-static void log_fsm_io(int _case) {
+static void log_fsm_io(LoggerFSMOption _case) {
     switch (_case) {
         // End of input
         case FSM_END:
@@ -427,10 +437,12 @@ static void log_fsm_io(int _case) {
         case FSM_OUTPUT_STUB:
             print_message("Creating stub output...");
             break;
+        default:
+            break;
     }
 }
 
-void log_fsm(FSM* _fsm, int _case, unsigned int _startByte) {
+void log_fsm(FSM* _fsm, LoggerFSMOption _case, unsigned int _startByte) {
     log_fsm_file(_fsm, _case);
     log_fsm_inode(_fsm, _case, _startByte);
     log_fsm_alloc(_fsm, _case);
@@ -445,13 +457,15 @@ void log_fsm(FSM* _fsm, int _case, unsigned int _startByte) {
  * @param[in] _case Identifier for the type of debug information to print.
  * @return void
  */
-static void log_ssm_file(int _case) {
+static void log_ssm_file(LoggerSSMOption _case) {
     switch (_case) {
         case SSM_FILE_OPEN:
             print_message("Reading input file...");
             break;
         case SSM_FILE_STUB_OUTPUT:
             print_message("Creating stub output...");
+            break;
+        default:
             break;
     }
 }
@@ -464,7 +478,7 @@ static void log_ssm_file(int _case) {
  * @param[in] _startByte Byte offset at which to begin the debug trace.
  * @return void
  */
-static void log_ssm_maps(SSM* _ssm, int _case, int _startByte) {
+static void log_ssm_maps(SSM* _ssm, LoggerSSMOption _case, int _startByte) {
     switch (_case) {
         case SSM_MAPS_PRINT:
             print_ssm_maps(_ssm, (unsigned int)_startByte);
@@ -517,6 +531,8 @@ static void log_ssm_maps(SSM* _ssm, int _case, int _startByte) {
                      _ssm->contSectors, _ssm->index[0], _ssm->index[1]);
             print_message(MESSAGE_BUFFER);
             break;
+        default:
+            break;
     }
 }
 
@@ -526,13 +542,15 @@ static void log_ssm_maps(SSM* _ssm, int _case, int _startByte) {
  * @param[in] _case Identifier for the type of debug information to print.
  * @return void
  */
-static void log_ssm_init(int _case) {
+static void log_ssm_init(LoggerSSMOption _case) {
     switch (_case) {
         case SSM_INIT_MAPS:
             print_message("Initializing SSM maps...");
             break;
         case SSM_INIT:
             print_message("Initializing SSM...");
+            break;
+        default:
             break;
     }
 }
@@ -544,7 +562,7 @@ static void log_ssm_init(int _case) {
  * @param[in] _case Identifier for the type of debug information to print.
  * @return void
  */
-static void log_ssm_integrity(SSM* _ssm, int _case) {
+static void log_ssm_integrity(SSM* _ssm, LoggerSSMOption _case) {
     switch (_case) {
         case SSM_FRAGMENTATION:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
@@ -568,6 +586,8 @@ static void log_ssm_integrity(SSM* _ssm, int _case) {
         case SSM_MAPS_INTEGRITY:
             print_message("//Check for integrity.\n//I\n\nChecking integrity of the maps...");
             break;
+        default:
+            break;
     }
 }
 
@@ -577,7 +597,7 @@ static void log_ssm_integrity(SSM* _ssm, int _case) {
  * @param[in] _case Identifier for the type of debug information to print.
  * @return void
  */
-static void log_ssm_io(int _case) {
+static void log_ssm_io(LoggerSSMOption _case) {
     switch (_case) {
         case SSM_END:
             printf("\nEND");
@@ -585,10 +605,12 @@ static void log_ssm_io(int _case) {
         case SSM_INVALID_INPUT:
             print_message("Bad input...");
             break;
+        default:
+            break;
     }
 }
 
-void log_ssm(SSM* _ssm, int _case, int _startByte) {
+void log_ssm(SSM* _ssm, LoggerSSMOption _case, int _startByte) {
     log_ssm_file(_case);
     log_ssm_maps(_ssm, _case, _startByte);
     log_ssm_init(_case);

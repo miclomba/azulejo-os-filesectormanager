@@ -14,7 +14,7 @@
 /*
  * @brief FSM logger values
  */
-enum {
+typedef enum LoggerFSMOption {
     FSM_INIT_MAPS = 0,
     FSM_INODE_MAP = 1,
     FSM_ALLOC_INODES = 2,
@@ -42,12 +42,12 @@ enum {
     FSM_FILE_ROOT_TEST = 27,
     FSM_FILE_ROOT_LS = 28,
     FSM_INODE_PRINT = 29
-};
+} LoggerFSMOption;
 
 /*
  * @brief SSM logger values
  */
-enum {
+typedef enum LoggerSSMOption {
     SSM_INIT_MAPS = 0,
     SSM_MAPS_PRINT = 1,
     SSM_MAPS_ALLOC = 2,
@@ -69,7 +69,7 @@ enum {
     SSM_FILE_STUB_OUTPUT = 18,
     SSM_INFO = 19,
     SSM_MAPS_GET = 20
-};
+} LoggerSSMOption;
 
 /**
  * @brief Prints debug information for the Sector Space Manager (SSM).
@@ -79,7 +79,7 @@ enum {
  * @param[in] _startByte Byte offset at which to begin the debug trace.
  * @return void
  */
-void log_ssm(SSM *_ssm, int _case, int _startByte);
+void log_ssm(SSM *_ssm, LoggerSSMOption _case, int _startByte);
 
 /**
  * @brief Prints debug information for the File Sector Manager (FSM).
@@ -89,6 +89,6 @@ void log_ssm(SSM *_ssm, int _case, int _startByte);
  * @param[in] _startByte Byte offset at which to begin the debug trace.
  * @return void
  */
-void log_fsm(FSM *_fsm, int _case, unsigned int _startByte);
+void log_fsm(FSM *_fsm, LoggerFSMOption _case, unsigned int _startByte);
 
 #endif  // LOGGER_H
