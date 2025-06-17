@@ -7,4 +7,7 @@
 
 #define _GNU_SOURCE
 
+static const char* SSM_ALLOCATE_MAP = "./fs/aMap";
+static const char* SSM_FREE_MAP = "./fs/fMap";
+
 #endif  // CONFIG_H

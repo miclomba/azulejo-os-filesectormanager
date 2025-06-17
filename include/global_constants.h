@@ -26,4 +26,6 @@ typedef int Bool;
 #define DEBUG_LEVEL (2)
 #endif
 
+static const int BITS_PER_BYTE = 8;
+
 #endif  // G_DEFINITIONS
