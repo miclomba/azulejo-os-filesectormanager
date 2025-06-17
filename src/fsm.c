@@ -901,17 +901,50 @@ static Bool add_file_to_single_indirect(FSM *_fsm, unsigned int _inodeNumF, unsi
     return False;
 }
 
+/**
+ * @brief Removes a file from a directory indirect pointers.
+ * Removes the file identified by `_inodeNumF`.
+ * @param[in,out] _fsm Pointer to the FSM instance.
+ * @param[in] _inodeNumF Inode number of the file to be removed.
+ * @return True if the file was successfully removed, false if the file could not be accessed.
+ * @date 2010-04-01 First implementation.
+ */
+static Bool remove_file_from_dir_indirect_pointers(FSM *_fsm, unsigned int _inodeNumF) {
+    // if the directory has files in it's sindirect pointer area, remove them
+    Bool success = False;
+    if (_fsm->inode.sIndirect != (unsigned int)(-1)) {
+        success = remove_file_from_single_indirect(_fsm, _inodeNumF, (unsigned int)(-1),
+                                                   _fsm->inode.sIndirect);
+        if (success == True) {
+            return True;
+        }  // end if (success == True)
+    }  // end if (_fsm->inode.sIndirect != (unsigned int)(-1))
+    // if the directory has files in it's dindirect pointer area, remove them
+    if (_fsm->inode.dIndirect != (unsigned int)(-1)) {
+        success = remove_file_from_double_indirect(_fsm, _inodeNumF, (unsigned int)(-1),
+                                                   _fsm->inode.dIndirect);
+        if (success == True) {
+            return True;
+        }  // end if (success == True)
+    }  // end if (_fsm->inode.dIndirect != (unsigned int)(-1))
+    // if the directory has files in it's tindirect pointer area, remove them
+    if (_fsm->inode.tIndirect != (unsigned int)(-1)) {
+        success = remove_file_from_triple_indirect(_fsm, _inodeNumF, _fsm->inode.tIndirect);
+        if (success == True) {
+            return True;
+        }  // end if (success == True)
+    }  // end if (_fsm->inode.tIndirect != (unsigned int)(-1))
+    return success;
+}
+
 Bool fs_remove_file_from_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int _inodeNumD) {
-    Bool success;
-    unsigned int i, j, k;
-    unsigned int diskOffset;
+    unsigned int j, k, diskOffset, sectorNum;
     unsigned int buffer[BLOCK_SIZE / 4];
-    unsigned int sectorNum;
     // open file, return false if access error
     const Inode *inode = fs_open_file(_fsm, _inodeNumD);
     if (inode != NULL) {
         if (_fsm->inode.fileType == 2) {  // type 2 is directory
-            for (i = 0; i < 10; i++) {
+            for (unsigned int i = 0; i < INODE_DIRECT_PTRS; i++) {
                 if (_fsm->inode.directPtr[i] != (unsigned int)(-1)) {
                     diskOffset = _fsm->inode.directPtr[i];
                     // update sampleCount
@@ -929,13 +962,7 @@ Bool fs_remove_file_from_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int _i
                             if (_fsm->inode.linkCount == 0) {
                                 // if there is nothing in the directory, set size to 0
                                 _fsm->inode.fileSize = 0;
-                                // deallocate all associated sectors
-                                for (k = 0; k < 10; k++) {
-                                    _fsm->inode.directPtr[k] = -1;
-                                }  // end for (k = 0; k < 10; k++)
-                                _fsm->inode.sIndirect = -1;
-                                _fsm->inode.dIndirect = -1;
-                                _fsm->inode.tIndirect = -1;
+                                inode_init_ptrs(&_fsm->inode);
                             }  // end if (_fsm->inode.linkCount == 0)
                             fseek(_fsm->diskHandle, 0, SEEK_SET);
                             fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
@@ -949,8 +976,8 @@ Bool fs_remove_file_from_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int _i
                             if (k == BLOCK_SIZE / 4) {
                                 sectorNum = _fsm->inode.directPtr[i] / BLOCK_SIZE;
                                 _fsm->ssm->contSectors = 1;
-                                _fsm->ssm->index[0] = sectorNum / 8;
-                                _fsm->ssm->index[1] = sectorNum % 8;
+                                _fsm->ssm->index[0] = sectorNum / BITS_PER_BYTE;
+                                _fsm->ssm->index[1] = sectorNum % BITS_PER_BYTE;
                                 ssm_deallocate_sectors(_fsm->ssm);
                                 _fsm->inode.directPtr[i] = (unsigned int)(-1);
                                 _fsm->inode.dataBlocks -= 1;
@@ -961,29 +988,9 @@ Bool fs_remove_file_from_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int _i
                     }  // end for (j = 0; j < BLOCK_SIZE/4; j += 4)
                 }  // end if (_fsm->inode.directPtr[i] != (unsigned int)(-1))
             }  // end for (i = 0; i < 10; i++)
-            // if the directory has files in it's sindirect pointer area, remove them
-            if (_fsm->inode.sIndirect != (unsigned int)(-1)) {
-                success = remove_file_from_single_indirect(_fsm, _inodeNumF, (unsigned int)(-1),
-                                                           _fsm->inode.sIndirect);
-                if (success == True) {
-                    return True;
-                }  // end if (success == True)
-            }  // end if (_fsm->inode.sIndirect != (unsigned int)(-1))
-            // if the directory has files in it's dindirect pointer area, remove them
-            if (_fsm->inode.dIndirect != (unsigned int)(-1)) {
-                success = remove_file_from_double_indirect(_fsm, _inodeNumF, (unsigned int)(-1),
-                                                           _fsm->inode.dIndirect);
-                if (success == True) {
-                    return True;
-                }  // end if (success == True)
-            }  // end if (_fsm->inode.dIndirect != (unsigned int)(-1))
-            // if the directory has files in it's tindirect pointer area, remove them
-            if (_fsm->inode.tIndirect != (unsigned int)(-1)) {
-                success = remove_file_from_triple_indirect(_fsm, _inodeNumF, _fsm->inode.tIndirect);
-                if (success == True) {
-                    return True;
-                }  // end if (success == True)
-            }  // end if (_fsm->inode.tIndirect != (unsigned int)(-1))
+            if (remove_file_from_dir_indirect_pointers(_fsm, _inodeNumF)) {
+                return True;
+            }
         }  // end if (_fsm->inode.fileType == 2)
     }  // end if (success == True)
     // file failed to open, return false
@@ -1003,15 +1010,14 @@ Bool fs_remove_file_from_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int _i
 static Bool remove_file_from_triple_indirect(FSM *_fsm, unsigned int _inodeNumF,
                                              unsigned int _tIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
-    unsigned int diskOffset;
-    unsigned int sectorNum;
+    unsigned int diskOffset, sectorNum;
     Bool success;
     diskOffset = _tIndirectOffset;
     // set sampleCount
     fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
     _fsm->sampleCount = fread(indirectBlock, BLOCK_SIZE, 1, _fsm->diskHandle);
-    unsigned int i, k;
-    for (i = 0; i < BLOCK_SIZE / 4; i++) {
+    unsigned int k;
+    for (unsigned int i = 0; i < BLOCK_SIZE / 4; i++) {
         if (indirectBlock[i] != (unsigned int)(-1)) {
             diskOffset = indirectBlock[i];
             success =
@@ -1028,8 +1034,8 @@ static Bool remove_file_from_triple_indirect(FSM *_fsm, unsigned int _inodeNumF,
                 if (k == BLOCK_SIZE / 4) {
                     sectorNum = _tIndirectOffset / BLOCK_SIZE;
                     _fsm->ssm->contSectors = 1;
-                    _fsm->ssm->index[0] = sectorNum / 8;
-                    _fsm->ssm->index[1] = sectorNum % 8;
+                    _fsm->ssm->index[0] = sectorNum / BITS_PER_BYTE;
+                    _fsm->ssm->index[1] = sectorNum % BITS_PER_BYTE;
                     ssm_deallocate_sectors(_fsm->ssm);
                     _fsm->inode.tIndirect = (unsigned int)(-1);
                     inode_write(&_fsm->inode, _fsm->inodeNum, _fsm->diskHandle);

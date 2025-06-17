@@ -33,6 +33,13 @@ typedef struct {
 } Inode;
 
 /**
+ * @brief Initializes the inode memory pointers.
+ * @param[out] _inode Pointer to an Inode structure to store the result.
+ * @return void
+ */
+void inode_init_ptrs(Inode *_inode);
+
+/**
  * @brief Initializes the inode memory.
  * @param[out] _inode Pointer to an Inode structure to store the result.
  * @return void

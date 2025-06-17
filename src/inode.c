@@ -11,17 +11,23 @@
 #include "fsm_constants.h"
 #include "global_constants.h"
 
-void inode_init(Inode *_inode) {
+void inode_init_ptrs(Inode *_inode) {
     typedef unsigned int UI;
     char *buffer = (char *)_inode;
     const int offset = 7;
-    // value loc for fileType, fileSize, permissions, linkCount, dataBlocks, tModified, status
-    memcpy(buffer, (unsigned int[]){0, 0, 0, 0, 0, 0, 0}, sizeof(unsigned int) * offset);
     // initialize all 10 direct pointers, 1 single idirect, 1 double indirect, 1 triple indirect
     memcpy(buffer + offset * sizeof(unsigned int),
            (unsigned int[]){(UI)-1, (UI)-1, (UI)-1, (UI)-1, (UI)-1, (UI)-1, (UI)-1, (UI)-1, (UI)-1,
                             (UI)-1, (UI)-1, (UI)-1, (UI)-1},
            sizeof(unsigned int) * 13);
+}
+
+void inode_init(Inode *_inode) {
+    char *buffer = (char *)_inode;
+    const int offset = 7;
+    // value loc for fileType, fileSize, permissions, linkCount, dataBlocks, tModified, status
+    memcpy(buffer, (unsigned int[]){0, 0, 0, 0, 0, 0, 0}, sizeof(unsigned int) * offset);
+    inode_init_ptrs(_inode);
 }
 
 void inode_make(unsigned int _count, FILE *_fileStream, unsigned int _diskOffset) {
