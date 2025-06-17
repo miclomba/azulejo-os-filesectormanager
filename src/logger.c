@@ -439,11 +439,33 @@ void log_fsm(FSM* _fsm, int _case, unsigned int _startByte) {
     log_fsm_io(_case);
 }
 
-void log_ssm(SSM* _ssm, int _case, int _startByte) {
+/**
+ * @brief Prints debug information for the Sector Space Manager (SSM) file operations.
+ * Logs diagnostic output based on the specified debug case and byte offset.
+ * @param[in] _case Identifier for the type of debug information to print.
+ * @return void
+ */
+static void log_ssm_file(int _case) {
     switch (_case) {
-        case SSM_INIT_MAPS:
-            print_message("Initializing SSM maps...");
+        case SSM_FILE_OPEN:
+            print_message("Reading input file...");
             break;
+        case SSM_FILE_STUB_OUTPUT:
+            print_message("Creating stub output...");
+            break;
+    }
+}
+
+/**
+ * @brief Prints debug information for the Sector Space Manager (SSM) map operations.
+ * Logs diagnostic output based on the specified debug case and byte offset.
+ * @param[in] _ssm Pointer to the SSM structure.
+ * @param[in] _case Identifier for the type of debug information to print.
+ * @param[in] _startByte Byte offset at which to begin the debug trace.
+ * @return void
+ */
+static void log_ssm_maps(SSM* _ssm, int _case, int _startByte) {
+    switch (_case) {
         case SSM_MAPS_PRINT:
             print_ssm_maps(_ssm, (unsigned int)_startByte);
             break;
@@ -455,18 +477,8 @@ void log_ssm(SSM* _ssm, int _case, int _startByte) {
                      get_sector_number(_ssm->index));
             print_message(MESSAGE_BUFFER);
             break;
-        case SSM_INIT:
-            print_message("Initializing SSM...");
-            break;
         case SSM_MAPS_ALLOC_FAIL:
             print_sector_failure(_ssm->badSector, "Failed to allocate sectors at sector");
-            break;
-        case SSM_FRAGMENTATION:
-            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Check for degree of fragmentation.\n//F\n\nThe degree of memory "
-                     "fragmentation is %10.10f ",
-                     _ssm->fragmented);
-            print_message(MESSAGE_BUFFER);
             break;
         case SSM_MAPS_DEALLOC:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
@@ -480,6 +492,72 @@ void log_ssm(SSM* _ssm, int _case, int _startByte) {
         case SSM_MAPS_DEALLOC_FAIL:
             print_sector_failure(_ssm->badSector, "Failed to deallocate sector");
             break;
+        case SSM_MAPS_SET:
+            print_set_map_sector(_ssm, ALLOCATED);
+            break;
+        case SSM_MAPS_UNSET:
+            print_set_map_sector(_ssm, FREE);
+            break;
+        case SSM_MAPS_GET:
+            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
+                     "//Get %d contiguous sectors.\n//G:%d\n\nThere are %d contiguous sectors at "
+                     "sector %d.",
+                     _ssm->contSectors, _ssm->contSectors, _ssm->contSectors,
+                     get_sector_number(_ssm->index));
+            print_message(MESSAGE_BUFFER);
+            break;
+        case SSM_MAPS_NOT_FOUND:
+            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
+                     "Could not find %d contiguous sectors.\n", _ssm->contSectors);
+            print_message(MESSAGE_BUFFER);
+            break;
+        case SSM_INFO:
+            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
+                     "Variable information:\ncontSectors = %d\nindex[0] = %d\nindex[1] = %d",
+                     _ssm->contSectors, _ssm->index[0], _ssm->index[1]);
+            print_message(MESSAGE_BUFFER);
+            break;
+    }
+}
+
+/**
+ * @brief Prints debug information for the Sector Space Manager (SSM) init operations.
+ * Logs diagnostic output based on the specified debug case and byte offset.
+ * @param[in] _case Identifier for the type of debug information to print.
+ * @return void
+ */
+static void log_ssm_init(int _case) {
+    switch (_case) {
+        case SSM_INIT_MAPS:
+            print_message("Initializing SSM maps...");
+            break;
+        case SSM_INIT:
+            print_message("Initializing SSM...");
+            break;
+    }
+}
+
+/**
+ * @brief Prints debug information for the Sector Space Manager (SSM) integrity operations.
+ * Logs diagnostic output based on the specified debug case and byte offset.
+ * @param[in] _ssm Pointer to the SSM structure.
+ * @param[in] _case Identifier for the type of debug information to print.
+ * @return void
+ */
+static void log_ssm_integrity(SSM* _ssm, int _case) {
+    switch (_case) {
+        case SSM_FRAGMENTATION:
+            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
+                     "//Check for degree of fragmentation.\n//F\n\nThe degree of memory "
+                     "fragmentation is %10.10f ",
+                     _ssm->fragmented);
+            print_message(MESSAGE_BUFFER);
+            break;
+        case SSM_FRAGMENTATION_MSG:
+            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
+                     "The memory sectors are %f percent fragmented.\n", _ssm->fragmented);
+            print_message(MESSAGE_BUFFER);
+            break;
         case SSM_MAPS_INTEGRITY_FAIL:
             print_sector_failure(_ssm->badSector, "Failed integrity check at sector");
             printf("\n");
@@ -490,47 +568,30 @@ void log_ssm(SSM* _ssm, int _case, int _startByte) {
         case SSM_MAPS_INTEGRITY:
             print_message("//Check for integrity.\n//I\n\nChecking integrity of the maps...");
             break;
-        case SSM_FRAGMENTATION_MSG:
-            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "The memory sectors are %f percent fragmented.\n", _ssm->fragmented);
-            print_message(MESSAGE_BUFFER);
-            break;
-        case SSM_MAPS_SET:
-            print_set_map_sector(_ssm, ALLOCATED);
-            break;
-        case SSM_MAPS_UNSET:
-            print_set_map_sector(_ssm, FREE);
-            break;
+    }
+}
+
+/**
+ * @brief Prints debug information for the Sector Space Manager (SSM) io operations.
+ * Logs diagnostic output based on the specified debug case and byte offset.
+ * @param[in] _case Identifier for the type of debug information to print.
+ * @return void
+ */
+static void log_ssm_io(int _case) {
+    switch (_case) {
         case SSM_END:
             printf("\nEND");
             break;
         case SSM_INVALID_INPUT:
             print_message("Bad input...");
             break;
-        case SSM_SECTORS_NOT_FOUND:
-            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "Could not find %d contiguous sectors.\n", _ssm->contSectors);
-            print_message(MESSAGE_BUFFER);
-            break;
-        case SSM_FILE_OPEN:
-            print_message("Reading input file...");
-            break;
-        case SSM_FILE_STUB_OUTPUT:
-            print_message("Creating stub output...");
-            break;
-        case SSM_INFO:
-            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "Variable information:\ncontSectors = %d\nindex[0] = %d\nindex[1] = %d",
-                     _ssm->contSectors, _ssm->index[0], _ssm->index[1]);
-            print_message(MESSAGE_BUFFER);
-            break;
-        case SSM_MAPS_GET:
-            snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Get %d contiguous sectors.\n//G:%d\n\nThere are %d contiguous sectors at "
-                     "sector %d.",
-                     _ssm->contSectors, _ssm->contSectors, _ssm->contSectors,
-                     get_sector_number(_ssm->index));
-            print_message(MESSAGE_BUFFER);
-            break;
     }
+}
+
+void log_ssm(SSM* _ssm, int _case, int _startByte) {
+    log_ssm_file(_case);
+    log_ssm_maps(_ssm, _case, _startByte);
+    log_ssm_init(_case);
+    log_ssm_integrity(_ssm, _case);
+    log_ssm_io(_case);
 }
