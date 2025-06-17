@@ -14,20 +14,6 @@
 #include "test_config.h"
 #include "utils.h"
 
-// FSM array used for pointer simplicity
-static FSM fsm[1];
-// buffer for input read, has a maximum input of 10,000 characters
-static char input[MAX_INPUT];
-
-// PROTOTYPES
-/**
- * @brief Outputs stub input for debugging or testing purposes.
- * Reads input from a predefined stub file (`INPUT_STUB_FILE`) and prints its contents
- * to standard output. Used primarily for generating traceable debug output when
- * `DEBUG_LEVEL > 0`. Terminates early upon encountering the "END" marker in the file.
- * @return void
- */
-void process_input_stub(void);
 /**
  * @brief Processes and executes file system commands from an input file.
  * Reads all commands from a predefined input file (`INPUT_FILE`) and interprets each command
@@ -36,11 +22,11 @@ void process_input_stub(void);
  * dispatch based on the character at the current buffer index.
  * @param argc Argument count from the command line.
  * @param argv Argument vector containing command-line parameters.
+ * @param fsm File Sector Manager
+ * @param input the program input
  * @return void
  */
-void process_input(int argc, char** argv);
-
-void process_input(int argc, char** argv) {
+static void process_input(int argc, char** argv, FSM* fsm, char* input) {
     // boolean for state of reading input
     Bool loop = True;
     // placeholder in the buffer array should start at the beginning
@@ -119,9 +105,11 @@ void process_input(int argc, char** argv) {
  * Reads input from a predefined stub file (`INPUT_STUB_FILE`) and prints its contents
  * to standard output. Used primarily for generating traceable debug output when
  * `DEBUG_LEVEL > 0`. Terminates early upon encountering the "END" marker in the file.
+ * @param fsm File Sector Manager
+ * @param input the program input
  * @return void
  */
-void process_input_stub(void) {
+static void process_input_stub(FSM* fsm, char* input) {
     // if the debug level is greater than 0, generate stub output
     if (DEBUG_LEVEL > 0) {
         // call log_fsm to print that stub output is being created
@@ -152,13 +140,18 @@ void process_input_stub(void) {
  * @return 0 on successful execution, non-zero on error.
  */
 int main(int _argc, char* _argv[]) {
+    // FSM array used for pointer simplicity
+    FSM fsm[1];
+    // buffer for input read, has a maximum input of 10,000 characters
+    char input[MAX_INPUT];
+
     // if designated by the parameters, run program with stub output
     if (_argc > 2 && atoi(_argv[2]) == 1) {
-        process_input_stub();
+        process_input_stub(fsm, input);
     }  // end if (_argc > 2 && atoi(_argv[2]) == 1)
     // if DEBUG_LEVEL is not set to read stub input, read legitimate input
     else {
-        process_input(_argc, _argv);
+        process_input(_argc, _argv, fsm, input);
     }  // end else
     // program successfully completed, return 0
     return 0;
