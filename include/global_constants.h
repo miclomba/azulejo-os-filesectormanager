@@ -27,5 +27,6 @@ typedef int Bool;
 #endif
 
 static const int BITS_PER_BYTE = 8;
+static const int INODE_DIRECT_PTRS = 10;
 
 #endif  // G_DEFINITIONS

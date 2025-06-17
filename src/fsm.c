@@ -175,24 +175,9 @@ const Inode *fs_open_file(FSM *_fsm, unsigned int _inodeNum) {
 }
 
 Bool fs_close_file(FSM *_fsm) {
-    int i, j;
     // Reset all FSM->Inode variables to defaults
     _fsm->inodeNum = (unsigned int)(-1);
-    _fsm->inode.fileType = 0;
-    _fsm->inode.fileSize = 0;
-    _fsm->inode.permissions = 0;
-    _fsm->inode.linkCount = 0;
-    _fsm->inode.dataBlocks = 0;
-    _fsm->inode.owner = 0;
-    _fsm->inode.status = 0;
-    j = 0;
-    for (i = 7; i < 17; i++) {
-        _fsm->inode.directPtr[j] = (unsigned int)(-1);
-        j++;
-    }  // end for (i = 7; i < 17; i++)
-    _fsm->inode.sIndirect = (unsigned int)(-1);
-    _fsm->inode.dIndirect = (unsigned int)(-1);
-    _fsm->inode.tIndirect = (unsigned int)(-1);
+    inode_init(&_fsm->inode);
     return True;
 }
 
@@ -202,19 +187,17 @@ Bool fs_read_from_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer) {
     if (success == NULL) {
         return False;
     }  // end if (success == False)
-    void *buffer;
-    buffer = _buffer;
+    void *buffer = _buffer;
     // Read data from direct pointers into buffer _buffer
-    int i;
     unsigned int diskOffset;
-    for (i = 0; i < 10; i++) {
+    for (int i = 0; i < INODE_DIRECT_PTRS; i++) {
         diskOffset = _fsm->inode.directPtr[i];
         if (diskOffset != (unsigned int)(-1)) {
             fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
             _fsm->sampleCount = fread(buffer, BLOCK_SIZE, 1, _fsm->diskHandle);
             buffer = (char *)buffer + BLOCK_SIZE;
         }  // end if (diskOffset != (unsigned int)(-1))
-    }  // end for (i = 0; i < 10; i++)
+    }  // end for (i = 0; i < INODE_DIRECT_PTRS; i++)
     // Read data from single indirect pointer into buffer _buffer
     diskOffset = _fsm->inode.sIndirect;
     if (diskOffset != (unsigned int)(-1)) {
@@ -234,34 +217,9 @@ Bool fs_read_from_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer) {
     return True;
 }
 
-Bool fs_write_to_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer, long long int _fileSize) {
-    // return false if openFile fails
-    const Inode *success = fs_open_file(_fsm, _inodeNum);
-    if (success == NULL) {
-        return False;
-    }  // end if (success == False)
-    // set fileSize and inode fileSize
-    long long int fileSize = _fileSize;
-    _fsm->inode.fileSize = (unsigned int)_fileSize;
-    _fsm->inode.dataBlocks = _fsm->inode.fileSize / BLOCK_SIZE;
-    unsigned int directPtrs = 0;
-    unsigned int i;
-    // Calculate how many direct pointers needed
-    for (i = 0; i < 10; i++) {
-        fileSize -= BLOCK_SIZE;
-        if (fileSize > 0) {
-            directPtrs++;
-        }  // end if (fileSize > 0)
-        else {
-            directPtrs++;
-            break;
-        }  // end else (fileSize > 0)
-    }  // end for (i = 0; i < 10; i++)
-    void *buffer;
-    buffer = _buffer;
-    // Write to direct pointers
+static void *fs_write_to_file_direct(FSM *_fsm, void *buffer, unsigned int directPtrs) {
     unsigned int diskOffset;
-    for (i = 0; i < directPtrs; i++) {
+    for (unsigned int i = 0; i < directPtrs; i++) {
         diskOffset = _fsm->inode.directPtr[i];
         if (diskOffset == (unsigned int)(-1)) {
             // If direct pointer is empty, get a Sector for it
@@ -271,7 +229,8 @@ Bool fs_write_to_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer, long lon
                 break;
             }  // end if (_fsm->ssm->index[0] == (unsigned int)(-1))
             else {
-                diskOffset = BLOCK_SIZE * ((8 * _fsm->ssm->index[0]) + (_fsm->ssm->index[1]));
+                diskOffset =
+                    BLOCK_SIZE * ((BITS_PER_BYTE * _fsm->ssm->index[0]) + (_fsm->ssm->index[1]));
                 _fsm->inode.directPtr[i] = diskOffset;
                 fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
                 _fsm->sampleCount = fwrite(buffer, BLOCK_SIZE, 1, _fsm->diskHandle);
@@ -287,6 +246,145 @@ Bool fs_write_to_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer, long lon
             buffer = (char *)buffer + BLOCK_SIZE;
         }  // end else (diskOffset == (unsigned int)(-1))
     }  // end for (i = 0; i < directPtrs; i++)
+    return buffer;
+}
+
+/**
+ * @brief Writes data to a file that uses single indirect blocks.
+ * Writes the contents of the provided buffer to the file identified by the given inode number.
+ * @param[in,out] _fsm Pointer to the FSM instance.
+ * @param[in,out] _buffer Pointer to the data to be written.
+ * @param[in,out] _fileSize Size of the data to write, in bytes.
+ * @param[in,out] baseOffset the base offset to write to
+ * @param[in,out] sIndirectPtrs the number of single indirect blocks
+ * @return the updated buffer address.
+ * @date 2025-06-16 First implementation.
+ */
+static void *fs_write_to_file_using_single_indirect_blocks(FSM *_fsm, void *buffer,
+                                                           long long int *fileSize,
+                                                           unsigned int *baseOffset,
+                                                           unsigned int *sIndirectPtrs) {
+    // Calculate number of single indirect pointers needed
+    *sIndirectPtrs = *fileSize / BLOCK_SIZE;
+    if (*fileSize % BLOCK_SIZE > 0) {
+        *sIndirectPtrs += 1;
+    }  // end if (fileSize % BLOCK_SIZE > 0)
+    // Allocate single indirect pointers
+    _fsm->inode.sIndirect = aloc_single_indirect(_fsm, *sIndirectPtrs);
+    // Write to single indirect pointers
+    *baseOffset = _fsm->inode.sIndirect;
+    write_to_single_indirect_blocks(_fsm, *baseOffset, buffer, *sIndirectPtrs);
+    return buffer;
+}
+
+/**
+ * @brief Writes data to a file that uses double indirect blocks.
+ * Writes the contents of the provided buffer to the file identified by the given inode number.
+ * @param[in,out] _fsm Pointer to the FSM instance.
+ * @param[in,out] _buffer Pointer to the data to be written.
+ * @param[in,out] _fileSize Size of the data to write, in bytes.
+ * @param[in,out] baseOffset the base offset to write to
+ * @param[in,out] sIndirectPtrs the number of single indirect blocks
+ * @param[in,out] dIndirectPtrs the number of double indirect blocks
+ * @return the updated buffer address.
+ * @date 2025-06-16 First implementation.
+ */
+static void *fs_write_to_file_using_double_indirect_blocks(FSM *_fsm, void *buffer,
+                                                           long long int *fileSize,
+                                                           unsigned int *baseOffset,
+                                                           unsigned int *sIndirectPtrs,
+                                                           unsigned int *dIndirectPtrs) {
+    // Allocate single Indirect blocks
+    *sIndirectPtrs = S_INDIRECT_BLOCKS;
+    _fsm->inode.sIndirect = aloc_single_indirect(_fsm, *sIndirectPtrs);
+    // Write to single Indirect pointers
+    *baseOffset = _fsm->inode.sIndirect;
+    write_to_single_indirect_blocks(_fsm, *baseOffset, buffer, *sIndirectPtrs);
+    buffer = (char *)buffer + BLOCK_SIZE * S_INDIRECT_BLOCKS;
+    // Calculate Remaining filesize
+    *fileSize = *fileSize + (INODE_DIRECT_PTRS * BLOCK_SIZE) - S_INDIRECT_SIZE;
+    // Calculate number of double Indirect Pointrs needed
+    *dIndirectPtrs = *fileSize / BLOCK_SIZE;
+    if (*fileSize % BLOCK_SIZE > 0) {
+        *dIndirectPtrs += 1;
+    }  // end if (fileSize % BLOCK_SIZE > 0)
+    // Allocate double Indirect Pointers
+    _fsm->inode.dIndirect = aloc_double_indirect(_fsm, *dIndirectPtrs);
+    *baseOffset = _fsm->inode.dIndirect;
+    // Write to double Indirect Pointers
+    write_to_double_indirect_blocks(_fsm, *baseOffset, buffer, *dIndirectPtrs);
+
+    return buffer;
+}
+
+/**
+ * @brief Writes data to a file that uses triple indirect blocks.
+ * Writes the contents of the provided buffer to the file identified by the given inode number.
+ * @param[in,out] _fsm Pointer to the FSM instance.
+ * @param[in,out] _buffer Pointer to the data to be written.
+ * @param[in,out] _fileSize Size of the data to write, in bytes.
+ * @param[in,out] baseOffset the base offset to write to
+ * @param[in,out] sIndirectPtrs the number of single indirect blocks
+ * @param[in,out] dIndirectPtrs the number of double indirect blocks
+ * @param[in,out] tIndirectPtrs the number of triple indirect blocks
+ * @return the updated buffer address.
+ * @date 2025-06-16 First implementation.
+ */
+static void *fs_write_to_file_using_triple_indirect_blocks(
+    FSM *_fsm, void *buffer, long long int *fileSize, unsigned int *baseOffset,
+    unsigned int *sIndirectPtrs, unsigned int *dIndirectPtrs, unsigned int *tIndirectPtrs) {
+    *sIndirectPtrs = S_INDIRECT_BLOCKS;
+    *dIndirectPtrs = D_INDIRECT_BLOCKS;
+    // Allocate Single and double indirect pointers
+    _fsm->inode.sIndirect = aloc_single_indirect(_fsm, *sIndirectPtrs);
+    _fsm->inode.dIndirect = aloc_double_indirect(_fsm, *dIndirectPtrs);
+    // Write to single indirect blocks
+    *baseOffset = _fsm->inode.sIndirect;
+    write_to_single_indirect_blocks(_fsm, *baseOffset, buffer, *sIndirectPtrs);
+    buffer = (char *)buffer + BLOCK_SIZE * S_INDIRECT_BLOCKS;
+    // Write to double indirect blocks
+    *baseOffset = _fsm->inode.dIndirect;
+    write_to_double_indirect_blocks(_fsm, *baseOffset, buffer, *dIndirectPtrs);
+    buffer = (char *)buffer + BLOCK_SIZE * D_INDIRECT_BLOCKS;
+    // Calculate remaining filesize
+    *fileSize = *fileSize + (INODE_DIRECT_PTRS * BLOCK_SIZE) - D_INDIRECT_SIZE;
+    // Calculate number of triple Indirect pointers needed
+    *tIndirectPtrs = *fileSize / BLOCK_SIZE;
+    if (*fileSize % BLOCK_SIZE > 0) {
+        *tIndirectPtrs += 1;
+    }  // end if (fileSize % BLOCK_SIZE > 0)
+    // Allocate triple Indirect Pointers
+    _fsm->inode.tIndirect = aloc_triple_indirect(_fsm, *tIndirectPtrs);
+    *baseOffset = _fsm->inode.tIndirect;
+    // Write to tripleIndirectBlocks
+    write_to_triple_indirect_blocks(_fsm, *baseOffset, buffer, *tIndirectPtrs);
+
+    return buffer;
+}
+
+Bool fs_write_to_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer, long long int _fileSize) {
+    // return false if openFile fails
+    const Inode *success = fs_open_file(_fsm, _inodeNum);
+    if (success == NULL) {
+        return False;
+    }  // end if (success == False)
+    // set fileSize and inode fileSize
+    long long int fileSize = _fileSize;
+    _fsm->inode.fileSize = (unsigned int)_fileSize;
+    _fsm->inode.dataBlocks = _fsm->inode.fileSize / BLOCK_SIZE;
+    unsigned int directPtrs = 0;
+    // Calculate how many direct pointers needed
+    for (unsigned int i = 0; i < INODE_DIRECT_PTRS; i++) {
+        fileSize -= BLOCK_SIZE;
+        directPtrs++;
+        if (fileSize <= 0) {
+            break;
+        }  // end else (fileSize > 0)
+    }  // end for (i = 0; i < INODE_DIRECT_PTRS; i++)
+    void *buffer = _buffer;
+    // Write to direct pointers
+    buffer = fs_write_to_file_direct(_fsm, buffer, directPtrs);
+
     unsigned int sIndirectPtrs = 0;
     unsigned int dIndirectPtrs = 0;
     unsigned int tIndirectPtrs = 0;
@@ -296,68 +394,22 @@ Bool fs_write_to_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer, long lon
     if (fileSize > 0) {
         // Write to file using triple Indirection if file too big for
         /// double indirection
-        if (fileSize + (10 * BLOCK_SIZE) - D_INDIRECT_SIZE > 0) {
-            sIndirectPtrs = S_INDIRECT_BLOCKS;
-            dIndirectPtrs = D_INDIRECT_BLOCKS;
-            // Allocate Single and double indirect pointers
-            _fsm->inode.sIndirect = aloc_single_indirect(_fsm, sIndirectPtrs);
-            _fsm->inode.dIndirect = aloc_double_indirect(_fsm, dIndirectPtrs);
-            // Write to single indirect blocks
-            baseOffset = _fsm->inode.sIndirect;
-            write_to_single_indirect_blocks(_fsm, baseOffset, buffer, sIndirectPtrs);
-            buffer = (char *)buffer + BLOCK_SIZE * S_INDIRECT_BLOCKS;
-            // Write to double indirect blocks
-            baseOffset = _fsm->inode.dIndirect;
-            write_to_double_indirect_blocks(_fsm, baseOffset, buffer, dIndirectPtrs);
-            buffer = (char *)buffer + BLOCK_SIZE * D_INDIRECT_BLOCKS;
-            // Calculate remaining filesize
-            fileSize = fileSize + (10 * BLOCK_SIZE) - D_INDIRECT_SIZE;
-            // Calculate number of triple Indirect pointers needed
-            tIndirectPtrs = fileSize / BLOCK_SIZE;
-            if (fileSize % BLOCK_SIZE > 0) {
-                tIndirectPtrs += 1;
-            }  // end if (fileSize % BLOCK_SIZE > 0)
-            // Allocate triple Indirect Pointers
-            _fsm->inode.tIndirect = aloc_triple_indirect(_fsm, tIndirectPtrs);
-            baseOffset = _fsm->inode.tIndirect;
-            // Write to tripleIndirectBlocks
-            write_to_triple_indirect_blocks(_fsm, baseOffset, buffer, tIndirectPtrs);
-        }  // end if (fileSize + (10 * BLOCK_SIZE) - D_INDIRECT_SIZE > 0)
+        if (fileSize + (INODE_DIRECT_PTRS * BLOCK_SIZE) - D_INDIRECT_SIZE > 0) {
+            buffer = fs_write_to_file_using_triple_indirect_blocks(_fsm, buffer, &fileSize,
+                                                                   &baseOffset, &sIndirectPtrs,
+                                                                   &dIndirectPtrs, &tIndirectPtrs);
+
+        }  // end if (fileSize + (INODE_DIRECT_PTRS * BLOCK_SIZE) - D_INDIRECT_SIZE > 0)
         // Write to file using double Indirection if too big for
         //   single indirection
-        else if (fileSize + (10 * BLOCK_SIZE) - S_INDIRECT_SIZE > 0) {
-            // Allocate single Indirect blocks
-            sIndirectPtrs = S_INDIRECT_BLOCKS;
-            _fsm->inode.sIndirect = aloc_single_indirect(_fsm, sIndirectPtrs);
-            // Write to single Indirect pointers
-            baseOffset = _fsm->inode.sIndirect;
-            write_to_single_indirect_blocks(_fsm, baseOffset, buffer, sIndirectPtrs);
-            buffer = (char *)buffer + BLOCK_SIZE * S_INDIRECT_BLOCKS;
-            // Calculate Remaining filesize
-            fileSize = fileSize + (10 * BLOCK_SIZE) - S_INDIRECT_SIZE;
-            // Calculate number of double Indirect Pointrs needed
-            dIndirectPtrs = fileSize / BLOCK_SIZE;
-            if (fileSize % BLOCK_SIZE > 0) {
-                dIndirectPtrs += 1;
-            }  // end if (fileSize % BLOCK_SIZE > 0)
-            // Allocate double Indirect Pointers
-            _fsm->inode.dIndirect = aloc_double_indirect(_fsm, dIndirectPtrs);
-            baseOffset = _fsm->inode.dIndirect;
-            // Write to double Indirect Pointers
-            write_to_double_indirect_blocks(_fsm, baseOffset, buffer, dIndirectPtrs);
-        }  // end else if (fileSize + (10 * BLOCK_SIZE) - S_INDIRECT_SIZE > 0)
+        else if (fileSize + (INODE_DIRECT_PTRS * BLOCK_SIZE) - S_INDIRECT_SIZE > 0) {
+            buffer = fs_write_to_file_using_double_indirect_blocks(
+                _fsm, buffer, &fileSize, &baseOffset, &sIndirectPtrs, &dIndirectPtrs);
+        }  // end else if (fileSize + (INODE_DIRECT_PTRS * BLOCK_SIZE) - S_INDIRECT_SIZE > 0)
         // Write to file using single Indirection only
         else {
-            // Calculate number of single indirect pointers needed
-            sIndirectPtrs = fileSize / BLOCK_SIZE;
-            if (fileSize % BLOCK_SIZE > 0) {
-                sIndirectPtrs += 1;
-            }  // end if (fileSize % BLOCK_SIZE > 0)
-            // Allocate single indirect pointers
-            _fsm->inode.sIndirect = aloc_single_indirect(_fsm, sIndirectPtrs);
-            // Write to single indirect pointers
-            baseOffset = _fsm->inode.sIndirect;
-            write_to_single_indirect_blocks(_fsm, baseOffset, buffer, sIndirectPtrs);
+            buffer = fs_write_to_file_using_single_indirect_blocks(_fsm, buffer, &fileSize,
+                                                                   &baseOffset, &sIndirectPtrs);
         }  // end else
     }  // end if (fileSize > 0)
     // Write created inode to disk
@@ -638,8 +690,8 @@ static Bool add_file_to_triple_indirect(FSM *_fsm, unsigned int _inodeNumF, unsi
     diskOffset = _tIndirectOffset;
     fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
     _fsm->sampleCount = fread(indirectBlock, BLOCK_SIZE, 1, _fsm->diskHandle);
-    unsigned int i;
-    for (i = 0; i < BLOCK_SIZE / 4; i++) {
+
+    for (unsigned int i = 0; i < BLOCK_SIZE / 4; i++) {
         if (indirectBlock[i] != (unsigned int)(-1)) {
             diskOffset = indirectBlock[i];
             success = add_file_to_double_indirect(_fsm, _inodeNumF, _name, diskOffset, _allocate);
@@ -650,20 +702,18 @@ static Bool add_file_to_triple_indirect(FSM *_fsm, unsigned int _inodeNumF, unsi
     }  // end for (i = 0; i < BLOCK_SIZE/4; i++)
     // Allocate more sectors to write to
     if (_allocate == True) {
-        for (i = 0; i < BLOCK_SIZE / 4; i++) {
+        for (unsigned int i = 0; i < BLOCK_SIZE / 4; i++) {
             if (indirectBlock[i] == (unsigned int)(-1)) {
                 ssm_get_sector(1, _fsm->ssm);
                 if (_fsm->ssm->index[0] == (unsigned int)(-1)) {
                     return False;
                 }  // end if (_fsm->ssm->index[0] == (unsigned int)(-1))
                 else {
-                    indirectBlock[i] =
-                        BLOCK_SIZE * ((8 * _fsm->ssm->index[0]) + (_fsm->ssm->index[1]));
+                    indirectBlock[i] = BLOCK_SIZE * ((BITS_PER_BYTE * _fsm->ssm->index[0]) +
+                                                     (_fsm->ssm->index[1]));
                     fseek(_fsm->diskHandle, _tIndirectOffset, SEEK_SET);
                     _fsm->sampleCount = fwrite(indirectBlock, BLOCK_SIZE, 1, _fsm->diskHandle);
-                    for (i = 0; i < BLOCK_SIZE / 4; i++) {
-                        buffer[i] = (unsigned int)(-1);
-                    }  // end for (i = 0; i < BLOCK_SIZE/4; i++)
+                    memset(buffer, 0xFF, BLOCK_SIZE);
                     fseek(_fsm->diskHandle, indirectBlock[i], SEEK_SET);
                     _fsm->sampleCount =
                         fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
