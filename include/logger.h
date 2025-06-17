@@ -16,7 +16,7 @@
  */
 typedef enum LoggerFSMOption {
     FSM_INIT_MAPS = 0,
-    FSM_INODE_MAP = 1,
+    FSM_INODE_ARRAY = 1,
     FSM_ALLOC_INODES = 2,
     FSM_INIT = 3,
     FSM_ALLOC_FAIL = 4,

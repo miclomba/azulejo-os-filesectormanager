@@ -279,7 +279,7 @@ static void log_fsm_file(FSM* _fsm, LoggerFSMOption _case) {
 static void log_fsm_inode(FSM* _fsm, LoggerFSMOption _case, unsigned int _startByte) {
     switch (_case) {
         // Print Inode Map
-        case FSM_INODE_MAP:
+        case FSM_INODE_ARRAY:
             print_inode_map(_fsm, _startByte);
             break;
         // Print Set inode sector message

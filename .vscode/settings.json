@@ -4,6 +4,7 @@
         "global_constants.h": "c",
         "random": "c",
         "fsm_constants.h": "c",
-        "ssm_constants.h": "c"
+        "ssm_constants.h": "c",
+        "inode.h": "c"
     }
 }

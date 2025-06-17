@@ -33,6 +33,13 @@ typedef struct {
 } Inode;
 
 /**
+ * @brief Initializes the inode memory.
+ * @param[out] _inode Pointer to an Inode structure to store the result.
+ * @return void
+ */
+void inode_init(Inode *_inode);
+
+/**
  * @brief Constructs a block of inodes and initializes their fields.
  * Creates a sequence of `_count` inodes starting at the specified disk offset.
  * Each inode is initialized with zeroed data fields and -1 in all pointer fields.
