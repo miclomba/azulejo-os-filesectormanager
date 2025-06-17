@@ -106,15 +106,12 @@ static void init_file_sector_mgr(FSM *_fsm, int _initSsmMaps) {
  * @date 2010-04-01 First implementation.
  */
 static void init_fsm_maps(FSM *_fsm) {
-    unsigned int i;
     unsigned char map[INODE_BLOCKS];  // SECTOR_BYTES
     unsigned char disk[DISK_SIZE];
     // Load iMap from file and place in iMapHandle
     _fsm->iMapHandle = fopen(FSM_INODE_MAP, "r+");
     // Initialize all map elements to 255
-    for (i = 0; i < INODE_BLOCKS; i++) {
-        map[i] = 255;
-    }  // end for (i = 0; i < INODE_BLOCKS; i++)
+    memset(map, UINT8_MAX, INODE_BLOCKS);
     // Write map back to iMapHandle
     _fsm->sampleCount = fwrite(map, 1, INODE_BLOCKS, _fsm->iMapHandle);
     // close the file
@@ -122,9 +119,7 @@ static void init_fsm_maps(FSM *_fsm) {
     _fsm->iMapHandle = Null;
     _fsm->diskHandle = fopen(HARD_DISK, "rb+");
     // Initialize all disk elements to 0
-    for (i = 0; i < DISK_SIZE; i++) {
-        disk[i] = 0;
-    }  // end for (i = 0; i < DISK_SIZE; i++)
+    memset(disk, 0, DISK_SIZE);
     // Write contents of disk to diskHandle
     _fsm->sampleCount = fwrite(disk, 1, DISK_SIZE, _fsm->diskHandle);
     fclose(_fsm->diskHandle);
@@ -139,28 +134,13 @@ unsigned int fs_create_file(FSM *_fsm, int _isDirectory, unsigned int *_name,
     }  // end if (_fsm->index[0] == (unsigned int)(-1))
     // Create a default file. Will start with all pointers as -1
     unsigned int inodeNum;
-    inodeNum = 8 * _fsm->index[0] + _fsm->index[1];
+    inodeNum = BITS_PER_BYTE * _fsm->index[0] + _fsm->index[1];
     inode_read(&_fsm->inode, inodeNum, _fsm->diskHandle);
     // initialize inode metadata
-    _fsm->inode.fileSize = 0;
-    _fsm->inode.permissions = 0;
-    _fsm->inode.linkCount = 0;
-    _fsm->inode.dataBlocks = 0;
-    _fsm->inode.owner = 0;
-    _fsm->inode.status = 0;
-    int i;
-    for (i = 0; i < 10; i++) {
-        _fsm->inode.directPtr[i] = (unsigned int)(-1);
-    }  // end for (i = 0; i < 10; i++)
-    _fsm->inode.sIndirect = (unsigned int)(-1);
-    _fsm->inode.dIndirect = (unsigned int)(-1);
-    _fsm->inode.tIndirect = (unsigned int)(-1);
+    inode_init(&_fsm->inode);
     // Assign filetype
-    if (_isDirectory == 1) {
-        _fsm->inode.fileType = 2;
-    } else {
-        _fsm->inode.fileType = 1;
-    }  // end else (_isDirectory == 1)
+    _fsm->inode.fileType = _isDirectory == 1 ? 2 : 1;
+
     inode_write(&_fsm->inode, inodeNum, _fsm->diskHandle);
     allocate_inode(_fsm);
     unsigned int name[2];
@@ -177,7 +157,6 @@ unsigned int fs_create_file(FSM *_fsm, int _isDirectory, unsigned int *_name,
 }
 
 const Inode *fs_open_file(FSM *_fsm, unsigned int _inodeNum) {
-    int i, j;
     if (_inodeNum == (unsigned int)(-1)) {
         return NULL;
     }  // end if (_inodeNum == (unsigned int)(-1)) {
@@ -186,21 +165,8 @@ const Inode *fs_open_file(FSM *_fsm, unsigned int _inodeNum) {
     // Return true if file loaded correctly
     if (_fsm->inode.fileType <= 0) {
         // If file not loaded, create a default inode and return False
-        _fsm->inode.fileType = 0;
-        _fsm->inode.fileSize = 0;
-        _fsm->inode.permissions = 0;
-        _fsm->inode.linkCount = 0;
-        _fsm->inode.dataBlocks = 0;
-        _fsm->inode.owner = 0;
-        _fsm->inode.status = 0;
-        j = 0;
-        for (i = 7; i < 17; i++) {
-            _fsm->inode.directPtr[j] = -1;
-            j++;
-        }  // end for (i = 7; i < 17; i++)
-        _fsm->inode.sIndirect = -1;
-        _fsm->inode.dIndirect = -1;
-        _fsm->inode.tIndirect = -1;
+        inode_init(&_fsm->inode);
+
         _fsm->inodeNum = (unsigned int)(-1);
         // Return False if file did not open correctly
         return False;
