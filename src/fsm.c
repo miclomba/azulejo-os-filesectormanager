@@ -418,6 +418,114 @@ Bool fs_write_to_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer, long lon
     return True;
 }
 
+typedef enum PointerType { SINGLE, DOUBLE, TRIPLE } PointerType;
+
+/**
+ * @brief Verify if an indirect pointer is not null.
+ * @param[in] _indirect_ptr an inode indirect pointer.
+ * @return True if the indirect pointer is not null; false otherwise.
+ * @date 2025-06-17 First implementation.
+ */
+static Bool is_not_null(unsigned int _indirect_ptr) { return _indirect_ptr != (unsigned int)(-1); }
+
+/**
+ * @brief Verify if an indirect pointer is null.
+ * @param[in] _indirect_ptr an inode indirect pointer.
+ * @return True if the indirect pointer is null; false otherwise.
+ * @date 2025-06-17 First implementation.
+ */
+static Bool is_null(unsigned int _indirect_ptr) { return _indirect_ptr == (unsigned int)(-1); }
+
+/**
+ * @brief Writes a file to an inode's first available indirect pointer location.
+ * Writes a file into the specified inode memory within the File Sector Manager.
+ * @param[in,out] _fsm Pointer to the FSM instance.
+ * @param[in] _inodeNumF Inode number of the file to be written.
+ * @param[in] _file_name Pointer to the name of the file.
+ * @param[in] _allocate If true, allocate SSM blocks as needed.
+ * @return True if the file was written successfully, false otherwise.
+ * @date 2025-06-17 First implementation.
+ */
+static Bool write_file_to_avail_indirect_loc(FSM *_fsm, unsigned int _inodeNumF,
+                                             unsigned int *_file_name, Bool _allocate) {
+    if (is_not_null(_fsm->inode.sIndirect)) {
+        if (add_file_to_single_indirect(_fsm, _inodeNumF, _file_name, _fsm->inode.sIndirect,
+                                        _allocate))
+            return True;
+    }
+    if (is_not_null(_fsm->inode.dIndirect)) {
+        if (add_file_to_double_indirect(_fsm, _inodeNumF, _file_name, _fsm->inode.dIndirect,
+                                        _allocate))
+            return True;
+    }
+    if (is_not_null(_fsm->inode.tIndirect)) {
+        if (add_file_to_triple_indirect(_fsm, _inodeNumF, _file_name, _fsm->inode.tIndirect,
+                                        _allocate))
+            return True;
+    }
+    return False;
+}
+
+/**
+ * @brief Writes a file to an inode's unset indirect pointer location.
+ * Writes a file into the specified inode memory within the File Sector Manager after setting it.
+ * @param[in] _type the indirect PointerType (SINGLE, DOUBLE, TRIPLE).
+ * @param[in,out] _fsm Pointer to the FSM instance.
+ * @param[in] _inodeNumF Inode number of the file to be written.
+ * @param[in] _file_name Pointer to the name of the file.
+ * @param[in] _inodeNumD Inode number of the directory to store the file in.
+ * @param[in,out] diskOffset Offset within the disk.
+ * @param[in] _file_buffer Pointer to the file data buffer.
+ * @return True if the file was written successfully, false otherwise.
+ * @date 2025-06-17 First implementation.
+ */
+static Bool write_file_to_unavail_indirect_loc(PointerType _type, FSM *_fsm,
+                                               unsigned int _inodeNumF, unsigned int *_file_name,
+                                               unsigned int _inodeNumD, unsigned int *diskOffset,
+                                               unsigned int *file_buffer) {
+    typedef Bool (*WriteFunc)(FSM *, unsigned int, unsigned int *, unsigned int, Bool);
+
+    unsigned int *indirect = NULL;
+    WriteFunc write_func;
+
+    if (_type == SINGLE) {
+        indirect = &_fsm->inode.sIndirect;
+        write_func = add_file_to_single_indirect;
+    } else if (_type == DOUBLE) {
+        indirect = &_fsm->inode.dIndirect;
+        write_func = add_file_to_double_indirect;
+    } else {
+        indirect = &_fsm->inode.tIndirect;
+        write_func = add_file_to_triple_indirect;
+    }
+
+    // Check if memory has been allocated for this indirect memory
+    if (is_null(*indirect)) {
+        // Allocate memory for the inode's indirect pointer using SSM and update the inode
+        ssm_get_sector(1, _fsm->ssm);
+        if (is_null(_fsm->ssm->index[0])) {
+            return False;
+        } else {
+            *indirect =
+                BLOCK_SIZE * ((BITS_PER_BYTE * _fsm->ssm->index[0]) + (_fsm->ssm->index[1]));
+            memset(file_buffer, 0xFF, BLOCK_SIZE);
+            *diskOffset = *indirect;
+            fseek(_fsm->diskHandle, 0, SEEK_SET);
+            fseek(_fsm->diskHandle, *diskOffset, SEEK_SET);
+            _fsm->sampleCount =
+                fwrite(file_buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
+            ssm_allocate_sectors(_fsm->ssm);
+            fseek(_fsm->diskHandle, 0, SEEK_SET);
+            inode_write(&_fsm->inode, _inodeNumD, _fsm->diskHandle);
+        }
+        // Write data to this indirect memory location on disk
+        if (write_func(_fsm, _inodeNumF, _file_name, *diskOffset, True)) {
+            return True;
+        }
+    }  // end else (_fsm->ssm->index[0] == (unsigned int)(-1))
+    return False;
+}
+
 /**
  * @brief Adds a file to a directory.
  * Inserts a file into the specified directory within the File Sector Manager.
@@ -430,7 +538,6 @@ Bool fs_write_to_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer, long lon
  */
 static Bool add_file_to_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_name,
                             unsigned int _inodeNumD) {
-    Bool success;
     unsigned int i, j;
     unsigned int diskOffset = 0;
     unsigned int buffer[BLOCK_SIZE / 4];
@@ -440,7 +547,7 @@ static Bool add_file_to_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_n
     if (inode != NULL) {
         if (_fsm->inode.fileType == 2) {
             // Read file's direct pointers from disk
-            for (i = 0; i < 10; i++) {
+            for (i = 0; i < INODE_DIRECT_PTRS; i++) {
                 if (_fsm->inode.directPtr[i] != (unsigned int)(-1)) {
                     diskOffset = _fsm->inode.directPtr[i];
                     fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
@@ -464,29 +571,14 @@ static Bool add_file_to_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_n
                         }  // end if (buffer[j+3] == 0)
                     }  // end or (j = 0; j < BLOCK_SIZE/4; j += 4)
                 }  // end if (_fsm->inode.directPtr[i] != (unsigned int)(-1))
-            }  // end for (i = 0; i < 10; i++)
-            if (_fsm->inode.sIndirect != (unsigned int)(-1)) {
-                success = add_file_to_single_indirect(_fsm, _inodeNumF, _name,
-                                                      _fsm->inode.sIndirect, False);
-                if (success == True) {
-                    return True;
-                }  // end if (success == True)
-            }  // end if (_fsm->inode.sIndirect != (unsigned int)(-1))
-            if (_fsm->inode.dIndirect != (unsigned int)(-1)) {
-                success = add_file_to_double_indirect(_fsm, _inodeNumF, _name,
-                                                      _fsm->inode.dIndirect, False);
-                if (success == True) {
-                    return True;
-                }  // end if (success == True)
-            }  // end _fsm->inode.dIndirect != (unsigned int)(-1))
-            if (_fsm->inode.tIndirect != (unsigned int)(-1)) {
-                success = add_file_to_triple_indirect(_fsm, _inodeNumF, _name,
-                                                      _fsm->inode.tIndirect, False);
-                if (success == True) {
-                    return True;
-                }  // end if (success == True)
-            }  // end if (_fsm->inode.tIndirect != (unsigned int)(-1))
-            for (i = 0; i < 10; i++) {
+            }  // end for (i = 0; i < INODE_DIRECT_PTRS; i++)
+
+            // Trye to write to the first available indirect memory
+            if (write_file_to_avail_indirect_loc(_fsm, _inodeNumF, _name, False)) {
+                return True;
+            }
+
+            for (i = 0; i < INODE_DIRECT_PTRS; i++) {
                 if (_fsm->inode.directPtr[i] == (unsigned int)(-1)) {
                     // Get sectors for direct pointers
                     ssm_get_sector(1, _fsm->ssm);
@@ -495,8 +587,8 @@ static Bool add_file_to_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_n
                         return False;
                     }  // end if (_fsm->ssm->index[0] == (unsigned int)(-1))
                     else {
-                        diskOffset =
-                            BLOCK_SIZE * ((8 * _fsm->ssm->index[0]) + (_fsm->ssm->index[1]));
+                        diskOffset = BLOCK_SIZE * ((BITS_PER_BYTE * _fsm->ssm->index[0]) +
+                                                   (_fsm->ssm->index[1]));
                         _fsm->inode.directPtr[i] = diskOffset;
                         _fsm->sampleCount = fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
                         // Clear buffer2
@@ -521,151 +613,34 @@ static Bool add_file_to_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_n
                         return True;
                     }  // end else (_fsm->ssm->index[0] == (unsigned int)(-1))
                 }  // end if (_fsm->inode.directPtr[i] == (unsigned int)(-1))
-            }  // end for (i = 0; i < 10; i++)
-            // Add file to existing Single Indirect
-            if (_fsm->inode.sIndirect != (unsigned int)(-1)) {
-                // Add file to single indirect without allocation
-                success = add_file_to_single_indirect(_fsm, _inodeNumF, _name,
-                                                      _fsm->inode.sIndirect, False);
-                if (success == True) {
-                    return True;
-                }  // end if (success == True)
-            }  // end if (_fsm->inode.sIndirect != (unsigned int)(-1))
-            // Add file to existing Double Indirect
-            if (_fsm->inode.dIndirect != (unsigned int)(-1)) {
-                // Add file to double indirection without allocation
-                success = add_file_to_double_indirect(_fsm, _inodeNumF, _name,
-                                                      _fsm->inode.dIndirect, False);
-                if (success == True) {
-                    return True;
-                }  // end if (success == True)
-            }  // end if (_fsm->inode.dIndirect != (unsigned int)(-1))
-            // Add file to existing Triple Indirect
-            if (_fsm->inode.tIndirect != (unsigned int)(-1)) {
-                // Add file to triple indirection without allocation
-                success = add_file_to_triple_indirect(_fsm, _inodeNumF, _name,
-                                                      _fsm->inode.tIndirect, False);
-                if (success == True) {
-                    return True;
-                }  // end if (success == True)
-            }  // end if (_fsm->inode.tIndirect != (unsigned int)(-1))
+            }  // end for (i = 0; i < INODE_DIRECT_PTRS; i++)
+
+            // Trye to write to the first available indirect memory location
+            if (write_file_to_avail_indirect_loc(_fsm, _inodeNumF, _name, False)) {
+                return True;
+            }
+
             // If can not find an open Single, Double or Triple Indirect pointer,
             // allocate a new one at lowest possible level
-            // Add file to new Single Indirect
-            if (_fsm->inode.sIndirect != (unsigned int)(-1)) {
-                // Add file to single indirection with allocation
-                success = add_file_to_single_indirect(_fsm, _inodeNumF, _name,
-                                                      _fsm->inode.sIndirect, True);
-                if (success == True) {
-                    return True;
-                }  // end if (success == True)
-            }  // end if (_fsm->inode.sIndirect != (unsigned int)(-1))
-            // Add file to new Double Indirect
-            if (_fsm->inode.dIndirect != (unsigned int)(-1)) {
-                // Add file to double indirection with allocation
-                success = add_file_to_double_indirect(_fsm, _inodeNumF, _name,
-                                                      _fsm->inode.dIndirect, True);
-                if (success == True) {
-                    return True;
-                }  // end if (success == True)
-            }  // end if (_fsm->inode.dIndirect != (unsigned int)(-1))
-            // Add file to new Triple Indirect
-            if (_fsm->inode.tIndirect != (unsigned int)(-1)) {
-                // Add file to triple indirection with allocation
-                success = add_file_to_triple_indirect(_fsm, _inodeNumF, _name,
-                                                      _fsm->inode.tIndirect, True);
-                if (success == True) {
-                    return True;
-                }  // end if (success == True)
-            }  // end if (_fsm->inode.tIndirect != (unsigned int)(-1))
-            if (_fsm->inode.sIndirect == (unsigned int)(-1)) {
-                ssm_get_sector(1, _fsm->ssm);
-                if (_fsm->ssm->index[0] == (unsigned int)(-1)) {
-                    return False;
-                }  // end if (_fsm->ssm->index[0] == (unsigned int)(-1))
-                else {
-                    _fsm->inode.sIndirect =
-                        BLOCK_SIZE * ((8 * _fsm->ssm->index[0]) + (_fsm->ssm->index[1]));
-                    for (i = 0; i < BLOCK_SIZE / 4; i++) {
-                        buffer2[i] = (unsigned int)(-1);
-                    }  // end for (i = 0; i < BLOCK_SIZE/4; i++)
-                    diskOffset = _fsm->inode.sIndirect;
-                    fseek(_fsm->diskHandle, 0, SEEK_SET);
-                    fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
-                    _fsm->sampleCount =
-                        fwrite(buffer2, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
-                    ssm_allocate_sectors(_fsm->ssm);
-                    fseek(_fsm->diskHandle, 0, SEEK_SET);
-                    inode_write(&_fsm->inode, _inodeNumD, _fsm->diskHandle);
-                }
-            }  // end else (_fsm->ssm->index[0] == (unsigned int)(-1))
-            success = add_file_to_single_indirect(_fsm, _inodeNumF, _name, diskOffset, True);
-            if (success == True) {
+            if (write_file_to_avail_indirect_loc(_fsm, _inodeNumF, _name, True)) {
                 return True;
-            }  // end if (success == True)
+            }
+
+            if (write_file_to_unavail_indirect_loc(SINGLE, _fsm, _inodeNumF, _name, _inodeNumD,
+                                                   &diskOffset, buffer2)) {
+                return True;
+            }
         }  // end if (_fsm->inode.sIndirect == (unsigned int)(-1))
-        if (_fsm->inode.dIndirect == (unsigned int)(-1)) {
-            ssm_get_sector(1, _fsm->ssm);
-            if (_fsm->ssm->index[0] == (unsigned int)(-1)) {
-                return False;
-            }  // end if (_fsm->ssm->index[0] == (unsigned int)(-1))
-            else {
-                _fsm->inode.dIndirect =
-                    BLOCK_SIZE * ((8 * _fsm->ssm->index[0]) + (_fsm->ssm->index[1]));
-                for (i = 0; i < BLOCK_SIZE / 4; i++) {
-                    buffer2[i] = (unsigned int)(-1);
-                }  // end for (i = 0; i < BLOCK_SIZE/4; i++)
-                diskOffset = _fsm->inode.dIndirect;
-                fseek(_fsm->diskHandle, 0, SEEK_SET);
-                fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
-                _fsm->sampleCount =
-                    fwrite(buffer2, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
-                ssm_allocate_sectors(_fsm->ssm);
-                fseek(_fsm->diskHandle, 0, SEEK_SET);
-                inode_write(&_fsm->inode, _inodeNumD, _fsm->diskHandle);
-            }  // end else (_fsm->ssm->index[0] == (unsigned int)(-1))
-            success =
-                add_file_to_double_indirect(_fsm, _inodeNumF, _name, _fsm->inode.dIndirect, True);
-            if (success == True) {
-                return True;
-            }  // end if (success == True)
-        }  // end if (_fsm->inode.dIndirect == (unsigned int)(-1))
-        if (_fsm->inode.tIndirect == (unsigned int)(-1)) {
-            ssm_get_sector(1, _fsm->ssm);
-            if (_fsm->ssm->index[0] == (unsigned int)(-1)) {
-                return False;
-            }  // end if (_fsm->ssm->index[0] == (unsigned int)(-1))
-            else {
-                _fsm->inode.tIndirect =
-                    BLOCK_SIZE * ((8 * _fsm->ssm->index[0]) + (_fsm->ssm->index[1]));
-                for (i = 0; i < BLOCK_SIZE / 4; i++) {
-                    buffer2[i] = (unsigned int)(-1);
-                }  // end for (i = 0; i < BLOCK_SIZE/4; i++)
-                diskOffset = _fsm->inode.tIndirect;
-                fseek(_fsm->diskHandle, 0, SEEK_SET);
-                fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
-                _fsm->sampleCount =
-                    fwrite(buffer2, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
-                ssm_allocate_sectors(_fsm->ssm);
-                fseek(_fsm->diskHandle, 0, SEEK_SET);
-                inode_write(&_fsm->inode, _inodeNumD, _fsm->diskHandle);
-            }  // end else (_fsm->ssm->index[0] == (unsigned int)(-1))
-            success =
-                add_file_to_triple_indirect(_fsm, _inodeNumF, _name, _fsm->inode.tIndirect, True);
-            if (success == True) {
-                return True;
-            }  // end if (success == True)
-        }  // end if (_fsm->inode.tIndirect == (unsigned int)(-1))
-        else {
-            // If filetype isn't "file" return false
-            return False;
-        }  // end else
-    }  // end if (success == True)
-    else {
-        // If file didn't open, return false
-        return False;
-    }  // end else (success == True)
-    // Fail case
+
+        if (write_file_to_unavail_indirect_loc(DOUBLE, _fsm, _inodeNumF, _name, _inodeNumD,
+                                               &diskOffset, buffer2)) {
+            return True;
+        }
+        if (write_file_to_unavail_indirect_loc(TRIPLE, _fsm, _inodeNumF, _name, _inodeNumD,
+                                               &diskOffset, buffer2)) {
+            return True;
+        }
+    }
     return False;
 }
 
