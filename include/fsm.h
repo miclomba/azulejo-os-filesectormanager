@@ -63,7 +63,7 @@ Bool fs_remove(FSM *_fsm);
  * @param[in,out] _fsm Pointer to the FSM instance.
  * @param[in] _isDirectory Non-zero if the new file is a directory, 0 otherwise.
  * @param[out] _name Pointer to where the generated name will be stored.
- * @param[in] _inodeNumD Inode number of the directory in which to create the file.
+ * @param[in] _inodeNumParentDir Inode number of the parent directory in which to create the file.
  * @return Non-zero (true) if successful, 0 (false) otherwise.
  * @date 2010-04-01 First implementation.
  */
@@ -73,6 +73,7 @@ unsigned int fs_create_file(FSM *_fsm, int _isDirectory, unsigned int *_name,
 /**
  * @brief Opens a file.
  * Opens a file identified by the given inode number within the File Sector Manager.
+ * Populates the FSM.inode struct with inode data from the disk.
  * @param[in,out] _fsm Pointer to the FSM instance.
  * @param[in] _inodeNum Inode number of the file to open.
  * @return The inode of the file, NULL otherwise.

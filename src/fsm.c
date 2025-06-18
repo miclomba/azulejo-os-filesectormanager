@@ -21,8 +21,10 @@ static void init_fsm_maps(FSM *_fsm);
 static Bool allocate_inode(FSM *_fsm);
 static Bool deallocate_inode(FSM *_fsm);
 static Bool get_inode(int _n, FSM *_fsm);
-static Bool write_file(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                       unsigned int _inodeNumD);
+static Bool is_not_null(unsigned int _ptr);
+static Bool is_null(unsigned int _ptr);
+static Bool create_file(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_name,
+                        unsigned int _inodeNumD);
 static Bool add_file_to_single_indirect(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_name,
                                         unsigned int _sIndirectOffset, Bool _allocate);
 static Bool add_file_to_double_indirect(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_name,
@@ -63,6 +65,22 @@ static Bool rename_file_in_triple_indirect(FSM *_fsm, unsigned int _inodeNumF, u
                                            unsigned int _tIndirectOffset);
 
 //========================= FSM FUNCTION DEFINITIONS =======================//
+/**
+ * @brief Verify if a pointer is not null.
+ * @param[in] _ptr a pointer.
+ * @return True if the pointer is not null; false otherwise.
+ * @date 2025-06-17 First implementation.
+ */
+static inline Bool is_not_null(unsigned int _ptr) { return _ptr != (unsigned int)(-1); }
+
+/**
+ * @brief Verify if a pointer is null.
+ * @param[in] _ptr a pointer.
+ * @return True if the pointer is null; false otherwise.
+ * @date 2025-06-17 First implementation.
+ */
+static inline Bool is_null(unsigned int _ptr) { return _ptr == (unsigned int)(-1); }
+
 /**
  * @brief Initializes the File Sector Manager.
  * Sets up the File Sector Manager and optionally initializes the SSM maps.
@@ -127,7 +145,7 @@ static void init_fsm_maps(FSM *_fsm) {
 }
 
 unsigned int fs_create_file(FSM *_fsm, int _isDirectory, unsigned int *_name,
-                            unsigned int _inodeNumD) {
+                            unsigned int _inodeNumParentDir) {
     get_inode(1, _fsm);
     if (_fsm->index[0] == (unsigned int)(-1)) {
         return (unsigned int)(-1);
@@ -147,29 +165,28 @@ unsigned int fs_create_file(FSM *_fsm, int _isDirectory, unsigned int *_name,
     if (_isDirectory == 1) {
         // set . directory
         strcpy((char *)name, ".");
-        write_file(_fsm, inodeNum, name, inodeNum);
+        create_file(_fsm, inodeNum, name, inodeNum);
         // set .. directory
         strcpy((char *)name, "..");
-        write_file(_fsm, _inodeNumD, name, inodeNum);
+        create_file(_fsm, _inodeNumParentDir, name, inodeNum);
     }  // end if (_isDirectory == 1)
-    write_file(_fsm, inodeNum, _name, _inodeNumD);
+    create_file(_fsm, inodeNum, _name, _inodeNumParentDir);
     return inodeNum;
 }
 
 const Inode *fs_open_file(FSM *_fsm, unsigned int _inodeNum) {
-    if (_inodeNum == (unsigned int)(-1)) {
+    if (is_null(_inodeNum)) {
         return NULL;
     }  // end if (_inodeNum == (unsigned int)(-1)) {
     inode_read(&_fsm->inode, _inodeNum, _fsm->diskHandle);
     _fsm->inodeNum = _inodeNum;
-    // Return true if file loaded correctly
     if (_fsm->inode.fileType <= 0) {
         // If file not loaded, create a default inode and return False
         inode_init(&_fsm->inode);
 
         _fsm->inodeNum = (unsigned int)(-1);
         // Return False if file did not open correctly
-        return False;
+        return NULL;
     }  // end else (_fsm->inode.fileType > 0)
     return &_fsm->inode;
 }
@@ -421,22 +438,6 @@ Bool fs_write_to_file(FSM *_fsm, unsigned int _inodeNum, void *_buffer, long lon
 typedef enum PointerType { SINGLE, DOUBLE, TRIPLE } PointerType;
 
 /**
- * @brief Verify if an indirect pointer is not null.
- * @param[in] _indirect_ptr an inode indirect pointer.
- * @return True if the indirect pointer is not null; false otherwise.
- * @date 2025-06-17 First implementation.
- */
-static Bool is_not_null(unsigned int _indirect_ptr) { return _indirect_ptr != (unsigned int)(-1); }
-
-/**
- * @brief Verify if an indirect pointer is null.
- * @param[in] _indirect_ptr an inode indirect pointer.
- * @return True if the indirect pointer is null; false otherwise.
- * @date 2025-06-17 First implementation.
- */
-static Bool is_null(unsigned int _indirect_ptr) { return _indirect_ptr == (unsigned int)(-1); }
-
-/**
  * @brief Writes a file to an inode's first available indirect pointer location.
  * Writes a file into the specified inode memory within the File Sector Manager.
  * @param[in,out] _fsm Pointer to the FSM instance.
@@ -446,8 +447,8 @@ static Bool is_null(unsigned int _indirect_ptr) { return _indirect_ptr == (unsig
  * @return True if the file was written successfully, false otherwise.
  * @date 2025-06-17 First implementation.
  */
-static Bool write_file_to_avail_indirect_loc(FSM *_fsm, unsigned int _inodeNumF,
-                                             unsigned int *_file_name, Bool _allocate) {
+static Bool create_file_in_avail_indirect_loc(FSM *_fsm, unsigned int _inodeNumF,
+                                              unsigned int *_file_name, Bool _allocate) {
     if (is_not_null(_fsm->inode.sIndirect)) {
         if (add_file_to_single_indirect(_fsm, _inodeNumF, _file_name, _fsm->inode.sIndirect,
                                         _allocate))
@@ -479,10 +480,10 @@ static Bool write_file_to_avail_indirect_loc(FSM *_fsm, unsigned int _inodeNumF,
  * @return True if the file was written successfully, false otherwise.
  * @date 2025-06-17 First implementation.
  */
-static Bool write_file_to_unavail_indirect_loc(PointerType _type, FSM *_fsm,
-                                               unsigned int _inodeNumF, unsigned int *_file_name,
-                                               unsigned int _inodeNumD, unsigned int *diskOffset,
-                                               unsigned int *file_buffer) {
+static Bool create_file_in_unavail_indirect_loc(PointerType _type, FSM *_fsm,
+                                                unsigned int _inodeNumF, unsigned int *_file_name,
+                                                unsigned int _inodeNumD, unsigned int *diskOffset,
+                                                unsigned int *file_buffer) {
     typedef Bool (*WriteFunc)(FSM *, unsigned int, unsigned int *, unsigned int, Bool);
 
     unsigned int *indirect = NULL;
@@ -537,9 +538,9 @@ static Bool write_file_to_unavail_indirect_loc(PointerType _type, FSM *_fsm,
  * @return True if the file was written successfully, false otherwise.
  * @date 2025-06-17 First implementation.
  */
-static Bool write_file_to_avail_direct_loc(FSM *_fsm, unsigned int _inodeNumF,
-                                           unsigned int *_file_name, unsigned int *diskOffset,
-                                           unsigned int *disk_buffer) {
+static Bool create_file_in_avail_direct_loc(FSM *_fsm, unsigned int _inodeNumF,
+                                            unsigned int *_file_name, unsigned int *diskOffset,
+                                            unsigned int *disk_buffer) {
     // Read file's direct pointers from disk
     unsigned int j;
     for (unsigned int i = 0; i < INODE_DIRECT_PTRS; i++) {
@@ -582,9 +583,9 @@ static Bool write_file_to_avail_direct_loc(FSM *_fsm, unsigned int _inodeNumF,
  * @return True if the file was written successfully, false otherwise.
  * @date 2025-06-17 First implementation.
  */
-static Bool write_file_to_unavail_direct_loc(FSM *_fsm, unsigned int _inodeNumF,
-                                             unsigned int _inodeNumD, unsigned int *_file_name,
-                                             unsigned int *diskOffset, unsigned int *disk_buffer) {
+static Bool create_file_in_unavail_direct_loc(FSM *_fsm, unsigned int _inodeNumF,
+                                              unsigned int _inodeNumD, unsigned int *_file_name,
+                                              unsigned int *diskOffset, unsigned int *disk_buffer) {
     unsigned int j;
     for (unsigned int i = 0; i < INODE_DIRECT_PTRS; i++) {
         if (_fsm->inode.directPtr[i] == (unsigned int)(-1)) {
@@ -631,59 +632,63 @@ static Bool write_file_to_unavail_direct_loc(FSM *_fsm, unsigned int _inodeNumF,
  * @param[in,out] _fsm Pointer to the FSM instance.
  * @param[in] _inodeNumF Inode number of the file to be added.
  * @param[in] _name Pointer to the name of the file.
- * @param[in] _inodeNumD Inode number of the target directory.
+ * @param[in] _inodeNumParentDir Inode number of the target directory.
  * @return True if the file was added successfully, false otherwise.
  * @date 2010-04-01 First implementation.
  */
-static Bool write_file(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                       unsigned int _inodeNumD) {
+static Bool create_file(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_name,
+                        unsigned int _inodeNumParentDir) {
     unsigned int diskOffset = 0;
     unsigned int buffer[BLOCK_SIZE / 4];
     unsigned int buffer2[BLOCK_SIZE / 4];
-    const Inode *inode = fs_open_file(_fsm, _inodeNumD);
-    if (inode != NULL) {
-        if (_fsm->inode.fileType == 2) {
-            // Read file's direct pointers from disk
-            if (write_file_to_avail_direct_loc(_fsm, _inodeNumF, _name, &diskOffset, buffer)) {
-                return True;
-            }
 
-            // Try to write to the first available indirect memory
-            if (write_file_to_avail_indirect_loc(_fsm, _inodeNumF, _name, False)) {
-                return True;
-            }
-
-            // If can not find an open Direct pointer, allocate a new one at lowest possible level
-            if (write_file_to_unavail_direct_loc(_fsm, _inodeNumF, _inodeNumD, _name, &diskOffset,
-                                                 buffer2)) {
-                return True;
-            }
-
-            // Try to write to the first available indirect memory location
-            if (write_file_to_avail_indirect_loc(_fsm, _inodeNumF, _name, False)) {
-                return True;
-            }
-
-            // If can not find an open Single, Double or Triple Indirect pointer,
-            // allocate a new one at lowest possible level
-            if (write_file_to_avail_indirect_loc(_fsm, _inodeNumF, _name, True)) {
-                return True;
-            }
-
-            if (write_file_to_unavail_indirect_loc(SINGLE, _fsm, _inodeNumF, _name, _inodeNumD,
-                                                   &diskOffset, buffer2)) {
-                return True;
-            }
-        }
-
-        if (write_file_to_unavail_indirect_loc(DOUBLE, _fsm, _inodeNumF, _name, _inodeNumD,
-                                               &diskOffset, buffer2)) {
+    // Open the parent directory
+    const Inode *inode = fs_open_file(_fsm, _inodeNumParentDir);
+    if (inode == NULL) {
+        return False;
+    }
+    // Create file within the parent directory
+    if (_fsm->inode.fileType == 2) {
+        // Read file's direct pointers from disk
+        if (create_file_in_avail_direct_loc(_fsm, _inodeNumF, _name, &diskOffset, buffer)) {
             return True;
         }
-        if (write_file_to_unavail_indirect_loc(TRIPLE, _fsm, _inodeNumF, _name, _inodeNumD,
-                                               &diskOffset, buffer2)) {
+
+        // Try to write to the first available indirect memory
+        if (create_file_in_avail_indirect_loc(_fsm, _inodeNumF, _name, False)) {
             return True;
         }
+
+        // If can not find an open Direct pointer, allocate a new one at lowest possible level
+        if (create_file_in_unavail_direct_loc(_fsm, _inodeNumF, _inodeNumParentDir, _name,
+                                              &diskOffset, buffer2)) {
+            return True;
+        }
+
+        // Try to write to the first available indirect memory location
+        if (create_file_in_avail_indirect_loc(_fsm, _inodeNumF, _name, False)) {
+            return True;
+        }
+
+        // If can not find an open Single, Double or Triple Indirect pointer,
+        // allocate a new one at lowest possible level
+        if (create_file_in_avail_indirect_loc(_fsm, _inodeNumF, _name, True)) {
+            return True;
+        }
+
+        if (create_file_in_unavail_indirect_loc(SINGLE, _fsm, _inodeNumF, _name, _inodeNumParentDir,
+                                                &diskOffset, buffer2)) {
+            return True;
+        }
+    }
+
+    if (create_file_in_unavail_indirect_loc(DOUBLE, _fsm, _inodeNumF, _name, _inodeNumParentDir,
+                                            &diskOffset, buffer2)) {
+        return True;
+    }
+    if (create_file_in_unavail_indirect_loc(TRIPLE, _fsm, _inodeNumF, _name, _inodeNumParentDir,
+                                            &diskOffset, buffer2)) {
+        return True;
     }
     return False;
 }
