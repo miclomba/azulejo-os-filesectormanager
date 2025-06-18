@@ -21,8 +21,8 @@ static void init_fsm_maps(FSM *_fsm);
 static Bool allocate_inode(FSM *_fsm);
 static Bool deallocate_inode(FSM *_fsm);
 static Bool get_inode(int _n, FSM *_fsm);
-static Bool add_file_to_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                            unsigned int _inodeNumD);
+static Bool write_file(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_name,
+                       unsigned int _inodeNumD);
 static Bool add_file_to_single_indirect(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_name,
                                         unsigned int _sIndirectOffset, Bool _allocate);
 static Bool add_file_to_double_indirect(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_name,
@@ -147,12 +147,12 @@ unsigned int fs_create_file(FSM *_fsm, int _isDirectory, unsigned int *_name,
     if (_isDirectory == 1) {
         // set . directory
         strcpy((char *)name, ".");
-        add_file_to_dir(_fsm, inodeNum, name, inodeNum);
+        write_file(_fsm, inodeNum, name, inodeNum);
         // set .. directory
         strcpy((char *)name, "..");
-        add_file_to_dir(_fsm, _inodeNumD, name, inodeNum);
+        write_file(_fsm, _inodeNumD, name, inodeNum);
     }  // end if (_isDirectory == 1)
-    add_file_to_dir(_fsm, inodeNum, _name, _inodeNumD);
+    write_file(_fsm, inodeNum, _name, _inodeNumD);
     return inodeNum;
 }
 
@@ -527,7 +527,106 @@ static Bool write_file_to_unavail_indirect_loc(PointerType _type, FSM *_fsm,
 }
 
 /**
- * @brief Adds a file to a directory.
+ * @brief Writes a file to an inode's set direct pointer location.
+ * Writes a file into the specified inode memory within the File Sector Manager after setting it.
+ * @param[in,out] _fsm Pointer to the FSM instance.
+ * @param[in] _inodeNumF Inode number of the file to be written.
+ * @param[in] _file_name Pointer to the name of the file.
+ * @param[in,out] diskOffset Offset within the disk.
+ * @param[in] _disk_buffer Pointer to the disk io buffer.
+ * @return True if the file was written successfully, false otherwise.
+ * @date 2025-06-17 First implementation.
+ */
+static Bool write_file_to_avail_direct_loc(FSM *_fsm, unsigned int _inodeNumF,
+                                           unsigned int *_file_name, unsigned int *diskOffset,
+                                           unsigned int *disk_buffer) {
+    // Read file's direct pointers from disk
+    unsigned int j;
+    for (unsigned int i = 0; i < INODE_DIRECT_PTRS; i++) {
+        if (_fsm->inode.directPtr[i] != (unsigned int)(-1)) {
+            *diskOffset = _fsm->inode.directPtr[i];
+            fseek(_fsm->diskHandle, *diskOffset, SEEK_SET);
+            _fsm->sampleCount =
+                fread(disk_buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
+            for (j = 0; j < BLOCK_SIZE / 4; j += 4) {
+                if (disk_buffer[j + 3] == 0) {
+                    disk_buffer[j + 3] = 1;
+                    disk_buffer[j] = _file_name[0];
+                    disk_buffer[j + 1] = _file_name[1];
+                    disk_buffer[j + 2] = _inodeNumF;
+                    _fsm->inode.linkCount += 1;
+                    fseek(_fsm->diskHandle, 0, SEEK_SET);
+                    fseek(_fsm->diskHandle, *diskOffset, SEEK_SET);
+                    _fsm->sampleCount =
+                        fwrite(disk_buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
+                    fseek(_fsm->diskHandle, 0, SEEK_SET);
+                    Bool status = fs_close_file(_fsm);
+                    if (status == False) printf("Error closing file\n");
+                    return True;
+                }  // end if (disk_buffer[j+3] == 0)
+            }  // end or (j = 0; j < BLOCK_SIZE/4; j += 4)
+        }  // end if (_fsm->inode.directPtr[i] != (unsigned int)(-1))
+    }  // end for (i = 0; i < INODE_DIRECT_PTRS; i++)
+    return False;
+}
+
+/**
+ * @brief Writes a file to an inode's set direct pointer location.
+ * Writes a file into the specified inode memory within the File Sector Manager after setting it.
+ * @param[in,out] _fsm Pointer to the FSM instance.
+ * @param[in] _inodeNumF Inode number of the file to be written.
+ * @param[in] _inodeNumD Inode number of the target directory.
+ * @param[in] _file_name Pointer to the name of the file.
+ * @param[in,out] diskOffset Offset within the disk.
+ * @param[in] _disk_buffer Pointer to the disk io buffer.
+ * @return True if the file was written successfully, false otherwise.
+ * @date 2025-06-17 First implementation.
+ */
+static Bool write_file_to_unavail_direct_loc(FSM *_fsm, unsigned int _inodeNumF,
+                                             unsigned int _inodeNumD, unsigned int *_file_name,
+                                             unsigned int *diskOffset, unsigned int *disk_buffer) {
+    unsigned int j;
+    for (unsigned int i = 0; i < INODE_DIRECT_PTRS; i++) {
+        if (_fsm->inode.directPtr[i] == (unsigned int)(-1)) {
+            // Get sectors for direct pointers
+            ssm_get_sector(1, _fsm->ssm);
+            if (_fsm->ssm->index[0] == (unsigned int)(-1)) {
+                // If sectors can't be retrieved, return false
+                return False;
+            }  // end if (_fsm->ssm->index[0] == (unsigned int)(-1))
+            else {
+                *diskOffset =
+                    BLOCK_SIZE * ((BITS_PER_BYTE * _fsm->ssm->index[0]) + (_fsm->ssm->index[1]));
+                _fsm->inode.directPtr[i] = *diskOffset;
+                _fsm->sampleCount = fseek(_fsm->diskHandle, *diskOffset, SEEK_SET);
+                // Clear disk_buffer
+                for (j = 0; j < BLOCK_SIZE / 4; j++) {
+                    disk_buffer[j] = 0;
+                }  // end for (j = 0; j < BLOCK_SIZE/4; j++)
+                disk_buffer[3] = 1;
+                disk_buffer[0] = _file_name[0];
+                disk_buffer[1] = _file_name[1];
+                disk_buffer[2] = _inodeNumF;
+                _fsm->inode.linkCount += 1;
+                _fsm->inode.fileSize += BLOCK_SIZE;
+                _fsm->inode.dataBlocks = _fsm->inode.fileSize / BLOCK_SIZE;
+                _fsm->sampleCount =
+                    fwrite(disk_buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
+                // Write file to disk
+                fseek(_fsm->diskHandle, 0, SEEK_SET);
+                inode_write(&_fsm->inode, _inodeNumD, _fsm->diskHandle);
+                ssm_allocate_sectors(_fsm->ssm);
+                Bool status = fs_close_file(_fsm);
+                if (status == False) printf("Error closing file\n");
+                return True;
+            }  // end else (_fsm->ssm->index[0] == (unsigned int)(-1))
+        }  // end if (_fsm->inode.directPtr[i] == (unsigned int)(-1))
+    }  // end for (i = 0; i < INODE_DIRECT_PTRS; i++)
+    return False;
+}
+
+/**
+ * @brief Write a file.
  * Inserts a file into the specified directory within the File Sector Manager.
  * @param[in,out] _fsm Pointer to the FSM instance.
  * @param[in] _inodeNumF Inode number of the file to be added.
@@ -536,86 +635,31 @@ static Bool write_file_to_unavail_indirect_loc(PointerType _type, FSM *_fsm,
  * @return True if the file was added successfully, false otherwise.
  * @date 2010-04-01 First implementation.
  */
-static Bool add_file_to_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_name,
-                            unsigned int _inodeNumD) {
-    unsigned int i, j;
+static Bool write_file(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_name,
+                       unsigned int _inodeNumD) {
     unsigned int diskOffset = 0;
     unsigned int buffer[BLOCK_SIZE / 4];
     unsigned int buffer2[BLOCK_SIZE / 4];
-    Bool status;
     const Inode *inode = fs_open_file(_fsm, _inodeNumD);
     if (inode != NULL) {
         if (_fsm->inode.fileType == 2) {
             // Read file's direct pointers from disk
-            for (i = 0; i < INODE_DIRECT_PTRS; i++) {
-                if (_fsm->inode.directPtr[i] != (unsigned int)(-1)) {
-                    diskOffset = _fsm->inode.directPtr[i];
-                    fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
-                    _fsm->sampleCount =
-                        fread(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
-                    for (j = 0; j < BLOCK_SIZE / 4; j += 4) {
-                        if (buffer[j + 3] == 0) {
-                            buffer[j + 3] = 1;
-                            buffer[j] = _name[0];
-                            buffer[j + 1] = _name[1];
-                            buffer[j + 2] = _inodeNumF;
-                            _fsm->inode.linkCount += 1;
-                            fseek(_fsm->diskHandle, 0, SEEK_SET);
-                            fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
-                            _fsm->sampleCount = fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4,
-                                                       _fsm->diskHandle);
-                            fseek(_fsm->diskHandle, 0, SEEK_SET);
-                            status = fs_close_file(_fsm);
-                            if (status == False) printf("Error closing file\n");
-                            return True;
-                        }  // end if (buffer[j+3] == 0)
-                    }  // end or (j = 0; j < BLOCK_SIZE/4; j += 4)
-                }  // end if (_fsm->inode.directPtr[i] != (unsigned int)(-1))
-            }  // end for (i = 0; i < INODE_DIRECT_PTRS; i++)
+            if (write_file_to_avail_direct_loc(_fsm, _inodeNumF, _name, &diskOffset, buffer)) {
+                return True;
+            }
 
-            // Trye to write to the first available indirect memory
+            // Try to write to the first available indirect memory
             if (write_file_to_avail_indirect_loc(_fsm, _inodeNumF, _name, False)) {
                 return True;
             }
 
-            for (i = 0; i < INODE_DIRECT_PTRS; i++) {
-                if (_fsm->inode.directPtr[i] == (unsigned int)(-1)) {
-                    // Get sectors for direct pointers
-                    ssm_get_sector(1, _fsm->ssm);
-                    if (_fsm->ssm->index[0] == (unsigned int)(-1)) {
-                        // If sectors can't be retrieved, return false
-                        return False;
-                    }  // end if (_fsm->ssm->index[0] == (unsigned int)(-1))
-                    else {
-                        diskOffset = BLOCK_SIZE * ((BITS_PER_BYTE * _fsm->ssm->index[0]) +
-                                                   (_fsm->ssm->index[1]));
-                        _fsm->inode.directPtr[i] = diskOffset;
-                        _fsm->sampleCount = fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
-                        // Clear buffer2
-                        for (j = 0; j < BLOCK_SIZE / 4; j++) {
-                            buffer2[j] = 0;
-                        }  // end for (j = 0; j < BLOCK_SIZE/4; j++)
-                        buffer2[3] = 1;
-                        buffer2[0] = _name[0];
-                        buffer2[1] = _name[1];
-                        buffer2[2] = _inodeNumF;
-                        _fsm->inode.linkCount += 1;
-                        _fsm->inode.fileSize += BLOCK_SIZE;
-                        _fsm->inode.dataBlocks = _fsm->inode.fileSize / BLOCK_SIZE;
-                        _fsm->sampleCount =
-                            fwrite(buffer2, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
-                        // Write file to disk
-                        fseek(_fsm->diskHandle, 0, SEEK_SET);
-                        inode_write(&_fsm->inode, _inodeNumD, _fsm->diskHandle);
-                        ssm_allocate_sectors(_fsm->ssm);
-                        status = fs_close_file(_fsm);
-                        if (status == False) printf("Error closing file\n");
-                        return True;
-                    }  // end else (_fsm->ssm->index[0] == (unsigned int)(-1))
-                }  // end if (_fsm->inode.directPtr[i] == (unsigned int)(-1))
-            }  // end for (i = 0; i < INODE_DIRECT_PTRS; i++)
+            // If can not find an open Direct pointer, allocate a new one at lowest possible level
+            if (write_file_to_unavail_direct_loc(_fsm, _inodeNumF, _inodeNumD, _name, &diskOffset,
+                                                 buffer2)) {
+                return True;
+            }
 
-            // Trye to write to the first available indirect memory location
+            // Try to write to the first available indirect memory location
             if (write_file_to_avail_indirect_loc(_fsm, _inodeNumF, _name, False)) {
                 return True;
             }
@@ -630,7 +674,7 @@ static Bool add_file_to_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_n
                                                    &diskOffset, buffer2)) {
                 return True;
             }
-        }  // end if (_fsm->inode.sIndirect == (unsigned int)(-1))
+        }
 
         if (write_file_to_unavail_indirect_loc(DOUBLE, _fsm, _inodeNumF, _name, _inodeNumD,
                                                &diskOffset, buffer2)) {
