@@ -147,7 +147,7 @@ static void init_fsm_maps(FSM *_fsm) {
 unsigned int fs_create_file(FSM *_fsm, int _isDirectory, unsigned int *_name,
                             unsigned int _inodeNumParentDir) {
     get_inode(1, _fsm);
-    if (_fsm->index[0] == (unsigned int)(-1)) {
+    if (is_null(_fsm->index[0])) {
         return (unsigned int)(-1);
     }  // end if (_fsm->index[0] == (unsigned int)(-1))
     // Create a default file. Will start with all pointers as -1
@@ -648,38 +648,38 @@ static Bool create_file(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_name,
         return False;
     }
     // Create file within the parent directory
-    if (_fsm->inode.fileType == 2) {
-        // Read file's direct pointers from disk
-        if (create_file_in_avail_direct_loc(_fsm, _inodeNumF, _name, &diskOffset, buffer)) {
-            return True;
-        }
 
-        // Try to write to the first available indirect memory
-        if (create_file_in_avail_indirect_loc(_fsm, _inodeNumF, _name, False)) {
-            return True;
-        }
+    // Read file's direct pointers from disk
+    if (create_file_in_avail_direct_loc(_fsm, _inodeNumF, _name, &diskOffset, buffer)) {
+        return True;
+    }
 
-        // If can not find an open Direct pointer, allocate a new one at lowest possible level
-        if (create_file_in_unavail_direct_loc(_fsm, _inodeNumF, _inodeNumParentDir, _name,
-                                              &diskOffset, buffer2)) {
-            return True;
-        }
+    // Try to write to the first available indirect memory
+    if (create_file_in_avail_indirect_loc(_fsm, _inodeNumF, _name, False)) {
+        return True;
+    }
 
-        // Try to write to the first available indirect memory location
-        if (create_file_in_avail_indirect_loc(_fsm, _inodeNumF, _name, False)) {
-            return True;
-        }
+    // If can not find an open Direct pointer, allocate a new one at lowest possible level
+    if (create_file_in_unavail_direct_loc(_fsm, _inodeNumF, _inodeNumParentDir, _name, &diskOffset,
+                                          buffer2)) {
+        return True;
+    }
 
-        // If can not find an open Single, Double or Triple Indirect pointer,
-        // allocate a new one at lowest possible level
-        if (create_file_in_avail_indirect_loc(_fsm, _inodeNumF, _name, True)) {
-            return True;
-        }
+    // Try to write to the first available indirect memory location
+    // @todo revist the need for this call
+    if (create_file_in_avail_indirect_loc(_fsm, _inodeNumF, _name, False)) {
+        return True;
+    }
 
-        if (create_file_in_unavail_indirect_loc(SINGLE, _fsm, _inodeNumF, _name, _inodeNumParentDir,
-                                                &diskOffset, buffer2)) {
-            return True;
-        }
+    // If can not find an open Single, Double or Triple Indirect pointer,
+    // allocate a new one at lowest possible level
+    if (create_file_in_avail_indirect_loc(_fsm, _inodeNumF, _name, True)) {
+        return True;
+    }
+
+    if (create_file_in_unavail_indirect_loc(SINGLE, _fsm, _inodeNumF, _name, _inodeNumParentDir,
+                                            &diskOffset, buffer2)) {
+        return True;
     }
 
     if (create_file_in_unavail_indirect_loc(DOUBLE, _fsm, _inodeNumF, _name, _inodeNumParentDir,
