@@ -124,7 +124,7 @@ static inline void deallocate_sector(unsigned int sectorNum) {
     ssm->contSectors = 1;
     ssm->index[0] = sectorNum / BITS_PER_BYTE;
     ssm->index[1] = sectorNum % BITS_PER_BYTE;
-    ssm_deallocate_sectors(ssm);
+    ssm_deallocate_sectors();
 }
 
 /**
@@ -153,10 +153,10 @@ static inline Bool is_null(unsigned int _ptr) { return _ptr == (unsigned int)(-1
 static void init_file_sector_mgr(int _initSsmMaps) {
     // Initialize SSM Maps
     if (_initSsmMaps == 1) {
-        ssm_init_maps(ssm);
+        ssm_init_maps();
     }  // end if (_initSsmMaps == 1)
     // Initialize SEctor Space Manager
-    ssm_init(ssm);
+    ssm_init();
     // Initialize FSM's variables
     fsm->contInodes = 0;
     fsm->index[0] = -1;
@@ -308,7 +308,7 @@ static void *write_to_file_direct(void *buffer, unsigned int directPtrs) {
         diskOffset = fsm->inode.directPtr[i];
         if (is_null(diskOffset)) {
             // If direct pointer is empty, get a Sector for it
-            ssm_get_sector(1, ssm);
+            ssm_get_sector(1);
             // If pointer invalid, break out of if
             if (is_null(ssm->index[0])) {
                 break;
@@ -317,7 +317,7 @@ static void *write_to_file_direct(void *buffer, unsigned int directPtrs) {
                 fsm->inode.directPtr[i] = diskOffset;
                 fseek(fsm->diskHandle, diskOffset, SEEK_SET);
                 fsm->sampleCount = fwrite(buffer, BLOCK_SIZE, 1, fsm->diskHandle);
-                ssm_allocate_sectors(ssm);
+                ssm_allocate_sectors();
                 buffer = (char *)buffer + BLOCK_SIZE;
             }
         } else {
@@ -557,7 +557,7 @@ static Bool create_file_in_unavail_indirect_loc(PointerType _type, unsigned int 
     // Check if memory has been allocated for this indirect memory
     if (is_null(*indirect)) {
         // Allocate memory for the inode's indirect pointer using SSM and update the inode
-        ssm_get_sector(1, ssm);
+        ssm_get_sector(1);
         if (is_null(ssm->index[0])) {
             return False;
         } else {
@@ -568,7 +568,7 @@ static Bool create_file_in_unavail_indirect_loc(PointerType _type, unsigned int 
             fseek(fsm->diskHandle, *diskOffset, SEEK_SET);
             fsm->sampleCount =
                 fwrite(file_buffer, sizeof(unsigned int), BLOCK_SIZE / 4, fsm->diskHandle);
-            ssm_allocate_sectors(ssm);
+            ssm_allocate_sectors();
             fseek(fsm->diskHandle, 0, SEEK_SET);
             inode_write(&fsm->inode, _inodeNumD, fsm->diskHandle);
         }
@@ -640,7 +640,7 @@ static Bool create_file_in_unavail_direct_loc(unsigned int _inodeNumF, unsigned 
     for (unsigned int i = 0; i < INODE_DIRECT_PTRS; i++) {
         if (is_null(fsm->inode.directPtr[i])) {
             // Get sectors for direct pointers
-            ssm_get_sector(1, ssm);
+            ssm_get_sector(1);
             if (is_null(ssm->index[0])) {
                 // If sectors can't be retrieved, return false
                 return False;
@@ -664,7 +664,7 @@ static Bool create_file_in_unavail_direct_loc(unsigned int _inodeNumF, unsigned 
                 // Write file to disk
                 fseek(fsm->diskHandle, 0, SEEK_SET);
                 inode_write(&fsm->inode, _inodeNumD, fsm->diskHandle);
-                ssm_allocate_sectors(ssm);
+                ssm_allocate_sectors();
                 Bool status = fs_close_file();
                 if (status == False) printf("Error closing file\n");
                 return True;
@@ -774,7 +774,7 @@ static Bool add_file_to_triple_indirect(unsigned int _inodeNumF, unsigned int *_
     if (_allocate == True) {
         for (unsigned int i = 0; i < BLOCK_SIZE / 4; i++) {
             if (is_null(indirectBlock[i])) {
-                ssm_get_sector(1, ssm);
+                ssm_get_sector(1);
                 if (is_null(ssm->index[0])) {
                     return False;
                 } else {
@@ -786,7 +786,7 @@ static Bool add_file_to_triple_indirect(unsigned int _inodeNumF, unsigned int *_
                     fseek(fsm->diskHandle, indirectBlock[i], SEEK_SET);
                     fsm->sampleCount =
                         fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, fsm->diskHandle);
-                    ssm_allocate_sectors(ssm);
+                    ssm_allocate_sectors();
                 }
                 diskOffset = indirectBlock[i];
                 success = add_file_to_double_indirect(_inodeNumF, _name, diskOffset, _allocate);
@@ -833,7 +833,7 @@ static Bool add_file_to_double_indirect(unsigned int _inodeNumF, unsigned int *_
     if (_allocate == True) {
         for (unsigned int i = 0; i < BLOCK_SIZE / 4; i++) {
             if (is_null(indirectBlock[i])) {
-                ssm_get_sector(1, ssm);
+                ssm_get_sector(1);
                 if (is_null(ssm->index[0])) {
                     return False;
                 } else {
@@ -845,7 +845,7 @@ static Bool add_file_to_double_indirect(unsigned int _inodeNumF, unsigned int *_
                     fseek(fsm->diskHandle, indirectBlock[i], SEEK_SET);
                     fsm->sampleCount =
                         fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, fsm->diskHandle);
-                    ssm_allocate_sectors(ssm);
+                    ssm_allocate_sectors();
                 }
                 diskOffset = indirectBlock[i];
                 success = add_file_to_single_indirect(_inodeNumF, _name, diskOffset, _allocate);
@@ -930,7 +930,7 @@ static Bool add_file_to_single_indirect(unsigned int _inodeNumF, unsigned int *_
         // Allocate space then write
         for (unsigned int i = 0; i < BLOCK_SIZE / 4; i++) {
             if (is_null(indirectBlock[i])) {
-                ssm_get_sector(1, ssm);
+                ssm_get_sector(1);
                 if (is_null(ssm->index[0])) {
                     return False;
                 } else {
@@ -951,7 +951,7 @@ static Bool add_file_to_single_indirect(unsigned int _inodeNumF, unsigned int *_
                     fsm->sampleCount =
                         fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, fsm->diskHandle);
                     fseek(fsm->diskHandle, 0, SEEK_SET);
-                    ssm_allocate_sectors(ssm);
+                    ssm_allocate_sectors();
                     status = fs_close_file();
                     if (status == False) printf("Error closing file\n");
                     return True;
@@ -1312,10 +1312,10 @@ static void read_from_single_indirect_blocks(void *_buffer, unsigned int _diskOf
 static unsigned int aloc_triple_indirect(long long int _blockCount) {
     unsigned int baseAddress, address, diskOffset;
     long long int blockCount = _blockCount;
-    ssm_get_sector(1, ssm);
+    ssm_get_sector(1);
     if (is_not_null(ssm->index[0])) {
         baseAddress = BLOCK_SIZE * (BITS_PER_BYTE * ssm->index[0] + ssm->index[1]);
-        ssm_allocate_sectors(ssm);
+        ssm_allocate_sectors();
         diskOffset = baseAddress;  // fsm->inode.tIndirect;
         // Initialize the indirect block pointers to -1
         unsigned int base[BLOCK_SIZE / 4];
@@ -1355,11 +1355,11 @@ static unsigned int aloc_triple_indirect(long long int _blockCount) {
 static unsigned int aloc_double_indirect(long long int _blockCount) {
     unsigned int baseAddress, address, diskOffset;
     long long int blockCount = _blockCount;
-    ssm_get_sector(1, ssm);
+    ssm_get_sector(1);
     // calculate base address
     if (is_not_null(ssm->index[0])) {
         baseAddress = BLOCK_SIZE * (BITS_PER_BYTE * ssm->index[0] + ssm->index[1]);
-        ssm_allocate_sectors(ssm);
+        ssm_allocate_sectors();
         diskOffset = baseAddress;  // fsm->inode.sIndirect;
         // Initialize the indirect block pointers to -1
         unsigned int base[BLOCK_SIZE / 4];
@@ -1397,11 +1397,11 @@ static unsigned int aloc_double_indirect(long long int _blockCount) {
  */
 static unsigned int aloc_single_indirect(long long int _blockCount) {
     unsigned int baseAddress, address, diskOffset;
-    ssm_get_sector(1, ssm);
+    ssm_get_sector(1);
     // calculate base address
     if (is_not_null(ssm->index[0])) {
         baseAddress = BLOCK_SIZE * (BITS_PER_BYTE * ssm->index[0] + ssm->index[1]);
-        ssm_allocate_sectors(ssm);
+        ssm_allocate_sectors();
         diskOffset = baseAddress;  // fsm->inode.sIndirect;
         // Initialize the indirect block pointers to -1
         unsigned int base[BLOCK_SIZE / 4];
@@ -1411,10 +1411,10 @@ static unsigned int aloc_single_indirect(long long int _blockCount) {
         // Allocate _blockCount blocks and store associated pointers in
         // the indirect block
         for (unsigned int i = 0; i < _blockCount && i < PTRS_PER_BLOCK; i++) {
-            ssm_get_sector(1, ssm);
+            ssm_get_sector(1);
             if (is_not_null(ssm->index[0])) {
                 address = BLOCK_SIZE * (BITS_PER_BYTE * ssm->index[0] + ssm->index[1]);
-                ssm_allocate_sectors(ssm);
+                ssm_allocate_sectors();
                 // write to buffer
                 fseek(fsm->diskHandle, diskOffset, SEEK_SET);
                 fsm->sampleCount = fwrite(&address, sizeof(unsigned int), 1, fsm->diskHandle);
@@ -1924,18 +1924,18 @@ Bool fs_make(unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE, unsigned int _IN
     init_fsm_maps();
     init_file_sector_mgr(_initSsmMaps);
     // Allocate the boot and super block sectors on disk
-    ssm_get_sector(2, ssm);
-    ssm_allocate_sectors(ssm);
+    ssm_get_sector(2);
+    ssm_allocate_sectors();
     // Create INODE_COUNT Inodes
     int factorsOf_32 = INODE_BLOCKS / 32;
     // int remainder = INODE_BLOCKS % 32;
     // get 32 sectors at a time and make them inode sectors
     for (int i = 0; i < factorsOf_32; i++) {
-        ssm_get_sector(32, ssm);
+        ssm_get_sector(32);
         fsm->diskOffset = BLOCK_SIZE * ((BITS_PER_BYTE * ssm->index[0]) + (ssm->index[1]));
         // take the 32 sectors and make inodes
         inode_make(32, fsm->diskHandle, fsm->diskOffset);
-        ssm_allocate_sectors(ssm);
+        ssm_allocate_sectors();
     }  // end for (i = 0; i < factorsOf_32; i++)
     // ssm_get_sector(remainder, ssm);
     // fsm->diskOffset = BLOCK_SIZE * ((8 * ssm->index[0]) + (ssm->index[1]));
