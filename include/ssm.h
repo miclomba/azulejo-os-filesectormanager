@@ -71,4 +71,22 @@ unsigned int ssm_allocate_sectors(int _n);
  */
 Bool ssm_deallocate_sectors(int _sectorNum);
 
+/**
+ * @brief Gets the sector offset of the last allocated sector.
+ * @return The disk byte offset to the current sector.
+ */
+unsigned int ssm_get_sector_offset(void);
+
+/**
+ * @brief Gets the sector byte index of the last allocated sector.
+ * @return The disk byte index to the current sector.
+ */
+unsigned int ssm_get_sector_offset_byte_index(void);
+
+/**
+ * @brief Gets the sector bit index of the last allocated sector.
+ * @return The disk bit index to the current sector.
+ */
+unsigned int ssm_get_sector_offset_bit_index(void);
+
 #endif  // SECTOR_SPACE_MGR_H

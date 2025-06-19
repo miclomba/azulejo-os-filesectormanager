@@ -100,7 +100,7 @@ static void print_sector_failure(unsigned int badArray[][2], const char* message
  * @param[in] index the fsm or ssm index
  * @return the sector number
  */
-static int get_sector_number(unsigned int index[2]) { return 8 * index[0] + index[1]; }
+static int get_sector_number(unsigned int index[2]) { return BITS_PER_BYTE * index[0] + index[1]; }
 
 /**
  * @brief Prints an inode.
@@ -171,8 +171,9 @@ static void print_message(const char* message) {
 static void print_set_map_sector(int mode) {
     snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
              "//Set allocated map sector (%d*8 + %d).\n//%s:%d:%d\n\nSetting %s map sector %d",
-             ssm->index[0], ssm->index[1], mode == ALLOCATED ? "X" : "Y", ssm->index[0],
-             ssm->index[1], mode == ALLOCATED ? "allocated" : "free",
+             ssm_get_sector_offset_byte_index(), ssm_get_sector_offset_bit_index(),
+             mode == ALLOCATED ? "X" : "Y", ssm_get_sector_offset_byte_index(),
+             ssm_get_sector_offset_bit_index(), mode == ALLOCATED ? "allocated" : "free",
              get_sector_number(ssm->index));
     print_message(MESSAGE_BUFFER);
 }
@@ -488,8 +489,12 @@ static void log_ssm_maps(LoggerSSMOption _case, int _startByte) {
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Deallocate %d contiguous sectors starting at sector %d\n//D:%d:%d:%d\n\n"
                      "Deallocating %d contiguous sectors at sector %d...",
-                     ssm->contSectors, ssm->index[0] * 8 + ssm->index[1], ssm->contSectors,
-                     ssm->index[0], ssm->index[1], ssm->contSectors, get_sector_number(ssm->index));
+                     ssm->contSectors,
+                     ssm_get_sector_offset_byte_index() * BITS_PER_BYTE +
+                         ssm_get_sector_offset_bit_index(),
+                     ssm->contSectors, ssm_get_sector_offset_byte_index(),
+                     ssm_get_sector_offset_bit_index(), ssm->contSectors,
+                     get_sector_number(ssm->index));
             print_message(MESSAGE_BUFFER);
             break;
         case SSM_MAPS_DEALLOC_FAIL:
@@ -517,7 +522,8 @@ static void log_ssm_maps(LoggerSSMOption _case, int _startByte) {
         case SSM_INFO:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "Variable information:\ncontSectors = %d\nindex[0] = %d\nindex[1] = %d",
-                     ssm->contSectors, ssm->index[0], ssm->index[1]);
+                     ssm->contSectors, ssm_get_sector_offset_byte_index(),
+                     ssm_get_sector_offset_bit_index());
             print_message(MESSAGE_BUFFER);
             break;
         default:

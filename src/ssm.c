@@ -37,7 +37,6 @@ static void set_aloc_sector(int _byte, int _bit) __attribute__((unused));
 static void set_free_sector(int _byte, int _bit) __attribute__((unused));
 static Bool ssm_get_sector(int _n);
 static void ssm_init_maps(void);
-static unsigned int ssm_get_sector_offset(void);
 
 //============================== SSM FUNCTION DEFINITIONS =========================//
 void ssm_init(int _init_maps) {
@@ -155,13 +154,13 @@ Bool ssm_deallocate_sectors(int _sectorNum) {
     return True;
 }
 
-/**
- * @brief Gets the sector offset of the last allocated sector.
- * @return The disk byte offset to the current sector.
- */
-static inline unsigned int ssm_get_sector_offset(void) {
+unsigned int ssm_get_sector_offset(void) {
     return BLOCK_SIZE * ((BITS_PER_BYTE * ssm->index[0]) + (ssm->index[1]));
 }
+
+unsigned int ssm_get_sector_offset_byte_index(void) { return ssm->index[0]; }
+
+unsigned int ssm_get_sector_offset_bit_index(void) { return ssm->index[1]; }
 
 /**
  * @brief Finds a contiguous block of free sectors.

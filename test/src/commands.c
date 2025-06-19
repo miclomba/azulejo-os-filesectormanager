@@ -441,8 +441,8 @@ int remove_test_command(char* input, int i) {
         // call to allocate sector
         fsm->inode.dIndirect = ssm_allocate_sectors(1);
         // retrieve index values from SSM
-        index[0] = ssm->index[0];
-        index[1] = ssm->index[1];
+        index[0] = ssm_get_sector_offset_byte_index();
+        index[1] = ssm_get_sector_offset_bit_index();
         // call to write_inode
         inode_write(&fsm->inode, atoi(&input[i]), fsm->diskHandle);
         // print the block size
@@ -450,15 +450,15 @@ int remove_test_command(char* input, int i) {
         // call to allocate sector
         ssm_allocate_sectors(1);
         // retrieve index values from SSM
-        index[2] = ssm->index[0];
-        index[3] = ssm->index[1];
+        index[2] = ssm_get_sector_offset_byte_index();
+        index[3] = ssm_get_sector_offset_bit_index();
         // clear the block
         for (unsigned int m = 0; m < BLOCK_SIZE / 4; m++) {
             // block values set to -1
             block[m] = (unsigned int)(-1);
         }  // end for (m = 0; m < BLOCK_SIZE/4; m
         // retrieve the block
-        block[0] = BLOCK_SIZE * (8 * ssm->index[0] + ssm->index[1]);
+        block[0] = ssm_get_sector_offset();
         // move to the beginning of the file
         fseek(fsm->diskHandle, 0, SEEK_SET);
         // move to the double indirect block
@@ -471,15 +471,15 @@ int remove_test_command(char* input, int i) {
         // call to allocate sector
         ssm_allocate_sectors(1);
         // retrieve index values from SSM
-        index[4] = ssm->index[0];
-        index[5] = ssm->index[1];
+        index[4] = ssm_get_sector_offset_byte_index();
+        index[5] = ssm_get_sector_offset_bit_index();
         // clear the block
         for (unsigned int m = 0; m < BLOCK_SIZE / 4; m++) {
             // block values set to -1
             block[m] = (unsigned int)(-1);
         }  // end for (m = 0; m < BLOCK_SIZE/4; m++)
         // retrieve the block
-        block[0] = BLOCK_SIZE * (8 * ssm->index[0] + ssm->index[1]);
+        block[0] = ssm_get_sector_offset();
         // move to the beginning of the file
         fseek(fsm->diskHandle, 0, SEEK_SET);
         // move to the double indirect block
