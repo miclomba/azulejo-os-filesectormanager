@@ -36,10 +36,14 @@ static void is_fragmented(void) __attribute__((unused));
 static void set_aloc_sector(int _byte, int _bit) __attribute__((unused));
 static void set_free_sector(int _byte, int _bit) __attribute__((unused));
 static Bool ssm_get_sector(int _n);
+static void ssm_init_maps(void);
 static unsigned int ssm_get_sector_offset(void);
 
 //============================== SSM FUNCTION DEFINITIONS =========================//
-void ssm_init(void) {
+void ssm_init(int _init_maps) {
+    if (_init_maps == 1) {
+        ssm_init_maps();
+    }
     ssm->contSectors = 0;
     ssm->index[0] = (unsigned int)(-1);
     ssm->index[1] = (unsigned int)(-1);
@@ -56,7 +60,13 @@ void ssm_init(void) {
     ssm->freeMapHandle = Null;
 }
 
-void ssm_init_maps(void) {
+/**
+ * @brief Initializes and zeroes out the sector allocation and free maps.
+ * Writes a clean slate to both maps on disk: allocation map is zeroed (no sectors allocated),
+ * and the free map is filled (all sectors available).
+ * @return void
+ */
+static void ssm_init_maps(void) {
     unsigned char map[SECTOR_BYTES];
     memset(map, 0, SECTOR_BYTES);
     ssm->alocMapHandle = fopen(SSM_ALLOCATE_MAP, "r+");

@@ -137,12 +137,8 @@ static inline Bool is_null(unsigned int _ptr) { return _ptr == (unsigned int)(-1
  * @date 2010-04-01 First implementation.
  */
 static void init_file_sector_mgr(int _initSsmMaps) {
-    // Initialize SSM Maps
-    if (_initSsmMaps == 1) {
-        ssm_init_maps();
-    }  // end if (_initSsmMaps == 1)
     // Initialize SEctor Space Manager
-    ssm_init();
+    ssm_init(_initSsmMaps);
     // Initialize FSM's variables
     fsm->contInodes = 0;
     fsm->index[0] = -1;

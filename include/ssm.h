@@ -48,17 +48,10 @@ extern SSM *ssm;
  * @brief Initializes the Sector Space Manager.
  * Sets default values, resets tracking structures, and loads allocation and free maps
  * from disk into memory. This should be called before any allocation or deallocation.
+ * @param _init_maps int option to initialize free and aloc maps (if equal to 1).
  * @return void
  */
-void ssm_init(void);
-
-/**
- * @brief Initializes and zeroes out the sector allocation and free maps.
- * Writes a clean slate to both maps on disk: allocation map is zeroed (no sectors allocated),
- * and the free map is filled (all sectors available).
- * @return void
- */
-void ssm_init_maps(void);
+void ssm_init(int _init_maps);
 
 /**
  * @brief Marks a contiguous range of sectors as allocated.
