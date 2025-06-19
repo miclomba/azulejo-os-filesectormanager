@@ -103,6 +103,20 @@ static Bool remove_file_from_dir_indirect_pointers(FSM *_fsm, unsigned int _inod
 
 //========================= FSM FUNCTION DEFINITIONS =======================//
 /**
+ * @brief Deallocates a sector.
+ * @param[in,out] _fsm Pointer to the FSM instance.
+ * @param[in] sectorNumber number/id of the sector to deallocate.
+ * @return void
+ * @date 2025-06-19 First implementation.
+ */
+static inline void deallocate_sector(FSM *_fsm, unsigned int sectorNum) {
+    _fsm->ssm->contSectors = 1;
+    _fsm->ssm->index[0] = sectorNum / BITS_PER_BYTE;
+    _fsm->ssm->index[1] = sectorNum % BITS_PER_BYTE;
+    ssm_deallocate_sectors(_fsm->ssm);
+}
+
+/**
  * @brief Verify if a pointer is not null.
  * @param[in] _ptr a pointer.
  * @return True if the pointer is not null; false otherwise.
@@ -999,64 +1013,55 @@ static Bool remove_file_from_dir_indirect_pointers(FSM *_fsm, unsigned int _inod
     return success;
 }
 
-// @todo refactor this function
 Bool fs_remove_file_from_dir(FSM *_fsm, unsigned int _inodeNumF, unsigned int _inodeNumD) {
     unsigned int j, k, diskOffset, sectorNum;
     unsigned int buffer[BLOCK_SIZE / 4];
-    // open file, return false if access error
+    // open the parent directory inode
     const Inode *inode = fs_open_file(_fsm, _inodeNumD);
-    if (inode != NULL) {
-        if (_fsm->inode.fileType == 2) {  // type 2 is directory
-            for (unsigned int i = 0; i < INODE_DIRECT_PTRS; i++) {
-                if (is_not_null(_fsm->inode.directPtr[i])) {
-                    diskOffset = _fsm->inode.directPtr[i];
-                    // update sampleCount
-                    fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
-                    _fsm->sampleCount =
-                        fread(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
-                    // clear all 4 bytes on each loop
-                    for (j = 0; j < BLOCK_SIZE / 4; j += 4) {
-                        if (buffer[j + 3] == 1 && buffer[j + 2] == _inodeNumF) {
-                            buffer[j + 3] = 0;
-                            buffer[j] = 0;
-                            buffer[j + 1] = 0;
-                            buffer[j + 2] = 0;
-                            _fsm->inode.linkCount -= 1;
-                            if (_fsm->inode.linkCount == 0) {
-                                // if there is nothing in the directory, set size to 0
-                                _fsm->inode.fileSize = 0;
-                                inode_init_ptrs(&_fsm->inode);
-                            }  // end if (_fsm->inode.linkCount == 0)
-                            fseek(_fsm->diskHandle, 0, SEEK_SET);
-                            fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
-                            _fsm->sampleCount = fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4,
-                                                       _fsm->diskHandle);
-                            for (k = 0; k < BLOCK_SIZE / 4; k += 4) {
-                                if (buffer[k + 3] == 1) {
-                                    break;
-                                }  // end if (buffer[k+3] == 1)
-                            }  // end for (k = 0; k < BLOCK_SIZE/4; k += 4)
-                            if (k == BLOCK_SIZE / 4) {
-                                sectorNum = _fsm->inode.directPtr[i] / BLOCK_SIZE;
-                                _fsm->ssm->contSectors = 1;
-                                _fsm->ssm->index[0] = sectorNum / BITS_PER_BYTE;
-                                _fsm->ssm->index[1] = sectorNum % BITS_PER_BYTE;
-                                ssm_deallocate_sectors(_fsm->ssm);
-                                _fsm->inode.directPtr[i] = (unsigned int)(-1);
-                                _fsm->inode.dataBlocks -= 1;
-                                inode_write(&_fsm->inode, _fsm->inodeNum, _fsm->diskHandle);
-                            }  // end if (k == BLOCK_SIZE/4)
-                            return True;
-                        }  // end if (buffer[j+3] == 1 && buffer[j+2] == _inodeNumF)
-                    }  // end for (j = 0; j < BLOCK_SIZE/4; j += 4)
+    if (inode == NULL) return False;
+    if (_fsm->inode.fileType == 2) {  // type 2 is directory
+        for (unsigned int i = 0; i < INODE_DIRECT_PTRS; i++) {
+            if (is_not_null(_fsm->inode.directPtr[i])) {
+                diskOffset = _fsm->inode.directPtr[i];
+                // update sampleCount
+                fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
+                _fsm->sampleCount =
+                    fread(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
+                // clear all 4 bytes on each loop
+                for (j = 0; j < BLOCK_SIZE / 4; j += 4) {
+                    if (buffer[j + 3] == 1 && buffer[j + 2] == _inodeNumF) {
+                        memset(&buffer[j], 0, 4 * sizeof(unsigned int));
+                        _fsm->inode.linkCount -= 1;
+                        if (_fsm->inode.linkCount == 0) {
+                            // if there is nothing in the directory, set size to 0
+                            _fsm->inode.fileSize = 0;
+                            inode_init_ptrs(&_fsm->inode);
+                        }
+                        fseek(_fsm->diskHandle, 0, SEEK_SET);
+                        fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
+                        _fsm->sampleCount =
+                            fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, _fsm->diskHandle);
+                        for (k = 0; k < BLOCK_SIZE / 4; k += 4) {
+                            if (buffer[k + 3] == 1) {
+                                break;
+                            }
+                        }
+                        if (k == BLOCK_SIZE / 4) {
+                            sectorNum = _fsm->inode.directPtr[i] / BLOCK_SIZE;
+                            deallocate_sector(_fsm, sectorNum);
+                            _fsm->inode.directPtr[i] = (unsigned int)(-1);
+                            _fsm->inode.dataBlocks -= 1;
+                            inode_write(&_fsm->inode, _fsm->inodeNum, _fsm->diskHandle);
+                        }
+                        return True;
+                    }
                 }
-            }  // end for (i = 0; i < 10; i++)
-            if (remove_file_from_dir_indirect_pointers(_fsm, _inodeNumF)) {
-                return True;
             }
-        }  // end if (_fsm->inode.fileType == 2)
-    }  // end if (success == True)
-    // file failed to open, return false
+        }
+        if (remove_file_from_dir_indirect_pointers(_fsm, _inodeNumF)) {
+            return True;
+        }
+    }
     return False;
 }
 
@@ -1096,10 +1101,7 @@ static Bool remove_file_from_triple_indirect(FSM *_fsm, unsigned int _inodeNumF,
                 }  // end for (k = 0; k < BLOCK_SIZE/4; k++)
                 if (k == BLOCK_SIZE / 4) {
                     sectorNum = _tIndirectOffset / BLOCK_SIZE;
-                    _fsm->ssm->contSectors = 1;
-                    _fsm->ssm->index[0] = sectorNum / BITS_PER_BYTE;
-                    _fsm->ssm->index[1] = sectorNum % BITS_PER_BYTE;
-                    ssm_deallocate_sectors(_fsm->ssm);
+                    deallocate_sector(_fsm, sectorNum);
                     _fsm->inode.tIndirect = (unsigned int)(-1);
                     inode_write(&_fsm->inode, _fsm->inodeNum, _fsm->diskHandle);
                 }  // end if (k == BLOCK_SIZE/4)
@@ -1148,10 +1150,7 @@ static Bool remove_file_from_double_indirect(FSM *_fsm, unsigned int _inodeNumF,
                 }  // end for (k = 0; k < BLOCK_SIZE/4; k++)
                 if (k == BLOCK_SIZE / 4) {
                     sectorNum = _dIndirectOffset / BLOCK_SIZE;
-                    _fsm->ssm->contSectors = 1;
-                    _fsm->ssm->index[0] = sectorNum / BITS_PER_BYTE;
-                    _fsm->ssm->index[1] = sectorNum % BITS_PER_BYTE;
-                    ssm_deallocate_sectors(_fsm->ssm);
+                    deallocate_sector(_fsm, sectorNum);
                     if (is_not_null(_tIndirectOffset)) {
                         diskOffset = _tIndirectOffset;
                         fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
@@ -1192,13 +1191,12 @@ static Bool remove_file_from_single_indirect(FSM *_fsm, unsigned int _inodeNumF,
                                              unsigned int _dIndirectOffset,
                                              unsigned int _sIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
-    unsigned int diskOffset, sectorNum;
+    unsigned int diskOffset, sectorNum, j, k;
     unsigned int buffer[BLOCK_SIZE / 4];
     diskOffset = _sIndirectOffset;
     // set simpleCount
     fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
     _fsm->sampleCount = fread(indirectBlock, BLOCK_SIZE, 1, _fsm->diskHandle);
-    unsigned int j, k;
     for (unsigned int i = 0; i < BLOCK_SIZE / 4; i++) {
         if (is_not_null(indirectBlock[i])) {
             diskOffset = indirectBlock[i];
@@ -1207,10 +1205,7 @@ static Bool remove_file_from_single_indirect(FSM *_fsm, unsigned int _inodeNumF,
             // clear all data in block
             for (j = 0; j < BLOCK_SIZE / 4; j += 4) {
                 if (buffer[j + 3] == 1 && buffer[j + 2] == _inodeNumF) {
-                    buffer[j + 3] = 0;
-                    buffer[j] = 0;
-                    buffer[j + 1] = 0;
-                    buffer[j + 2] = 0;
+                    memset(&buffer[j], 0, 4 * sizeof(unsigned int));
                     _fsm->inode.linkCount -= 1;
                     fseek(_fsm->diskHandle, 0, SEEK_SET);
                     fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
@@ -1223,10 +1218,7 @@ static Bool remove_file_from_single_indirect(FSM *_fsm, unsigned int _inodeNumF,
                     }  // end for (k = 0; k < BLOCK_SIZE/4; k += 4)
                     if (k == BLOCK_SIZE / 4) {
                         sectorNum = indirectBlock[i] / BLOCK_SIZE;
-                        _fsm->ssm->contSectors = 1;
-                        _fsm->ssm->index[0] = sectorNum / BITS_PER_BYTE;
-                        _fsm->ssm->index[1] = sectorNum % BITS_PER_BYTE;
-                        ssm_deallocate_sectors(_fsm->ssm);
+                        deallocate_sector(_fsm, sectorNum);
                         _fsm->inode.dataBlocks -= 1;
                         inode_write(&_fsm->inode, _fsm->inodeNum, _fsm->diskHandle);
                         indirectBlock[i] = (unsigned int)(-1);
@@ -1240,10 +1232,7 @@ static Bool remove_file_from_single_indirect(FSM *_fsm, unsigned int _inodeNumF,
                         }  // end for (k = 0; k < BLOCK_SIZE/4; k++)
                         if (k == BLOCK_SIZE / 4) {
                             sectorNum = _sIndirectOffset / BLOCK_SIZE;
-                            _fsm->ssm->contSectors = 1;
-                            _fsm->ssm->index[0] = sectorNum / BITS_PER_BYTE;
-                            _fsm->ssm->index[1] = sectorNum % BITS_PER_BYTE;
-                            ssm_deallocate_sectors(_fsm->ssm);
+                            deallocate_sector(_fsm, sectorNum);
                             if (is_not_null(_dIndirectOffset)) {
                                 diskOffset = _dIndirectOffset;
                                 fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
@@ -1642,12 +1631,7 @@ Bool fs_remove_file(FSM *_fsm, unsigned int _inodeNum, unsigned int _inodeNumD) 
                 }  // end for (j = 8; j < BLOCK_SIZE/4; j += 4)
             }  // end if (fileType == 2)
             sectorNumber = diskOffset / BLOCK_SIZE;
-            byte = sectorNumber / BITS_PER_BYTE;
-            bit = sectorNumber % BITS_PER_BYTE;
-            _fsm->ssm->contSectors = 1;
-            _fsm->ssm->index[0] = byte;
-            _fsm->ssm->index[1] = bit;
-            ssm_deallocate_sectors(_fsm->ssm);
+            deallocate_sector(_fsm, sectorNumber);
         }
     }  // end for (i = 0; i < 10; i++)
     // Read data from single indirect pointer into buffer _buffer
@@ -1723,7 +1707,6 @@ static void remove_file_triple_indirect_blocks(FSM *_fsm, unsigned int _fileType
                                                unsigned int _inodeNumD, unsigned int _diskOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset = _diskOffset;
-    unsigned int sectorNumber, byte, bit;
     // Read disk to indirectBlock
     fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
     _fsm->sampleCount = fread(indirectBlock, BLOCK_SIZE, 1, _fsm->diskHandle);
@@ -1736,14 +1719,8 @@ static void remove_file_triple_indirect_blocks(FSM *_fsm, unsigned int _fileType
     }  // for (i = 0; i < BLOCK_SIZE/4; i++)
     // Deallocate T indirect block
     diskOffset = _diskOffset;
-    sectorNumber = diskOffset / BLOCK_SIZE;
-    byte = sectorNumber / BITS_PER_BYTE;
-    bit = sectorNumber % BITS_PER_BYTE;
-    _fsm->ssm->contSectors = 1;
-    _fsm->ssm->index[0] = byte;
-    _fsm->ssm->index[1] = bit;
-    // Deallocate newly freed sectors
-    ssm_deallocate_sectors(_fsm->ssm);
+    unsigned int sectorNumber = diskOffset / BLOCK_SIZE;
+    deallocate_sector(_fsm, sectorNumber);
 }
 
 /**
@@ -1760,7 +1737,6 @@ static void remove_file_double_indirect_blocks(FSM *_fsm, unsigned int _fileType
                                                unsigned int _inodeNumD, unsigned int _diskOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset = _diskOffset;
-    unsigned int sectorNumber, byte, bit;
     // Read disk to indirectBlock
     fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
     _fsm->sampleCount = fread(indirectBlock, BLOCK_SIZE, 1, _fsm->diskHandle);
@@ -1773,14 +1749,8 @@ static void remove_file_double_indirect_blocks(FSM *_fsm, unsigned int _fileType
     }  // end for (i = 0; i < BLOCK_SIZE/4; i++)
     // Deallocate D indirect block
     diskOffset = _diskOffset;
-    sectorNumber = diskOffset / BLOCK_SIZE;
-    byte = sectorNumber / BITS_PER_BYTE;
-    bit = sectorNumber % BITS_PER_BYTE;
-    _fsm->ssm->contSectors = 1;
-    _fsm->ssm->index[0] = byte;
-    _fsm->ssm->index[1] = bit;
-    // Deallocate newly freed sectors
-    ssm_deallocate_sectors(_fsm->ssm);
+    unsigned int sectorNumber = diskOffset / BLOCK_SIZE;
+    deallocate_sector(_fsm, sectorNumber);
 }
 
 /**
@@ -1798,7 +1768,7 @@ static void remove_file_single_indirect_blocks(FSM *_fsm, unsigned int _fileType
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset = _diskOffset;
     unsigned int buffer[BLOCK_SIZE / 4];
-    unsigned int sectorNumber, byte, bit, j;
+    unsigned int sectorNumber, j;
     // Read disk to indirectBlock
     fseek(_fsm->diskHandle, diskOffset, SEEK_SET);
     _fsm->sampleCount = fread(indirectBlock, BLOCK_SIZE, 1, _fsm->diskHandle);
@@ -1818,24 +1788,13 @@ static void remove_file_single_indirect_blocks(FSM *_fsm, unsigned int _fileType
                 }  // end for (j = 8; j < BLOCK_SIZE/4; j += 4)
             }  // end if (_fileType == 2)
             sectorNumber = diskOffset / BLOCK_SIZE;
-            byte = sectorNumber / BITS_PER_BYTE;
-            bit = sectorNumber % BITS_PER_BYTE;
-            _fsm->ssm->contSectors = 1;
-            _fsm->ssm->index[0] = byte;
-            _fsm->ssm->index[1] = bit;
-            ssm_deallocate_sectors(_fsm->ssm);
+            deallocate_sector(_fsm, sectorNumber);
         }
     }  // end for (i = 0; i < BLOCK_SIZE/4; i++)
     // Deallocate S indirect block
     diskOffset = _diskOffset;
     sectorNumber = diskOffset / BLOCK_SIZE;
-    byte = sectorNumber / BITS_PER_BYTE;
-    bit = sectorNumber % BITS_PER_BYTE;
-    _fsm->ssm->contSectors = 1;
-    _fsm->ssm->index[0] = byte;
-    _fsm->ssm->index[1] = bit;
-    // Deallocate newly freed sectors
-    ssm_deallocate_sectors(_fsm->ssm);
+    deallocate_sector(_fsm, sectorNumber);
 }
 
 Bool fs_rename_file(FSM *_fsm, unsigned int _inodeNumF, unsigned int *_name,
