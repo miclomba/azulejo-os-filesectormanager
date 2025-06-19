@@ -11,6 +11,7 @@
 #include <string.h>
 
 #include "config.h"
+#include "fsm_constants.h"
 #include "global_constants.h"
 #include "ssm_constants.h"
 
@@ -34,6 +35,8 @@ static Bool check_integrity(void);
 static void is_fragmented(void) __attribute__((unused));
 static void set_aloc_sector(int _byte, int _bit) __attribute__((unused));
 static void set_free_sector(int _byte, int _bit) __attribute__((unused));
+static Bool ssm_get_sector(int _n);
+static unsigned int ssm_get_sector_offset(void);
 
 //============================== SSM FUNCTION DEFINITIONS =========================//
 void ssm_init(void) {
@@ -67,32 +70,29 @@ void ssm_init_maps(void) {
     ssm->freeMapHandle = Null;
 }
 
-Bool ssm_allocate_sectors(void) {
-    if (ssm->index[0] != (unsigned int)(-1)) {
-        int n;
-        unsigned int byte;
-        int bit;
-        bit = ssm->index[1];
-        byte = ssm->index[0];
-        n = ssm->contSectors;
-        while (n > 0) {
-            for (; bit < BITS_PER_BYTE; bit++) {
-                ssm->freeMap[byte] -= pow(2, bit);
-                ssm->alocMap[byte] += pow(2, bit);
-                n--;
-                if (n == 0) {
-                    break;
-                }
-            }
-            byte++;
-            bit = 0;
-        }
+unsigned int ssm_allocate_sectors(int _n) {
+    if (!ssm_get_sector(_n)) {
+        return -1;
     }
+
+    unsigned int bit = ssm->index[1];
+    unsigned int byte = ssm->index[0];
+    int n = ssm->contSectors;
+    while (n > 0) {
+        for (; bit < BITS_PER_BYTE; bit++) {
+            ssm->freeMap[byte] -= pow(2, bit);
+            ssm->alocMap[byte] += pow(2, bit);
+            n--;
+            if (n == 0) {
+                break;
+            }
+        }
+        byte++;
+        bit = 0;
+    }
+
     Bool integrity = check_integrity();
-    if (integrity == False) return False;
-    ssm->index[0] = (unsigned int)(-1);
-    ssm->index[1] = (unsigned int)(-1);
-    ssm->contSectors = 0;
+    if (integrity == False) return -1;
     ssm->alocMapHandle = fopen(SSM_ALLOCATE_MAP, "r+");
     ssm->freeMapHandle = fopen(SSM_FREE_MAP, "r+");
     ssm->sampleCount = fwrite(ssm->alocMap, 1, SECTOR_BYTES, ssm->alocMapHandle);
@@ -101,10 +101,14 @@ Bool ssm_allocate_sectors(void) {
     fclose(ssm->freeMapHandle);
     ssm->alocMapHandle = Null;
     ssm->freeMapHandle = Null;
-    return True;
+    return ssm_get_sector_offset();
 }
 
-Bool ssm_deallocate_sectors(void) {
+Bool ssm_deallocate_sectors(int _sectorNum) {
+    ssm->contSectors = 1;
+    ssm->index[0] = _sectorNum / BITS_PER_BYTE;
+    ssm->index[1] = _sectorNum % BITS_PER_BYTE;
+
     if (ssm->index[0] != (unsigned int)(-1)) {
         int n;
         unsigned int byte;
@@ -141,7 +145,23 @@ Bool ssm_deallocate_sectors(void) {
     return True;
 }
 
-Bool ssm_get_sector(int _n) {
+/**
+ * @brief Gets the sector offset of the last allocated sector.
+ * @return The disk byte offset to the current sector.
+ */
+static inline unsigned int ssm_get_sector_offset(void) {
+    return BLOCK_SIZE * ((BITS_PER_BYTE * ssm->index[0]) + (ssm->index[1]));
+}
+
+/**
+ * @brief Finds a contiguous block of free sectors.
+ * Searches the free map for `_n` contiguous free sectors. If found, stores
+ * the byte and bit index in the manager's internal state (`_ssm->index`)
+ * and returns success.
+ * @param[in] _n Number of contiguous sectors to find (1–32).
+ * @return True if a suitable block was found, False otherwise.
+ */
+static Bool ssm_get_sector(int _n) {
     ssm->contSectors = _n;
     // We assume 0 < _n < 33
     if (_n < 33 && _n > 0) {

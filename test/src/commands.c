@@ -438,21 +438,17 @@ int remove_test_command(char* input, int i) {
         printf("Opened Folder (Inode %d)\n", atoi(&input[i]));
         // print that the required data blocks are being allocated
         printf("Allocating required data Blocks:\n\n");
-        // call to getSector
-        ssm_get_sector(1);
+        // call to allocate sector
+        fsm->inode.dIndirect = ssm_allocate_sectors(1);
         // retrieve index values from SSM
         index[0] = ssm->index[0];
         index[1] = ssm->index[1];
-        // locate double indirect
-        fsm->inode.dIndirect = BLOCK_SIZE * (8 * ssm->index[0] + ssm->index[1]);
         // call to write_inode
         inode_write(&fsm->inode, atoi(&input[i]), fsm->diskHandle);
-        // call to allocateSectors
-        ssm_allocate_sectors();
         // print the block size
         printf("Double indirect Ptr --> %d\n", fsm->inode.dIndirect / BLOCK_SIZE);
-        // call to getSector
-        ssm_get_sector(1);
+        // call to allocate sector
+        ssm_allocate_sectors(1);
         // retrieve index values from SSM
         index[2] = ssm->index[0];
         index[3] = ssm->index[1];
@@ -469,13 +465,11 @@ int remove_test_command(char* input, int i) {
         fseek(fsm->diskHandle, fsm->inode.dIndirect, SEEK_SET);
         // write block to the file
         fwrite(block, BLOCK_SIZE, 1, fsm->diskHandle);
-        // call to allocateSectors
-        ssm_allocate_sectors();
         // print that iNode values will be tested
         printf("Double indirect Ptr --> Double Indirect Block ");
         printf("--> %d\n", block[0] / BLOCK_SIZE);
-        // call to getSector
-        ssm_get_sector(1);
+        // call to allocate sector
+        ssm_allocate_sectors(1);
         // retrieve index values from SSM
         index[4] = ssm->index[0];
         index[5] = ssm->index[1];
@@ -492,8 +486,6 @@ int remove_test_command(char* input, int i) {
         fseek(fsm->diskHandle, BLOCK_SIZE * (8 * index[2] + index[3]), SEEK_SET);
         // write block to file
         fwrite(block, BLOCK_SIZE, 1, fsm->diskHandle);
-        // call to allocateSectors
-        ssm_allocate_sectors();
         // print block value
         printf("Double indirect Ptr --> Double Indirect Block ");
         printf("--> Single Indirect Block -> %d\n", block[0] / BLOCK_SIZE);
