@@ -81,16 +81,16 @@ or Allocated. A lesser known, essential function is the maintenance of the physi
 ## System Calls
 
 ```cpp
-Bool fs_make(FSM* _fsm, unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE, unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT, int _init_ssm_maps);
-Bool fs_remove(FSM* _fsm);
-Bool fs_create_file(FSM* _fsm, int _is_dir, unsigned int* _file_name, unsigned int _dir_inode_num);
-Inode* fs_open_file(FSM* _fsm, unsigned int _file_inode_num);
-Bool fs_close_file(FSM* _fsm);
-Bool fs_remove_file_from_dir(FSM* _fsm, unsigned int _file_inode_num, unsigned int _dir_inode_num);
-Bool fs_write_to_file(FSM* _fsm, unsigned int _file_inode_num, void* _write_buffer, long long int _file_size);
-Bool fs_read_from_file(FSM* _fsm, unsigned int _file_inode_num, void* _read_buffer);
-Bool fs_remove_file(FSM* _fsm, unsigned int _file_inode_num, unsigned int _dir_inode_num);
-Bool fs_rename_file(FSM* _fsm, unsigned int _file_inode_num, unsigned int* _file_name, unsigned int _dir_inode_num);
+int fs_make(unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE, unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT, int _init_ssm_maps);
+int fs_remove(void);
+int fs_create_file(int _is_dir, unsigned int* _file_name, unsigned int _dir_inode_num);
+Inode* fs_open_file(unsigned int _file_inode_num);
+int fs_close_file(void);
+int fs_remove_file_from_dir(unsigned int _file_inode_num, unsigned int _dir_inode_num);
+int fs_write_to_file(unsigned int _file_inode_num, void* _write_buffer, long long int _file_size);
+int fs_read_from_file(unsigned int _file_inode_num, void* _read_buffer);
+int fs_remove_file(unsigned int _file_inode_num, unsigned int _dir_inode_num);
+int fs_rename_file(unsigned int _file_inode_num, unsigned int* _file_name, unsigned int _dir_inode_num);
 ```
 
 ## Sample Input
