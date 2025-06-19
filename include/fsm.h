@@ -10,12 +10,9 @@
 #include "fsm_constants.h"
 #include "global_constants.h"
 #include "inode.h"
-#include "ssm.h"
 
 //======================== FSM TYPE DEFINITION ==============================//
 typedef struct {
-    // pointer to SSM
-    SSM ssm[1];
     // pointers used for disk access
     FILE *iMapHandle;
     FILE *diskHandle;

@@ -14,6 +14,21 @@
 #include "global_constants.h"
 #include "ssm_constants.h"
 
+//============================== SSM STRUCT =====================================//
+static SSM ssm_instance = {
+    .alocMapHandle = NULL,
+    .freeMapHandle = NULL,
+    .alocMap = {0},  // initialize first element with 0 and the rest are implicitly initialized to 0
+    .freeMap = {0},  // initialize first element with 0 and the rest are implicitly initialized to 0
+    .sampleCount = 0,
+    .contSectors = 0,
+    .index = {0, 0},
+    .badSector = {{0}},  // The first inner array (badSector[0]) is initialized to {0, 0}. All other
+                         // entries are implicitly initialized to zero
+    .fragmented = 0.0f};
+
+SSM *ssm = &ssm_instance;
+
 //============================== SSM FUNCTION PROTOTYPES =========================//
 static Bool check_integrity(SSM *_ssm);
 static void is_fragmented(SSM *_ssm) __attribute__((unused));

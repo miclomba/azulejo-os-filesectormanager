@@ -12,17 +12,35 @@
 #include "ssm_constants.h"
 
 //============================== SSM TYPE DEFINITION ==============================//
-typedef struct {
+/**
+ * @brief Sector State Manager structure.
+ *
+ * Holds metadata and runtime data for managing sector allocation and fragmentation
+ * within a file system or block storage interface.
+ */
+typedef struct SSM {
+    /** File handle for the allocation map. */
     FILE *alocMapHandle;
+    /** File handle for the free sector map. */
     FILE *freeMapHandle;
+    /** Total number of samples/sectors tracked. */
     unsigned int sampleCount;
+    /** Allocation bitmap per sector. */
     unsigned char alocMap[SECTOR_BYTES];
+    /** Free sector bitmap. */
     unsigned char freeMap[SECTOR_BYTES];
+    /** Count of contiguous sectors found. */
     unsigned int contSectors;
+    /** Index used for internal iteration or sector marking (e.g., byte/bit). */
     unsigned int index[2];
+    /** List of bad sectors with their corresponding coordinates/indexes. */
     unsigned int badSector[MAX_INPUT][2];
+    /** Fragmentation percentage as a floating-point value (0.0 to 100.0). */
     float fragmented;
 } SSM;
+
+// Create
+extern SSM *ssm;
 
 //============================== SSM FUNCTION PROTOTYPES ==========================//
 

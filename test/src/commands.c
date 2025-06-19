@@ -11,6 +11,7 @@
 #include "fsm.h"
 #include "global_constants.h"
 #include "logger.h"
+#include "ssm.h"
 #include "utils.h"
 
 // buffer for holding block information
@@ -129,7 +130,7 @@ int print_command(char* input, FSM* fsm, int i) {
             // call to log_fsm
             log_fsm(fsm, 1, 0);
             // call to log_ssm
-            log_ssm(fsm->ssm, 1, atoi(&input[i]));
+            log_ssm(ssm, 1, atoi(&input[i]));
         }  // end if (DEBUG_LEVEL > 0)
     }  // end if (digit > 0)
     // discard input until new line
@@ -438,30 +439,30 @@ int remove_test_command(char* input, FSM* fsm, int i) {
         // print that the required data blocks are being allocated
         printf("Allocating required data Blocks:\n\n");
         // call to getSector
-        ssm_get_sector(1, fsm->ssm);
+        ssm_get_sector(1, ssm);
         // retrieve index values from SSM
-        index[0] = fsm->ssm->index[0];
-        index[1] = fsm->ssm->index[1];
+        index[0] = ssm->index[0];
+        index[1] = ssm->index[1];
         // locate double indirect
-        fsm->inode.dIndirect = BLOCK_SIZE * (8 * fsm->ssm->index[0] + fsm->ssm->index[1]);
+        fsm->inode.dIndirect = BLOCK_SIZE * (8 * ssm->index[0] + ssm->index[1]);
         // call to write_inode
         inode_write(&fsm->inode, atoi(&input[i]), fsm->diskHandle);
         // call to allocateSectors
-        ssm_allocate_sectors(fsm->ssm);
+        ssm_allocate_sectors(ssm);
         // print the block size
         printf("Double indirect Ptr --> %d\n", fsm->inode.dIndirect / BLOCK_SIZE);
         // call to getSector
-        ssm_get_sector(1, fsm->ssm);
+        ssm_get_sector(1, ssm);
         // retrieve index values from SSM
-        index[2] = fsm->ssm->index[0];
-        index[3] = fsm->ssm->index[1];
+        index[2] = ssm->index[0];
+        index[3] = ssm->index[1];
         // clear the block
         for (unsigned int m = 0; m < BLOCK_SIZE / 4; m++) {
             // block values set to -1
             block[m] = (unsigned int)(-1);
         }  // end for (m = 0; m < BLOCK_SIZE/4; m
         // retrieve the block
-        block[0] = BLOCK_SIZE * (8 * fsm->ssm->index[0] + fsm->ssm->index[1]);
+        block[0] = BLOCK_SIZE * (8 * ssm->index[0] + ssm->index[1]);
         // move to the beginning of the file
         fseek(fsm->diskHandle, 0, SEEK_SET);
         // move to the double indirect block
@@ -469,22 +470,22 @@ int remove_test_command(char* input, FSM* fsm, int i) {
         // write block to the file
         fwrite(block, BLOCK_SIZE, 1, fsm->diskHandle);
         // call to allocateSectors
-        ssm_allocate_sectors(fsm->ssm);
+        ssm_allocate_sectors(ssm);
         // print that iNode values will be tested
         printf("Double indirect Ptr --> Double Indirect Block ");
         printf("--> %d\n", block[0] / BLOCK_SIZE);
         // call to getSector
-        ssm_get_sector(1, fsm->ssm);
+        ssm_get_sector(1, ssm);
         // retrieve index values from SSM
-        index[4] = fsm->ssm->index[0];
-        index[5] = fsm->ssm->index[1];
+        index[4] = ssm->index[0];
+        index[5] = ssm->index[1];
         // clear the block
         for (unsigned int m = 0; m < BLOCK_SIZE / 4; m++) {
             // block values set to -1
             block[m] = (unsigned int)(-1);
         }  // end for (m = 0; m < BLOCK_SIZE/4; m++)
         // retrieve the block
-        block[0] = BLOCK_SIZE * (8 * fsm->ssm->index[0] + fsm->ssm->index[1]);
+        block[0] = BLOCK_SIZE * (8 * ssm->index[0] + ssm->index[1]);
         // move to the beginning of the file
         fseek(fsm->diskHandle, 0, SEEK_SET);
         // move to the double indirect block
@@ -492,7 +493,7 @@ int remove_test_command(char* input, FSM* fsm, int i) {
         // write block to file
         fwrite(block, BLOCK_SIZE, 1, fsm->diskHandle);
         // call to allocateSectors
-        ssm_allocate_sectors(fsm->ssm);
+        ssm_allocate_sectors(ssm);
         // print block value
         printf("Double indirect Ptr --> Double Indirect Block ");
         printf("--> Single Indirect Block -> %d\n", block[0] / BLOCK_SIZE);
