@@ -17,7 +17,7 @@
 // buffer for holding block information
 static unsigned int buffer[600 * (MAX_BLOCK_SIZE / 4)];
 
-int init_command(int _argc, char** _argv, char* input, FSM* fsm, int i) {
+int init_command(int _argc, char** _argv, char* input, int i) {
     // vars for holding the disk, block, iNode, iNode-block, iNode-count sizes for the file system
     unsigned int _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT;
     _DISK_SIZE = _BLOCK_SIZE = _INODE_SIZE = _INODE_BLOCKS = _INODE_COUNT = 0;
@@ -25,7 +25,7 @@ int init_command(int _argc, char** _argv, char* input, FSM* fsm, int i) {
     // if debug, print the creation of the file system
     if (DEBUG_LEVEL > 0)
         // call to log_fsm, print creation of the file system
-        log_fsm(fsm, 21, 0);
+        log_fsm(21, 0);
     // move to retrieve disk size
     i += 2;
     // check to see that the character is a digit
@@ -70,27 +70,27 @@ int init_command(int _argc, char** _argv, char* input, FSM* fsm, int i) {
     Bool status = True;
     if (_argc > 1 && atoi(_argv[1]) == 1)
         // call to mkfs, initializing the SSM values
-        status = fs_make(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 1);
+        status = fs_make(_DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 1);
     else
         // call to mkfs, without initializing SSM values
-        status = fs_make(fsm, _DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 0);
+        status = fs_make(_DISK_SIZE, _BLOCK_SIZE, _INODE_SIZE, _INODE_BLOCKS, _INODE_COUNT, 0);
     if (status == False) printf("Error: Could not create file system.\n");
     // find next line of input
     i = advance_to_char(input, '\n', i);
     return i;
 }
 
-void end_command(FSM* fsm) {
+void end_command(void) {
     // if debug, print the end has been reached
     if (DEBUG_LEVEL > 0) {
         // call to log_fsm, print the end has been reached
-        log_fsm(fsm, 14, 0);
+        log_fsm(14, 0);
     }  // end if (DEBUG_LEVEL > 0)
-    Bool status = fs_remove(fsm);
+    Bool status = fs_remove();
     if (status == False) printf("Error: Could not remove file system.\n");
 }
 
-int info_command(char* input, FSM* fsm, int i) {
+int info_command(char* input, int i) {
     // iNode number dealing with files
     unsigned int inodeNumF;
     // move to retrieve the iNode number
@@ -102,15 +102,15 @@ int info_command(char* input, FSM* fsm, int i) {
         // convert the character to a digit
         inodeNumF = atoi(&input[i]);
         // attempt to open the file located at inodeNumF
-        const Inode* inode = fs_open_file(fsm, inodeNumF);
+        const Inode* inode = fs_open_file(inodeNumF);
         // if the iNode was successfully opened, print the
         // appropriate message
         if (inode != NULL) {
             // call to log_fsm, print the iNode information
-            log_fsm(fsm, 29, 0);
+            log_fsm(29, 0);
         }  // if (*success == True)
         // close the iNode by flushing the iNode buffer inside FSM
-        Bool status = fs_close_file(fsm);
+        Bool status = fs_close_file();
         if (status == False) printf("Error closing file\n");
     }  // end if (digit > 0)
     // find the next line of input
@@ -118,7 +118,7 @@ int info_command(char* input, FSM* fsm, int i) {
     return i;
 }
 
-int print_command(char* input, FSM* fsm, int i) {
+int print_command(char* input, int i) {
     // get the starting point, (for our input, a number)
     i += 2;
     // check to see that the character is a digit
@@ -128,9 +128,9 @@ int print_command(char* input, FSM* fsm, int i) {
         // if debug, print the call to both log_fsm and log_ssm
         if (DEBUG_LEVEL > 0) {
             // call to log_fsm
-            log_fsm(fsm, 1, 0);
+            log_fsm(1, 0);
             // call to log_ssm
-            log_ssm(ssm, 1, atoi(&input[i]));
+            log_ssm(1, atoi(&input[i]));
         }  // end if (DEBUG_LEVEL > 0)
     }  // end if (digit > 0)
     // discard input until new line
@@ -138,7 +138,7 @@ int print_command(char* input, FSM* fsm, int i) {
     return i;
 }
 
-int create_command(char* input, FSM* fsm, int i) {
+int create_command(char* input, int i) {
     // buffer used when renaming files
     char name[9];
     // iNode number dealing with files and directories
@@ -164,12 +164,12 @@ int create_command(char* input, FSM* fsm, int i) {
         // if character is 'F', create a file
         if (c == 'F') {
             // call to createFile with parameter for file
-            inodeNumF = fs_create_file(fsm, 0, (unsigned int*)name, inodeNumD);
+            inodeNumF = fs_create_file(0, (unsigned int*)name, inodeNumD);
         }  // end if (c == 'F')
         // if character is 'D', create a directory
         else if (c == 'D') {
             // call to createFile with parameter for directory
-            inodeNumF = fs_create_file(fsm, 1, (unsigned int*)name, inodeNumD);
+            inodeNumF = fs_create_file(1, (unsigned int*)name, inodeNumD);
         }  // end if (c == 'D')
         // find next input
         i = advance_to_char(input, ':', i);
@@ -180,7 +180,7 @@ int create_command(char* input, FSM* fsm, int i) {
         name[8] = '\0';  // ensure null-termination
         i += 8;
         // call to renameFile
-        fs_rename_file(fsm, inodeNumF, (unsigned int*)name, inodeNumD);
+        fs_rename_file(inodeNumF, (unsigned int*)name, inodeNumD);
     }  // end if (digit > 0)
     printf("DEBUG_LEVEL > 0:\n");
     // if a folder was created, print respective output
@@ -203,7 +203,7 @@ int create_command(char* input, FSM* fsm, int i) {
     return i;
 }
 
-int rename_command(char* input, FSM* fsm, int i) {
+int rename_command(char* input, int i) {
     // buffer used when renaming files
     char name[9];
     // iNode number dealing with files and directories
@@ -242,7 +242,7 @@ int rename_command(char* input, FSM* fsm, int i) {
             // print input information
             printf("//N:%d:%d:%s\n\n", inodeNumF, inodeNumD, name);
             // call renameFile
-            fs_rename_file(fsm, inodeNumF, (unsigned int*)name, inodeNumD);
+            fs_rename_file(inodeNumF, (unsigned int*)name, inodeNumD);
             // print success in renaming file
             printf("-> Renamed File (Inode %d) to \'%s\'\n", inodeNumF, name);
             // print section break
@@ -255,7 +255,7 @@ int rename_command(char* input, FSM* fsm, int i) {
     return i;
 }
 
-int write_command(char* input, FSM* fsm, int i) {
+int write_command(char* input, int i) {
     // iNode number dealing with files
     unsigned int inodeNumF;
     // move to retrieve the iNode number
@@ -289,7 +289,7 @@ int write_command(char* input, FSM* fsm, int i) {
             buffer[14 * (BLOCK_SIZE / 4) + 23] = 77;
             buffer[266 * (BLOCK_SIZE / 4) + 56] = 113;
             // call to writeToFile
-            fs_write_to_file(fsm, inodeNumF, buffer, atoi(&input[i]));
+            fs_write_to_file(inodeNumF, buffer, atoi(&input[i]));
             // print file had been written to
             printf("-> Wrote %d bytes to File (Inode %d)\n", atoi(&input[i]), inodeNumF);
             printf("** Expected Result: 0 Inodes allocated in the");
@@ -308,7 +308,7 @@ int write_command(char* input, FSM* fsm, int i) {
     return i;
 }
 
-int read_command(char* input, FSM* fsm, int i) {
+int read_command(char* input, int i) {
     // iNode number dealing with files
     unsigned int inodeNumF;
     // move to retrieve the iNode number of the file to be read
@@ -334,7 +334,7 @@ int read_command(char* input, FSM* fsm, int i) {
             // print input information
             printf("//R:%d:%d\n\n", inodeNumF, atoi(&input[i]));
             // call to readFromFile
-            fs_read_from_file(fsm, inodeNumF, buffer);
+            fs_read_from_file(inodeNumF, buffer);
             // print that the file had been read
             printf("-> Read %d bytes from File (Inode %d)\n", atoi(&input[i]), inodeNumF);
             printf("** Expected Result: 0 Inodes allocated in the");
@@ -353,7 +353,7 @@ int read_command(char* input, FSM* fsm, int i) {
     return i;
 }
 
-int remove_command(char* input, FSM* fsm, int i) {
+int remove_command(char* input, int i) {
     // iNode number dealing with files and directories
     unsigned int inodeNumF, inodeNumD;
     // move to retrieve the file's iNode number
@@ -385,7 +385,7 @@ int remove_command(char* input, FSM* fsm, int i) {
             printf("-> Removed File (Inode ");
             printf("%d) from Folder (Inode %d).\n", inodeNumF, inodeNumD);
             // call to openFile to ensure file has been removed
-            const Inode* inode = fs_open_file(fsm, inodeNumF);
+            const Inode* inode = fs_open_file(inodeNumF);
             if (inode == NULL) printf("Filesystem corruption during remove command.\n");
             // if removing a folder, recursively remove all
             // subdirectories and files
@@ -401,7 +401,7 @@ int remove_command(char* input, FSM* fsm, int i) {
             printf("%d Blocks deallocated in the Aloc/Free Map\n",
                    fsm->inode.fileSize / BLOCK_SIZE);
             // call to rmFile
-            fs_remove_file(fsm, inodeNumF, inodeNumD);
+            fs_remove_file(inodeNumF, inodeNumD);
         }  // end if (digit > 0)
         // print section break
         printf("- - - - - - - - - - - - - - - - - - - - - - - - ");
@@ -412,7 +412,7 @@ int remove_command(char* input, FSM* fsm, int i) {
     return i;
 }
 
-int remove_test_command(char* input, FSM* fsm, int i) {
+int remove_test_command(char* input, int i) {
     // buffer for holding temporary values
     unsigned int index[6];
     // buffer for holding block information
@@ -432,7 +432,7 @@ int remove_test_command(char* input, FSM* fsm, int i) {
         // print input information
         printf("//T:%d\n\n", atoi(&input[i]));
         // call to openFile
-        const Inode* inode = fs_open_file(fsm, atoi(&input[i]));
+        const Inode* inode = fs_open_file(atoi(&input[i]));
         if (inode == NULL) printf("Filesystem corruption during remove test command.\n");
         // print that iNode has been opened
         printf("Opened Folder (Inode %d)\n", atoi(&input[i]));
@@ -516,12 +516,12 @@ int remove_test_command(char* input, FSM* fsm, int i) {
         printf("Added File-Tuple (Inode 25) to data block at ");
         printf("sector %d\n", index[0] / BLOCK_SIZE);
         // call to rmFileFromDir
-        Bool success = fs_remove_file_from_dir(fsm, 25, atoi(&input[i]));
+        Bool success = fs_remove_file_from_dir(25, atoi(&input[i]));
         // print respective functions
         printf("\nTRY FUNCTION CALL: rmFileFromDir(fsm,25,");
         printf("%d);\n\nReturned %s\n", atoi(&input[i]), success ? "TRUE" : "FALSE");
         // call to openFile
-        inode = fs_open_file(fsm, atoi(&input[i]));
+        inode = fs_open_file(atoi(&input[i]));
         if (inode == NULL) printf("Filesystem corruption during remove test command.\n");
         // set single indirect to -1
         fsm->inode.dIndirect = -1;
@@ -536,7 +536,7 @@ int remove_test_command(char* input, FSM* fsm, int i) {
     return i;
 }
 
-int list_command(char* input, FSM* fsm, int i) {
+int list_command(char* input, int i) {
     // buffer used when renaming files
     char name[9];
     // iNode number dealing with files
@@ -568,7 +568,7 @@ int list_command(char* input, FSM* fsm, int i) {
             printf("//L:%d:%s\n", inodeNumF, name);
         }  // end if (DEBUG_LEVEL > 0)
         // call to readFromFile
-        fs_read_from_file(fsm, inodeNumF, buffer);
+        fs_read_from_file(inodeNumF, buffer);
         // store values from readFromFile call into a local buffer
         char* charBuffer = (char*)buffer;
         // print all items of the iNode
@@ -592,13 +592,13 @@ int list_command(char* input, FSM* fsm, int i) {
     return i;
 }
 
-int default_command(char* input, FSM* fsm, int i) {
+int default_command(char* input, int i) {
     // discard input until new line
     i = advance_to_char(input, '\n', i);
     // if debug, print bad input
     if (DEBUG_LEVEL > 0) {
         // call to log_fsm, print bad input
-        log_fsm(fsm, 15, 0);
+        log_fsm(15, 0);
     }  // end if (DEBUG_LEVEL > 0)
     return i;
 }

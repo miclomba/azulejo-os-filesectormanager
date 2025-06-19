@@ -61,20 +61,19 @@ static void print_128_bits(unsigned char* map, unsigned int _startByte, unsigned
 
 /**
  * @brief Prints SSM maps.
- * @param[in] _ssm the Sector Space Manager
  * @param[in] _startByte the start byte of the maps
  * @return void
  */
-static void print_ssm_maps(SSM* _ssm, unsigned int _startByte) {
+static void print_ssm_maps(unsigned int _startByte) {
     printf("//Print 128 contiguous Sectors from Free/Aloc Map starting at Sector (%d).\n",
            _startByte * 8);
     // printf("//P:%d\n\n",_startByte);
     printf("=======================================================================\n");
     printf("FREE MAP\n");
-    print_128_bits(_ssm->freeMap, _startByte, SECTOR_BYTES);
+    print_128_bits(ssm->freeMap, _startByte, SECTOR_BYTES);
     printf("\n");
     printf("ALLOCATED MAP\n");
-    print_128_bits(_ssm->alocMap, _startByte, SECTOR_BYTES);
+    print_128_bits(ssm->alocMap, _startByte, SECTOR_BYTES);
     printf("=======================================================================\n\n\n");
 }
 
@@ -105,50 +104,49 @@ static int get_sector_number(unsigned int index[2]) { return 8 * index[0] + inde
 
 /**
  * @brief Prints an inode.
- * @param[in] _fsm the file sector manager
  * @return void
  */
-static void print_inode(FSM* _fsm) {
+static void print_inode(void) {
     printf("DEBUG_LEVEL > 0:\n");
-    printf("//Display Info of File (Inode %d)\n", _fsm->inodeNum);
-    printf("//I:%d\n\n", _fsm->inodeNum);
-    if (_fsm->inode.fileType == 1) {
+    printf("//Display Info of File (Inode %d)\n", fsm->inodeNum);
+    printf("//I:%d\n\n", fsm->inodeNum);
+    if (fsm->inode.fileType == 1) {
         printf("-> fileType = FILE\n");
-    }  // end if (_fsm->inode.fileType == 1)
-    else if (_fsm->inode.fileType == 2) {
+    }  // end if (fsm->inode.fileType == 1)
+    else if (fsm->inode.fileType == 2) {
         printf("-> fileType = DIRECTORY\n");
     }  // end else
-    printf("-> fileSize = %d\n", _fsm->inode.fileSize);
-    printf("-> permissions = %d\n", _fsm->inode.permissions);
-    printf("-> linkCount = %d\n", _fsm->inode.linkCount);
-    printf("-> dataBlocks = %d\n", _fsm->inode.dataBlocks);
-    printf("-> owner = %d\n", _fsm->inode.owner);
-    printf("-> status = %d\n\n", _fsm->inode.status);
+    printf("-> fileSize = %d\n", fsm->inode.fileSize);
+    printf("-> permissions = %d\n", fsm->inode.permissions);
+    printf("-> linkCount = %d\n", fsm->inode.linkCount);
+    printf("-> dataBlocks = %d\n", fsm->inode.dataBlocks);
+    printf("-> owner = %d\n", fsm->inode.owner);
+    printf("-> status = %d\n\n", fsm->inode.status);
     for (int i = 0; i < 10; i++) {
-        if (_fsm->inode.directPtr[i] == (unsigned int)(-1)) {
-            printf("-> directPtr[%d] = %d\n", i, _fsm->inode.directPtr[i]);
-        }  // end if(_fsm->inode.directPtr[i] = (unsigned int))
+        if (fsm->inode.directPtr[i] == (unsigned int)(-1)) {
+            printf("-> directPtr[%d] = %d\n", i, fsm->inode.directPtr[i]);
+        }  // end if(fsm->inode.directPtr[i] = (unsigned int))
         else {
-            printf("-> directPtr[%d] = %d\n", i, _fsm->inode.directPtr[i] / BLOCK_SIZE);
+            printf("-> directPtr[%d] = %d\n", i, fsm->inode.directPtr[i] / BLOCK_SIZE);
         }  // end else
     }  // end for (i = 0; i < 10; i++)
-    if (_fsm->inode.sIndirect == (unsigned int)(-1)) {
-        printf("\n-> sIndirect = %d\n", _fsm->inode.sIndirect);
-    }  // end if if(_fsm->inode.sIndirect == (unsigned int)(-1)
+    if (fsm->inode.sIndirect == (unsigned int)(-1)) {
+        printf("\n-> sIndirect = %d\n", fsm->inode.sIndirect);
+    }  // end if if(fsm->inode.sIndirect == (unsigned int)(-1)
     else {
-        printf("\n-> sIndirect = %d\n", _fsm->inode.sIndirect / BLOCK_SIZE);
+        printf("\n-> sIndirect = %d\n", fsm->inode.sIndirect / BLOCK_SIZE);
     }  // end elsee
-    if (_fsm->inode.dIndirect == (unsigned int)(-1)) {
-        printf("-> dIndirect = %d\n", _fsm->inode.dIndirect);
-    }  // end if (_fsm->inode.dIndirect == (unsigned int)(-1))
+    if (fsm->inode.dIndirect == (unsigned int)(-1)) {
+        printf("-> dIndirect = %d\n", fsm->inode.dIndirect);
+    }  // end if (fsm->inode.dIndirect == (unsigned int)(-1))
     else {
-        printf("-> dIndirect = %d\n", _fsm->inode.dIndirect / BLOCK_SIZE);
+        printf("-> dIndirect = %d\n", fsm->inode.dIndirect / BLOCK_SIZE);
     }  // end else
-    if (_fsm->inode.tIndirect == (unsigned int)(-1)) {
-        printf("-> tIndirect = %d\n", _fsm->inode.tIndirect);
-    }  // end if (_fsm->inode.tIndirect == (unsigned int)(-1))
+    if (fsm->inode.tIndirect == (unsigned int)(-1)) {
+        printf("-> tIndirect = %d\n", fsm->inode.tIndirect);
+    }  // end if (fsm->inode.tIndirect == (unsigned int)(-1))
     else {
-        printf("-> tIndirect = %d\n", _fsm->inode.tIndirect / BLOCK_SIZE);
+        printf("-> tIndirect = %d\n", fsm->inode.tIndirect / BLOCK_SIZE);
     }  // end else
     printf("- - - - - - - - - - - - - - - - - - - - - - -");
     printf(" - - - - - - - - - - - - -\n\n\n");
@@ -167,26 +165,24 @@ static void print_message(const char* message) {
 
 /**
  * @brief Prints SSM maps.
- * @param[in] _ssm the Sector Space Manager
  * @param[in] mode map mode (ALLOCATED, FREE)
  * @return void
  */
-static void print_set_map_sector(SSM* _ssm, int mode) {
+static void print_set_map_sector(int mode) {
     snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
              "//Set allocated map sector (%d*8 + %d).\n//%s:%d:%d\n\nSetting %s map sector %d",
-             _ssm->index[0], _ssm->index[1], mode == ALLOCATED ? "X" : "Y", _ssm->index[0],
-             _ssm->index[1], mode == ALLOCATED ? "allocated" : "free",
-             get_sector_number(_ssm->index));
+             ssm->index[0], ssm->index[1], mode == ALLOCATED ? "X" : "Y", ssm->index[0],
+             ssm->index[1], mode == ALLOCATED ? "allocated" : "free",
+             get_sector_number(ssm->index));
     print_message(MESSAGE_BUFFER);
 }
 
 /**
  * @brief Prints Inode map.
- * @param[in] _fsm the File Sector Manager
  * @param[in] _startByte the start byte of the maps
  * @return void
  */
-static void print_inode_map(FSM* _fsm, unsigned int _startByte) {
+static void print_inode_map(unsigned int _startByte) {
     printf("DEBUG_LEVEL > 0:\n");
     printf("//Print 128 contiguous Inodes from Inode Map ");
     printf("starting at Inode (%d).\n", _startByte * 8);
@@ -194,7 +190,7 @@ static void print_inode_map(FSM* _fsm, unsigned int _startByte) {
     printf("===================================");
     printf("====================================\n\n");
     printf("INODE MAP\n");
-    print_128_bits(_fsm->iMap, _startByte, INODE_BLOCKS);
+    print_128_bits(fsm->iMap, _startByte, INODE_BLOCKS);
     printf("\n");
     printf("===================================");
     printf("====================================\n\n");
@@ -219,11 +215,10 @@ static void print_making_fs(void) {
 /**
  * @brief Prints debug information for the File Sector Manager (FSM) file operations.
  * Logs diagnostic output based on the specified debug case and byte offset.
- * @param[in] _fsm Pointer to the fsm structure.
  * @param[in] _case Identifier for the type of debug information to print.
  * @return void
  */
-static void log_fsm_file(FSM* _fsm, LoggerFSMOption _case) {
+static void log_fsm_file(LoggerFSMOption _case) {
     switch (_case) {
         case FSM_FILE_CREATE:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
@@ -233,22 +228,22 @@ static void log_fsm_file(FSM* _fsm, LoggerFSMOption _case) {
         // Print opened file
         case FSM_FILE_OPEN:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Open a file\n//O:%d\n\nOpenned file at inode %d...\n", _fsm->inodeNum,
-                     _fsm->inodeNum);
+                     "//Open a file\n//O:%d\n\nOpenned file at inode %d...\n", fsm->inodeNum,
+                     fsm->inodeNum);
             print_message(MESSAGE_BUFFER);
             break;
         // Print write to file
         case FSM_FILE_WRITE:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Write to file\n//W:%d\n\nWrote to file at inode %d...", _fsm->inodeNum,
-                     _fsm->inodeNum);
+                     "//Write to file\n//W:%d\n\nWrote to file at inode %d...", fsm->inodeNum,
+                     fsm->inodeNum);
             print_message(MESSAGE_BUFFER);
             break;
         // Print read from file
         case FSM_FILE_READ:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Read from file\n//R:%d\n\nRead from file at inode %d..", _fsm->inodeNum,
-                     _fsm->inodeNum);
+                     "//Read from file\n//R:%d\n\nRead from file at inode %d..", fsm->inodeNum,
+                     fsm->inodeNum);
             print_message(MESSAGE_BUFFER);
             break;
         // Print create directory
@@ -272,29 +267,28 @@ static void log_fsm_file(FSM* _fsm, LoggerFSMOption _case) {
 /**
  * @brief Prints debug information for the File Sector Manager (FSM) inode operations.
  * Logs diagnostic output based on the specified debug case and byte offset.
- * @param[in] _fsm Pointer to the fsm structure.
  * @param[in] _case Identifier for the type of debug information to print.
  * @return void
  */
-static void log_fsm_inode(FSM* _fsm, LoggerFSMOption _case, unsigned int _startByte) {
+static void log_fsm_inode(LoggerFSMOption _case, unsigned int _startByte) {
     switch (_case) {
         // Print Inode Map
         case FSM_INODE_ARRAY:
-            print_inode_map(_fsm, _startByte);
+            print_inode_map(_startByte);
             break;
         // Print Set inode sector message
         case FSM_INODE_SET:
             snprintf(
                 MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                 "//Set inode map sector (%d*8 + %d).\n//X:%d:%d\n\nSetting inode map sector %d",
-                _fsm->index[0], _fsm->index[1], _fsm->index[0], _fsm->index[1],
-                get_sector_number(_fsm->index));
+                fsm->index[0], fsm->index[1], fsm->index[0], fsm->index[1],
+                get_sector_number(fsm->index));
             print_message(MESSAGE_BUFFER);
             break;
         // Print unable to find contiguous inodes message
         case FSM_INODE_NOT_FOUND:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER), "Could not find %d contiguous inodes.",
-                     _fsm->contInodes);
+                     fsm->contInodes);
             print_message(MESSAGE_BUFFER);
             break;
         // Print getting inodes message
@@ -302,19 +296,19 @@ static void log_fsm_inode(FSM* _fsm, LoggerFSMOption _case, unsigned int _startB
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Get %d contiguous inodes\n//G:%d\n\nThere are %d contiguous inodes at "
                      "sector %d.",
-                     _fsm->contInodes, _fsm->contInodes, _fsm->contInodes,
-                     get_sector_number(_fsm->index));
+                     fsm->contInodes, fsm->contInodes, fsm->contInodes,
+                     get_sector_number(fsm->index));
             print_message(MESSAGE_BUFFER);
             break;
         // Print created a file
         case FSM_INODE_PRINT:
-            print_inode(_fsm);
+            print_inode();
             break;
         // Print variable information
         case FSM_INFO:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "Variable information:\ncontInodes = %d\nindex[0] = %d\nindex[1] = %d",
-                     _fsm->contInodes, _fsm->index[0], _fsm->index[1]);
+                     fsm->contInodes, fsm->index[0], fsm->index[1]);
             print_message(MESSAGE_BUFFER);
             break;
         default:
@@ -325,37 +319,35 @@ static void log_fsm_inode(FSM* _fsm, LoggerFSMOption _case, unsigned int _startB
 /**
  * @brief Prints debug information for the File Sector Manager (FSM) alloc operations.
  * Logs diagnostic output based on the specified debug case and byte offset.
- * @param[in] _fsm Pointer to the fsm structure.
  * @param[in] _case Identifier for the type of debug information to print.
  * @return void
  */
-static void log_fsm_alloc(FSM* _fsm, LoggerFSMOption _case) {
+static void log_fsm_alloc(LoggerFSMOption _case) {
     switch (_case) {
         case FSM_ALLOC_INODES:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Allocate %d contiguous inodes.\n//A:%d\n\nAllocating %d contiguous inodes "
                      "at sector %d",
-                     _fsm->contInodes, _fsm->contInodes, _fsm->contInodes,
-                     get_sector_number(_fsm->index));
+                     fsm->contInodes, fsm->contInodes, fsm->contInodes,
+                     get_sector_number(fsm->index));
             print_message(MESSAGE_BUFFER);
             break;
         // Print Allocate Failure method
         case FSM_ALLOC_FAIL:
-            print_sector_failure(_fsm->badInode, "Failed to allocate inodes at sector\n");
+            print_sector_failure(fsm->badInode, "Failed to allocate inodes at sector\n");
             break;
         // Print deallocation message
         case FSM_DEALLOC_INODES:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Deallocate %d contiguous inodes starting at sector "
                      "%d\n//D:%d:%d:%d\n\nDeallocating %d contiguous inodes at sector %d",
-                     _fsm->contInodes, _fsm->index[0] * 8 + _fsm->index[1], _fsm->contInodes,
-                     _fsm->index[0], _fsm->index[1], _fsm->contInodes,
-                     get_sector_number(_fsm->index));
+                     fsm->contInodes, fsm->index[0] * 8 + fsm->index[1], fsm->contInodes,
+                     fsm->index[0], fsm->index[1], fsm->contInodes, get_sector_number(fsm->index));
             print_message(MESSAGE_BUFFER);
             break;
         // Print deallocation failure message
         case FSM_DEALLOC_FAIL:
-            print_sector_failure(_fsm->badInode, "Failed to deallocate inode\n");
+            print_sector_failure(fsm->badInode, "Failed to deallocate inode\n");
             break;
         default:
             break;
@@ -365,15 +357,14 @@ static void log_fsm_alloc(FSM* _fsm, LoggerFSMOption _case) {
 /**
  * @brief Prints debug information for the File Sector Manager (FSM) integrity operations.
  * Logs diagnostic output based on the specified debug case and byte offset.
- * @param[in] _fsm Pointer to the fsm structure.
  * @param[in] _case Identifier for the type of debug information to print.
  * @return void
  */
-static void log_fsm_integrity(FSM* _fsm, LoggerFSMOption _case) {
+static void log_fsm_integrity(LoggerFSMOption _case) {
     switch (_case) {
         // Print integrity check failure message
         case FSM_INTEG_FAIL:
-            print_sector_failure(_fsm->badInode, "Failed integrity check at sector\n\n");
+            print_sector_failure(fsm->badInode, "Failed integrity check at sector\n\n");
             break;
         // Print integrity check pass message
         case FSM_INTEG_PASS:
@@ -442,11 +433,11 @@ static void log_fsm_io(LoggerFSMOption _case) {
     }
 }
 
-void log_fsm(FSM* _fsm, LoggerFSMOption _case, unsigned int _startByte) {
-    log_fsm_file(_fsm, _case);
-    log_fsm_inode(_fsm, _case, _startByte);
-    log_fsm_alloc(_fsm, _case);
-    log_fsm_integrity(_fsm, _case);
+void log_fsm(LoggerFSMOption _case, unsigned int _startByte) {
+    log_fsm_file(_case);
+    log_fsm_inode(_case, _startByte);
+    log_fsm_alloc(_case);
+    log_fsm_integrity(_case);
     log_fsm_init(_case);
     log_fsm_io(_case);
 }
@@ -473,62 +464,60 @@ static void log_ssm_file(LoggerSSMOption _case) {
 /**
  * @brief Prints debug information for the Sector Space Manager (SSM) map operations.
  * Logs diagnostic output based on the specified debug case and byte offset.
- * @param[in] _ssm Pointer to the SSM structure.
  * @param[in] _case Identifier for the type of debug information to print.
  * @param[in] _startByte Byte offset at which to begin the debug trace.
  * @return void
  */
-static void log_ssm_maps(SSM* _ssm, LoggerSSMOption _case, int _startByte) {
+static void log_ssm_maps(LoggerSSMOption _case, int _startByte) {
     switch (_case) {
         case SSM_MAPS_PRINT:
-            print_ssm_maps(_ssm, (unsigned int)_startByte);
+            print_ssm_maps((unsigned int)_startByte);
             break;
         case SSM_MAPS_ALLOC:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Allocate %d contiguous sectors.\n//A:%d\n\nAllocating %d contiguous "
                      "sectors at sector %d...",
-                     _ssm->contSectors, _ssm->contSectors, _ssm->contSectors,
-                     get_sector_number(_ssm->index));
+                     ssm->contSectors, ssm->contSectors, ssm->contSectors,
+                     get_sector_number(ssm->index));
             print_message(MESSAGE_BUFFER);
             break;
         case SSM_MAPS_ALLOC_FAIL:
-            print_sector_failure(_ssm->badSector, "Failed to allocate sectors at sector");
+            print_sector_failure(ssm->badSector, "Failed to allocate sectors at sector");
             break;
         case SSM_MAPS_DEALLOC:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Deallocate %d contiguous sectors starting at sector %d\n//D:%d:%d:%d\n\n"
                      "Deallocating %d contiguous sectors at sector %d...",
-                     _ssm->contSectors, _ssm->index[0] * 8 + _ssm->index[1], _ssm->contSectors,
-                     _ssm->index[0], _ssm->index[1], _ssm->contSectors,
-                     get_sector_number(_ssm->index));
+                     ssm->contSectors, ssm->index[0] * 8 + ssm->index[1], ssm->contSectors,
+                     ssm->index[0], ssm->index[1], ssm->contSectors, get_sector_number(ssm->index));
             print_message(MESSAGE_BUFFER);
             break;
         case SSM_MAPS_DEALLOC_FAIL:
-            print_sector_failure(_ssm->badSector, "Failed to deallocate sector");
+            print_sector_failure(ssm->badSector, "Failed to deallocate sector");
             break;
         case SSM_MAPS_SET:
-            print_set_map_sector(_ssm, ALLOCATED);
+            print_set_map_sector(ALLOCATED);
             break;
         case SSM_MAPS_UNSET:
-            print_set_map_sector(_ssm, FREE);
+            print_set_map_sector(FREE);
             break;
         case SSM_MAPS_GET:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Get %d contiguous sectors.\n//G:%d\n\nThere are %d contiguous sectors at "
                      "sector %d.",
-                     _ssm->contSectors, _ssm->contSectors, _ssm->contSectors,
-                     get_sector_number(_ssm->index));
+                     ssm->contSectors, ssm->contSectors, ssm->contSectors,
+                     get_sector_number(ssm->index));
             print_message(MESSAGE_BUFFER);
             break;
         case SSM_MAPS_NOT_FOUND:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "Could not find %d contiguous sectors.\n", _ssm->contSectors);
+                     "Could not find %d contiguous sectors.\n", ssm->contSectors);
             print_message(MESSAGE_BUFFER);
             break;
         case SSM_INFO:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "Variable information:\ncontSectors = %d\nindex[0] = %d\nindex[1] = %d",
-                     _ssm->contSectors, _ssm->index[0], _ssm->index[1]);
+                     ssm->contSectors, ssm->index[0], ssm->index[1]);
             print_message(MESSAGE_BUFFER);
             break;
         default:
@@ -558,26 +547,25 @@ static void log_ssm_init(LoggerSSMOption _case) {
 /**
  * @brief Prints debug information for the Sector Space Manager (SSM) integrity operations.
  * Logs diagnostic output based on the specified debug case and byte offset.
- * @param[in] _ssm Pointer to the SSM structure.
  * @param[in] _case Identifier for the type of debug information to print.
  * @return void
  */
-static void log_ssm_integrity(SSM* _ssm, LoggerSSMOption _case) {
+static void log_ssm_integrity(LoggerSSMOption _case) {
     switch (_case) {
         case SSM_FRAGMENTATION:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Check for degree of fragmentation.\n//F\n\nThe degree of memory "
                      "fragmentation is %10.10f ",
-                     _ssm->fragmented);
+                     ssm->fragmented);
             print_message(MESSAGE_BUFFER);
             break;
         case SSM_FRAGMENTATION_MSG:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "The memory sectors are %f percent fragmented.\n", _ssm->fragmented);
+                     "The memory sectors are %f percent fragmented.\n", ssm->fragmented);
             print_message(MESSAGE_BUFFER);
             break;
         case SSM_MAPS_INTEGRITY_FAIL:
-            print_sector_failure(_ssm->badSector, "Failed integrity check at sector");
+            print_sector_failure(ssm->badSector, "Failed integrity check at sector");
             printf("\n");
             break;
         case SSM_MAPS_INTEGRITY_PASS:
@@ -610,10 +598,10 @@ static void log_ssm_io(LoggerSSMOption _case) {
     }
 }
 
-void log_ssm(SSM* _ssm, LoggerSSMOption _case, int _startByte) {
+void log_ssm(LoggerSSMOption _case, int _startByte) {
     log_ssm_file(_case);
-    log_ssm_maps(_ssm, _case, _startByte);
+    log_ssm_maps(_case, _startByte);
     log_ssm_init(_case);
-    log_ssm_integrity(_ssm, _case);
+    log_ssm_integrity(_case);
     log_ssm_io(_case);
 }
