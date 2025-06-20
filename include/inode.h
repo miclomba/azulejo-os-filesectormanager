@@ -32,7 +32,12 @@ typedef struct Inode {
     unsigned int tIndirect;
 } Inode;
 
+typedef struct InodeMetadata {
+    unsigned int number;
+} InodeMetadata;
+
 extern Inode inode;
+extern InodeMetadata inode_meta;
 
 /**
  * @brief Initializes the inode memory pointers.

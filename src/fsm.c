@@ -63,11 +63,13 @@ static Bool add_file_to_triple_indirect(unsigned int _inodeNumF, unsigned int *_
 static Bool add_file_to_single_indirect_no_alloc(unsigned int *buffer, unsigned int *indirectBlock,
                                                  unsigned int _inodeNumF, unsigned int *_name,
                                                  unsigned int *diskOffset);
-static Bool remove_file_from_single_indirect(unsigned int _inodeNumF, unsigned int _dIndirectOffset,
+static Bool remove_file_from_single_indirect(unsigned int _inodeNumF, unsigned int _inodeNumD,
+                                             unsigned int _dIndirectOffset,
                                              unsigned int _sIndirectOffset);
-static Bool remove_file_from_double_indirect(unsigned int _inodeNumF, unsigned int _tIndirectOffset,
+static Bool remove_file_from_double_indirect(unsigned int _inodeNumF, unsigned int _inodeNumD,
+                                             unsigned int _tIndirectOffset,
                                              unsigned int _dIndirectOffset);
-static Bool remove_file_from_triple_indirect(unsigned int _inodeNumF,
+static Bool remove_file_from_triple_indirect(unsigned int _inodeNumF, unsigned int _inodeNumD,
                                              unsigned int _tIndirectOffset);
 static unsigned int aloc_single_indirect(long long int _blockCount);
 static unsigned int aloc_double_indirect(long long int _blockCount);
@@ -109,7 +111,8 @@ static Bool rename_file_in_double_indirect(unsigned int _inodeNumF, unsigned int
                                            unsigned int _dIndirectOffset);
 static Bool rename_file_in_triple_indirect(unsigned int _inodeNumF, unsigned int *_name,
                                            unsigned int _tIndirectOffset);
-static Bool remove_file_from_dir_indirect_pointers(unsigned int _inodeNumF);
+static Bool remove_file_from_dir_indirect_pointers(unsigned int _inodeNumF,
+                                                   unsigned int _inodeNumD);
 
 //========================= FSM FUNCTION DEFINITIONS =======================//
 /**
@@ -146,7 +149,7 @@ static void init_file_sector_mgr(int _initSsmMaps) {
     // Initialize FSM's inode pointer to a blank inode
     inode_init(&inode);
 
-    fsm->inodeNum = (unsigned int)-1;
+    inode_meta.number = (unsigned int)-1;
     // Open file stream for iMap
     fsm->iMapHandle = fopen(FSM_INODE_MAP, "r+");
     // Read in INODE_BLOCKS number of items from iMap to iMapHandle
@@ -220,12 +223,11 @@ Bool fs_open_file(unsigned int _inodeNum, Inode *_inode) {
         return False;
     }
     inode_read(_inode, _inodeNum, fsm->diskHandle);
-    fsm->inodeNum = _inodeNum;
+    inode_meta.number = _inodeNum;
     if (_inode->fileType <= 0) {
         // If file not loaded, create a default inode and return False
         inode_init(_inode);
-
-        fsm->inodeNum = (unsigned int)(-1);
+        inode_meta.number = (unsigned int)(-1);
         // Return False if file did not open correctly
         return False;
     }
@@ -234,7 +236,7 @@ Bool fs_open_file(unsigned int _inodeNum, Inode *_inode) {
 
 Bool fs_close_file(void) {
     // Reset all FSM->Inode variables to defaults
-    fsm->inodeNum = (unsigned int)(-1);
+    inode_meta.number = (unsigned int)(-1);
     inode_init(&inode);
     return True;
 }
@@ -928,28 +930,32 @@ static Bool add_file_to_single_indirect(unsigned int _inodeNumF, unsigned int *_
  * @brief Removes a file from a directory indirect pointers.
  * Removes the file identified by `_inodeNumF`.
  * @param[in] _inodeNumF Inode number of the file to be removed.
+ * @param[in] _inodeNumD Inode number of the file's parent directory
  * @return True if the file was successfully removed, false if the file could not be accessed.
  * @date 2010-04-01 First implementation.
  */
-static Bool remove_file_from_dir_indirect_pointers(unsigned int _inodeNumF) {
+static Bool remove_file_from_dir_indirect_pointers(unsigned int _inodeNumF,
+                                                   unsigned int _inodeNumD) {
     // if the directory has files in it's sindirect pointer area, remove them
     Bool success = False;
     if (is_not_null(inode.sIndirect)) {
-        success = remove_file_from_single_indirect(_inodeNumF, (unsigned int)(-1), inode.sIndirect);
+        success = remove_file_from_single_indirect(_inodeNumF, _inodeNumD, (unsigned int)(-1),
+                                                   inode.sIndirect);
         if (success == True) {
             return True;
         }  // end if (success == True)
     }
     // if the directory has files in it's dindirect pointer area, remove them
     if (is_not_null(inode.dIndirect)) {
-        success = remove_file_from_double_indirect(_inodeNumF, (unsigned int)(-1), inode.dIndirect);
+        success = remove_file_from_double_indirect(_inodeNumF, _inodeNumD, (unsigned int)(-1),
+                                                   inode.dIndirect);
         if (success == True) {
             return True;
         }  // end if (success == True)
     }
     // if the directory has files in it's tindirect pointer area, remove them
     if (is_not_null(inode.tIndirect)) {
-        success = remove_file_from_triple_indirect(_inodeNumF, inode.tIndirect);
+        success = remove_file_from_triple_indirect(_inodeNumF, _inodeNumD, inode.tIndirect);
         if (success == True) {
             return True;
         }  // end if (success == True)
@@ -994,14 +1000,14 @@ Bool fs_remove_file_from_dir(unsigned int _inodeNumF, unsigned int _inodeNumD) {
                             ssm_deallocate_sectors(sectorNum);
                             inode.directPtr[i] = (unsigned int)(-1);
                             inode.dataBlocks -= 1;
-                            inode_write(&inode, fsm->inodeNum, fsm->diskHandle);
+                            inode_write(&inode, _inodeNumD, fsm->diskHandle);
                         }
                         return True;
                     }
                 }
             }
         }
-        if (remove_file_from_dir_indirect_pointers(_inodeNumF)) {
+        if (remove_file_from_dir_indirect_pointers(_inodeNumF, _inodeNumD)) {
             return True;
         }
     }
@@ -1013,11 +1019,12 @@ Bool fs_remove_file_from_dir(unsigned int _inodeNumF, unsigned int _inodeNumD) {
  * Removes the file identified by `_inodeNumF` from the triple indirect block at the specified
  * offset. Internally calls `rmFileFrom_D_Indirect` to complete the operation.
  * @param[in] _inodeNumF Inode number of the file to be removed.
+ * @param[in] _inodeNumD Inode number of the file's parent.
  * @param[in] _tIndirectOffset Offset to the triple indirect block containing the file.
  * @return True if the file was successfully removed, false if the file could not be accessed.
  * @date 2010-04-01 First implementation.
  */
-static Bool remove_file_from_triple_indirect(unsigned int _inodeNumF,
+static Bool remove_file_from_triple_indirect(unsigned int _inodeNumF, unsigned int _inodeNumD,
                                              unsigned int _tIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset, sectorNum;
@@ -1030,7 +1037,8 @@ static Bool remove_file_from_triple_indirect(unsigned int _inodeNumF,
     for (unsigned int i = 0; i < BLOCK_SIZE / 4; i++) {
         if (is_not_null(indirectBlock[i])) {
             diskOffset = indirectBlock[i];
-            success = remove_file_from_double_indirect(_inodeNumF, _tIndirectOffset, diskOffset);
+            success = remove_file_from_double_indirect(_inodeNumF, _inodeNumD, _tIndirectOffset,
+                                                       diskOffset);
             if (success == True) {
                 diskOffset = _tIndirectOffset;
                 fseek(fsm->diskHandle, diskOffset, SEEK_SET);
@@ -1042,7 +1050,7 @@ static Bool remove_file_from_triple_indirect(unsigned int _inodeNumF,
                     sectorNum = _tIndirectOffset / BLOCK_SIZE;
                     ssm_deallocate_sectors(sectorNum);
                     inode.tIndirect = (unsigned int)(-1);
-                    inode_write(&inode, fsm->inodeNum, fsm->diskHandle);
+                    inode_write(&inode, _inodeNumD, fsm->diskHandle);
                 }  // end if (k == BLOCK_SIZE/4)
                 return True;
             }  // if (success == True)
@@ -1056,12 +1064,14 @@ static Bool remove_file_from_triple_indirect(unsigned int _inodeNumF,
  * Removes the file identified by `_inodeNumF` from the double indirect block at the specified
  * offset. Typically called by higher-level triple indirect removal logic.
  * @param[in] _inodeNumF Inode number of the file to be removed.
+ * @param[in] _inodeNumD Inode number of the file's parent.
  * @param[in] _tIndirectOffset Offset to the parent triple indirect block.
  * @param[in] _dIndirectOffset Offset to the double indirect block containing the file.
  * @return True if the file was successfully removed, false if the file could not be accessed.
  * @date 2010-04-01 First implementation.
  */
-static Bool remove_file_from_double_indirect(unsigned int _inodeNumF, unsigned int _tIndirectOffset,
+static Bool remove_file_from_double_indirect(unsigned int _inodeNumF, unsigned int _inodeNumD,
+                                             unsigned int _tIndirectOffset,
                                              unsigned int _dIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset, sectorNum;
@@ -1074,7 +1084,8 @@ static Bool remove_file_from_double_indirect(unsigned int _inodeNumF, unsigned i
     for (unsigned int i = 0; i < BLOCK_SIZE / 4; i++) {
         if (is_not_null(indirectBlock[i])) {
             diskOffset = indirectBlock[i];
-            success = remove_file_from_single_indirect(_inodeNumF, _dIndirectOffset, diskOffset);
+            success = remove_file_from_single_indirect(_inodeNumF, _inodeNumD, _dIndirectOffset,
+                                                       diskOffset);
             if (success == True) {
                 diskOffset = _dIndirectOffset;
                 fseek(fsm->diskHandle, diskOffset, SEEK_SET);
@@ -1099,7 +1110,7 @@ static Bool remove_file_from_double_indirect(unsigned int _inodeNumF, unsigned i
                         fsm->sampleCount = fwrite(indirectBlock, BLOCK_SIZE, 1, fsm->diskHandle);
                     } else {
                         inode.dIndirect = (unsigned int)(-1);
-                        inode_write(&inode, fsm->inodeNum, fsm->diskHandle);
+                        inode_write(&inode, _inodeNumD, fsm->diskHandle);
                     }  // end else
                 }  // if (k == BLOCK_SIZE/4)
                 return True;
@@ -1114,12 +1125,14 @@ static Bool remove_file_from_double_indirect(unsigned int _inodeNumF, unsigned i
  * Removes the file identified by `_inodeNumF` from the single indirect block located
  * via the specified double and single indirect offsets.
  * @param[in] _inodeNumF Inode number of the file to be removed.
+ * @param[in] _inodeNumD Inode number of the file's parent.
  * @param[in] _dIndirectOffset Offset to the parent double indirect block.
  * @param[in] _sIndirectOffset Offset to the single indirect block containing the file.
  * @return True if the file was successfully removed, false if the file could not be accessed.
  * @date 2010-04-01 First implementation.
  */
-static Bool remove_file_from_single_indirect(unsigned int _inodeNumF, unsigned int _dIndirectOffset,
+static Bool remove_file_from_single_indirect(unsigned int _inodeNumF, unsigned int _inodeNumD,
+                                             unsigned int _dIndirectOffset,
                                              unsigned int _sIndirectOffset) {
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset, sectorNum, j, k;
@@ -1147,7 +1160,7 @@ static Bool remove_file_from_single_indirect(unsigned int _inodeNumF, unsigned i
                         sectorNum = indirectBlock[i] / BLOCK_SIZE;
                         ssm_deallocate_sectors(sectorNum);
                         inode.dataBlocks -= 1;
-                        inode_write(&inode, fsm->inodeNum, fsm->diskHandle);
+                        inode_write(&inode, _inodeNumD, fsm->diskHandle);
                         indirectBlock[i] = (unsigned int)(-1);
                         diskOffset = _sIndirectOffset;
                         fseek(fsm->diskHandle, diskOffset, SEEK_SET);
@@ -1174,7 +1187,7 @@ static Bool remove_file_from_single_indirect(unsigned int _inodeNumF, unsigned i
                                     fwrite(indirectBlock, BLOCK_SIZE, 1, fsm->diskHandle);
                             } else {
                                 inode.sIndirect = (unsigned int)(-1);
-                                inode_write(&inode, fsm->inodeNum, fsm->diskHandle);
+                                inode_write(&inode, _inodeNumD, fsm->diskHandle);
                             }
                         }
                     }

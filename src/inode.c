@@ -23,6 +23,8 @@ Inode inode = {.dataBlocks = 0,
                .status = 0,
                .tIndirect = 0};
 
+InodeMetadata inode_meta = {.number = 0};
+
 void inode_init_ptrs(Inode *_inode) {
     typedef unsigned int UI;
     char *buffer = (char *)_inode;

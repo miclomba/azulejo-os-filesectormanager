@@ -109,10 +109,10 @@ static int get_sector_number(unsigned int index[2]) { return BITS_PER_BYTE * ind
  */
 static void print_inode(void) {
     printf("DEBUG_LEVEL > 0:\n");
-    printf("//Display Info of File (Inode %d)\n", fsm->inodeNum);
-    printf("//I:%d\n\n", fsm->inodeNum);
+    printf("//Display Info of File (Inode %d)\n", inode_meta.number);
+    printf("//I:%d\n\n", inode_meta.number);
 
-    fs_open_file(fsm->inodeNum, &inode);
+    fs_open_file(inode_meta.number, &inode);
 
     if (inode.fileType == 1) {
         printf("-> fileType = FILE\n");
@@ -233,22 +233,22 @@ static void log_fsm_file(LoggerFSMOption _case) {
         // Print opened file
         case FSM_FILE_OPEN:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Open a file\n//O:%d\n\nOpenned file at inode %d...\n", fsm->inodeNum,
-                     fsm->inodeNum);
+                     "//Open a file\n//O:%d\n\nOpenned file at inode %d...\n", inode_meta.number,
+                     inode_meta.number);
             print_message(MESSAGE_BUFFER);
             break;
         // Print write to file
         case FSM_FILE_WRITE:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Write to file\n//W:%d\n\nWrote to file at inode %d...", fsm->inodeNum,
-                     fsm->inodeNum);
+                     "//Write to file\n//W:%d\n\nWrote to file at inode %d...", inode_meta.number,
+                     inode_meta.number);
             print_message(MESSAGE_BUFFER);
             break;
         // Print read from file
         case FSM_FILE_READ:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Read from file\n//R:%d\n\nRead from file at inode %d..", fsm->inodeNum,
-                     fsm->inodeNum);
+                     "//Read from file\n//R:%d\n\nRead from file at inode %d..", inode_meta.number,
+                     inode_meta.number);
             print_message(MESSAGE_BUFFER);
             break;
         // Print create directory
