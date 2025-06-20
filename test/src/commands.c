@@ -16,6 +16,8 @@
 
 // buffer for holding block information
 static unsigned int buffer[600 * (MAX_BLOCK_SIZE / 4)];
+// buffer for an inode
+static Inode inode;
 
 int init_command(int _argc, char** _argv, char* input, int i) {
     // vars for holding the disk, block, iNode, iNode-block, iNode-count sizes for the file system
@@ -101,11 +103,9 @@ int info_command(char* input, int i) {
     if (digit > 0) {
         // convert the character to a digit
         inodeNumF = atoi(&input[i]);
-        // attempt to open the file located at inodeNumF
-        const Inode* inode = fs_open_file(inodeNumF);
-        // if the iNode was successfully opened, print the
-        // appropriate message
-        if (inode != NULL) {
+        // Attempt to open the file located at inodeNumF. If the iNode was successfully opened,
+        // print the appropriate message
+        if (fs_open_file(inodeNumF, &inode)) {
             // call to log_fsm, print the iNode information
             log_fsm(29, 0);
         }  // if (*success == True)
@@ -385,11 +385,11 @@ int remove_command(char* input, int i) {
             printf("-> Removed File (Inode ");
             printf("%d) from Folder (Inode %d).\n", inodeNumF, inodeNumD);
             // call to openFile to ensure file has been removed
-            const Inode* inode = fs_open_file(inodeNumF);
-            if (inode == NULL) printf("Filesystem corruption during remove command.\n");
+            if (!fs_open_file(inodeNumF, &inode))
+                printf("Filesystem corruption during remove command.\n");
             // if removing a folder, recursively remove all
             // subdirectories and files
-            if (fsm->inode.fileType == 2) {
+            if (inode.fileType == 2) {
                 // print all subdirectories and files will be deleted
                 printf("** Expected Result: Recursively removing ");
                 printf("all Files in Folder (Inode %d)\n", inodeNumD);
@@ -398,8 +398,7 @@ int remove_command(char* input, int i) {
             printf("** Expected Result: 1 Inode deallocated in ");
             printf("the Inode Map\n");
             printf("** Expected Result: ");
-            printf("%d Blocks deallocated in the Aloc/Free Map\n",
-                   fsm->inode.fileSize / BLOCK_SIZE);
+            printf("%d Blocks deallocated in the Aloc/Free Map\n", inode.fileSize / BLOCK_SIZE);
             // call to rmFile
             fs_remove_file(inodeNumF, inodeNumD);
         }  // end if (digit > 0)
@@ -432,21 +431,21 @@ int remove_test_command(char* input, int i) {
         // print input information
         printf("//T:%d\n\n", atoi(&input[i]));
         // call to openFile
-        const Inode* inode = fs_open_file(atoi(&input[i]));
-        if (inode == NULL) printf("Filesystem corruption during remove test command.\n");
+        if (!fs_open_file(atoi(&input[i]), &inode))
+            printf("Filesystem corruption during remove test command.\n");
         // print that iNode has been opened
         printf("Opened Folder (Inode %d)\n", atoi(&input[i]));
         // print that the required data blocks are being allocated
         printf("Allocating required data Blocks:\n\n");
         // call to allocate sector
-        fsm->inode.dIndirect = ssm_allocate_sectors(1);
+        inode.dIndirect = ssm_allocate_sectors(1);
         // retrieve index values from SSM
         index[0] = ssm_get_sector_offset_byte_index();
         index[1] = ssm_get_sector_offset_bit_index();
         // call to write_inode
-        inode_write(&fsm->inode, atoi(&input[i]), fsm->diskHandle);
+        inode_write(&inode, atoi(&input[i]), fsm->diskHandle);
         // print the block size
-        printf("Double indirect Ptr --> %d\n", fsm->inode.dIndirect / BLOCK_SIZE);
+        printf("Double indirect Ptr --> %d\n", inode.dIndirect / BLOCK_SIZE);
         // call to allocate sector
         ssm_allocate_sectors(1);
         // retrieve index values from SSM
@@ -462,7 +461,7 @@ int remove_test_command(char* input, int i) {
         // move to the beginning of the file
         fseek(fsm->diskHandle, 0, SEEK_SET);
         // move to the double indirect block
-        fseek(fsm->diskHandle, fsm->inode.dIndirect, SEEK_SET);
+        fseek(fsm->diskHandle, inode.dIndirect, SEEK_SET);
         // write block to the file
         fwrite(block, BLOCK_SIZE, 1, fsm->diskHandle);
         // print that iNode values will be tested
@@ -513,12 +512,12 @@ int remove_test_command(char* input, int i) {
         printf("\nTRY FUNCTION CALL: rmFileFromDir(fsm,25,");
         printf("%d);\n\nReturned %s\n", atoi(&input[i]), success ? "TRUE" : "FALSE");
         // call to openFile
-        inode = fs_open_file(atoi(&input[i]));
-        if (inode == NULL) printf("Filesystem corruption during remove test command.\n");
+        if (!fs_open_file(atoi(&input[i]), &inode))
+            printf("Filesystem corruption during remove test command.\n");
         // set single indirect to -1
-        fsm->inode.dIndirect = -1;
+        inode.dIndirect = -1;
         // write iNode to file
-        inode_write(&fsm->inode, atoi(&input[i]), fsm->diskHandle);
+        inode_write(&inode, atoi(&input[i]), fsm->diskHandle);
         // print section break
         printf("- - - - - - - - - - - - - - - - - - - - - - - - ");
         printf("- - - - - - - - - - - -\n\n\n");
@@ -564,7 +563,9 @@ int list_command(char* input, int i) {
         // store values from readFromFile call into a local buffer
         char* charBuffer = (char*)buffer;
         // print all items of the iNode
-        for (unsigned int j = 0; j < fsm->inode.fileSize; j += 16) {
+        if (!fs_open_file(inodeNumF, &inode))
+            printf("Filesystem corruption during remove test command.\n");
+        for (unsigned int j = 0; j < inode.fileSize; j += 16) {
             // if the values are not blank, print them
             if (*((unsigned int*)(&charBuffer[j + 12])) != 0) {
                 // read value from buffer

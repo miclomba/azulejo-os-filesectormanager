@@ -19,7 +19,6 @@ typedef struct FSM {
     unsigned int diskOffset;
     unsigned int sampleCount;
     unsigned char iMap[MAX_INODE_BLOCKS];
-    Inode inode;
     unsigned int inodeNum;
     unsigned int contInodes;
     unsigned int index[2];
@@ -71,10 +70,11 @@ unsigned int fs_create_file(int _isDirectory, unsigned int *_name, unsigned int 
  * Opens a file identified by the given inode number within the File Sector Manager.
  * Populates the FSM.inode struct with inode data from the disk.
  * @param[in] _inodeNum Inode number of the file to open.
- * @return The inode of the file, NULL otherwise.
+ * @param[in,out] inode a inode struct to populate
+ * @return True if the inode was opened successfully; false otherwise.
  * @date 2010-04-01 First implementation.
  */
-const Inode *fs_open_file(unsigned int _inodeNum);
+Bool fs_open_file(unsigned int _inodeNum, Inode *inode);
 
 /**
  * @brief Closes the currently opened file.

@@ -16,6 +16,8 @@ enum { ALLOCATED = 9, FREE = 10 };
 enum { FIELD_WIDTH = 9 };
 static char MESSAGE_BUFFER[1024];
 
+static Inode inode;
+
 /**
  * @brief Prints INODE and FREE maps 8 bit sections.
  * For example: 00011111
@@ -110,43 +112,46 @@ static void print_inode(void) {
     printf("DEBUG_LEVEL > 0:\n");
     printf("//Display Info of File (Inode %d)\n", fsm->inodeNum);
     printf("//I:%d\n\n", fsm->inodeNum);
-    if (fsm->inode.fileType == 1) {
+
+    fs_open_file(fsm->inodeNum, &inode);
+
+    if (inode.fileType == 1) {
         printf("-> fileType = FILE\n");
-    }  // end if (fsm->inode.fileType == 1)
-    else if (fsm->inode.fileType == 2) {
+    }  // end if (inode.fileType == 1)
+    else if (inode.fileType == 2) {
         printf("-> fileType = DIRECTORY\n");
     }  // end else
-    printf("-> fileSize = %d\n", fsm->inode.fileSize);
-    printf("-> permissions = %d\n", fsm->inode.permissions);
-    printf("-> linkCount = %d\n", fsm->inode.linkCount);
-    printf("-> dataBlocks = %d\n", fsm->inode.dataBlocks);
-    printf("-> owner = %d\n", fsm->inode.owner);
-    printf("-> status = %d\n\n", fsm->inode.status);
+    printf("-> fileSize = %d\n", inode.fileSize);
+    printf("-> permissions = %d\n", inode.permissions);
+    printf("-> linkCount = %d\n", inode.linkCount);
+    printf("-> dataBlocks = %d\n", inode.dataBlocks);
+    printf("-> owner = %d\n", inode.owner);
+    printf("-> status = %d\n\n", inode.status);
     for (int i = 0; i < 10; i++) {
-        if (fsm->inode.directPtr[i] == (unsigned int)(-1)) {
-            printf("-> directPtr[%d] = %d\n", i, fsm->inode.directPtr[i]);
-        }  // end if(fsm->inode.directPtr[i] = (unsigned int))
+        if (inode.directPtr[i] == (unsigned int)(-1)) {
+            printf("-> directPtr[%d] = %d\n", i, inode.directPtr[i]);
+        }  // end if(inode.directPtr[i] = (unsigned int))
         else {
-            printf("-> directPtr[%d] = %d\n", i, fsm->inode.directPtr[i] / BLOCK_SIZE);
+            printf("-> directPtr[%d] = %d\n", i, inode.directPtr[i] / BLOCK_SIZE);
         }  // end else
     }  // end for (i = 0; i < 10; i++)
-    if (fsm->inode.sIndirect == (unsigned int)(-1)) {
-        printf("\n-> sIndirect = %d\n", fsm->inode.sIndirect);
-    }  // end if if(fsm->inode.sIndirect == (unsigned int)(-1)
+    if (inode.sIndirect == (unsigned int)(-1)) {
+        printf("\n-> sIndirect = %d\n", inode.sIndirect);
+    }  // end if if(inode.sIndirect == (unsigned int)(-1)
     else {
-        printf("\n-> sIndirect = %d\n", fsm->inode.sIndirect / BLOCK_SIZE);
+        printf("\n-> sIndirect = %d\n", inode.sIndirect / BLOCK_SIZE);
     }  // end elsee
-    if (fsm->inode.dIndirect == (unsigned int)(-1)) {
-        printf("-> dIndirect = %d\n", fsm->inode.dIndirect);
-    }  // end if (fsm->inode.dIndirect == (unsigned int)(-1))
+    if (inode.dIndirect == (unsigned int)(-1)) {
+        printf("-> dIndirect = %d\n", inode.dIndirect);
+    }  // end if (inode.dIndirect == (unsigned int)(-1))
     else {
-        printf("-> dIndirect = %d\n", fsm->inode.dIndirect / BLOCK_SIZE);
+        printf("-> dIndirect = %d\n", inode.dIndirect / BLOCK_SIZE);
     }  // end else
-    if (fsm->inode.tIndirect == (unsigned int)(-1)) {
-        printf("-> tIndirect = %d\n", fsm->inode.tIndirect);
-    }  // end if (fsm->inode.tIndirect == (unsigned int)(-1))
+    if (inode.tIndirect == (unsigned int)(-1)) {
+        printf("-> tIndirect = %d\n", inode.tIndirect);
+    }  // end if (inode.tIndirect == (unsigned int)(-1))
     else {
-        printf("-> tIndirect = %d\n", fsm->inode.tIndirect / BLOCK_SIZE);
+        printf("-> tIndirect = %d\n", inode.tIndirect / BLOCK_SIZE);
     }  // end else
     printf("- - - - - - - - - - - - - - - - - - - - - - -");
     printf(" - - - - - - - - - - - - -\n\n\n");

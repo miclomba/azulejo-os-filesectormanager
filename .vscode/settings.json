@@ -5,6 +5,9 @@
         "random": "c",
         "fsm_constants.h": "c",
         "ssm_constants.h": "c",
-        "inode.h": "c"
+        "inode.h": "c",
+        "format": "c",
+        "limits": "c",
+        "type_traits": "c"
     }
 }

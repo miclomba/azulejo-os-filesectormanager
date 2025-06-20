@@ -8,7 +8,7 @@
 
 #include "config.h"
 
-typedef struct {
+typedef struct Inode {
     // struct location for fileType
     unsigned int fileType;
     // struct location for fileSize

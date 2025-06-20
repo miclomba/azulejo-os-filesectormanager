@@ -30,6 +30,8 @@ static FSM fsm_instance = {.badInode = {{0}},
                            .inodeNum = 0,
                            .sampleCount = 0};
 
+static Inode inode;
+
 FSM *fsm = &fsm_instance;
 
 //================================ TYPES ==================================//
@@ -145,7 +147,7 @@ static void init_file_sector_mgr(int _initSsmMaps) {
     fsm->index[1] = -1;
     fsm->sampleCount = 0;
     // Initialize FSM's inode pointer to a blank inode
-    inode_init(&fsm->inode);
+    inode_init(&inode);
 
     fsm->inodeNum = (unsigned int)-1;
     // Open file stream for iMap
@@ -195,13 +197,13 @@ unsigned int fs_create_file(int _isDirectory, unsigned int *_name,
     // Create a default file. Will start with all pointers as -1
     unsigned int inodeNum;
     inodeNum = BITS_PER_BYTE * fsm->index[0] + fsm->index[1];
-    inode_read(&fsm->inode, inodeNum, fsm->diskHandle);
+    inode_read(&inode, inodeNum, fsm->diskHandle);
     // initialize inode metadata
-    inode_init(&fsm->inode);
+    inode_init(&inode);
     // Assign filetype
-    fsm->inode.fileType = _isDirectory == 1 ? 2 : 1;
+    inode.fileType = _isDirectory == 1 ? 2 : 1;
 
-    inode_write(&fsm->inode, inodeNum, fsm->diskHandle);
+    inode_write(&inode, inodeNum, fsm->diskHandle);
     allocate_inode();
     unsigned int name[2];
     if (_isDirectory == 1) {
@@ -216,41 +218,40 @@ unsigned int fs_create_file(int _isDirectory, unsigned int *_name,
     return inodeNum;
 }
 
-const Inode *fs_open_file(unsigned int _inodeNum) {
+Bool fs_open_file(unsigned int _inodeNum, Inode *_inode) {
     if (is_null(_inodeNum)) {
-        return NULL;
+        return False;
     }
-    inode_read(&fsm->inode, _inodeNum, fsm->diskHandle);
+    inode_read(_inode, _inodeNum, fsm->diskHandle);
     fsm->inodeNum = _inodeNum;
-    if (fsm->inode.fileType <= 0) {
+    if (_inode->fileType <= 0) {
         // If file not loaded, create a default inode and return False
-        inode_init(&fsm->inode);
+        inode_init(_inode);
 
         fsm->inodeNum = (unsigned int)(-1);
         // Return False if file did not open correctly
-        return NULL;
-    }  // end else (fsm->inode.fileType > 0)
-    return &fsm->inode;
+        return False;
+    }
+    return True;
 }
 
 Bool fs_close_file(void) {
     // Reset all FSM->Inode variables to defaults
     fsm->inodeNum = (unsigned int)(-1);
-    inode_init(&fsm->inode);
+    inode_init(&inode);
     return True;
 }
 
 Bool fs_read_from_file(unsigned int _inodeNum, void *_buffer) {
     // Open file at Inode _inodeNum for reading
-    const Inode *success = fs_open_file(_inodeNum);
-    if (success == NULL) {
+    if (!fs_open_file(_inodeNum, &inode)) {
         return False;
     }  // end if (success == False)
     void *buffer = _buffer;
     // Read data from direct pointers into buffer _buffer
     unsigned int diskOffset;
     for (int i = 0; i < INODE_DIRECT_PTRS; i++) {
-        diskOffset = fsm->inode.directPtr[i];
+        diskOffset = inode.directPtr[i];
         if (is_not_null(diskOffset)) {
             fseek(fsm->diskHandle, diskOffset, SEEK_SET);
             fsm->sampleCount = fread(buffer, BLOCK_SIZE, 1, fsm->diskHandle);
@@ -258,17 +259,17 @@ Bool fs_read_from_file(unsigned int _inodeNum, void *_buffer) {
         }
     }  // end for (i = 0; i < INODE_DIRECT_PTRS; i++)
     // Read data from single indirect pointer into buffer _buffer
-    diskOffset = fsm->inode.sIndirect;
+    diskOffset = inode.sIndirect;
     if (is_not_null(diskOffset)) {
         read_from_single_indirect_blocks(buffer, diskOffset);
         buffer = (char *)buffer + BLOCK_SIZE * S_INDIRECT_BLOCKS;
     }
-    diskOffset = fsm->inode.dIndirect;
+    diskOffset = inode.dIndirect;
     if (is_not_null(diskOffset)) {
         read_from_double_indirect_blocks(buffer, diskOffset);
         buffer = (char *)buffer + BLOCK_SIZE * D_INDIRECT_BLOCKS;
     }
-    diskOffset = fsm->inode.tIndirect;
+    diskOffset = inode.tIndirect;
     if (is_not_null(diskOffset)) {
         read_from_triple_indirect_blocks(buffer, diskOffset);
     }
@@ -287,14 +288,14 @@ Bool fs_read_from_file(unsigned int _inodeNum, void *_buffer) {
 static void *write_to_file_direct(void *buffer, unsigned int directPtrs) {
     unsigned int diskOffset;
     for (unsigned int i = 0; i < directPtrs; i++) {
-        diskOffset = fsm->inode.directPtr[i];
+        diskOffset = inode.directPtr[i];
         if (is_null(diskOffset)) {
             // If direct pointer is empty, get a Sector for it
             diskOffset = ssm_allocate_sectors(1);
             if (is_null(diskOffset)) {
                 break;
             } else {
-                fsm->inode.directPtr[i] = diskOffset;
+                inode.directPtr[i] = diskOffset;
                 fseek(fsm->diskHandle, diskOffset, SEEK_SET);
                 fsm->sampleCount = fwrite(buffer, BLOCK_SIZE, 1, fsm->diskHandle);
                 buffer = (char *)buffer + BLOCK_SIZE;
@@ -329,9 +330,9 @@ static void *write_to_file_using_single_indirect_blocks(void *buffer, long long 
         *sIndirectPtrs += 1;
     }  // end if (fileSize % BLOCK_SIZE > 0)
     // Allocate single indirect pointers
-    fsm->inode.sIndirect = aloc_single_indirect(*sIndirectPtrs);
+    inode.sIndirect = aloc_single_indirect(*sIndirectPtrs);
     // Write to single indirect pointers
-    *baseOffset = fsm->inode.sIndirect;
+    *baseOffset = inode.sIndirect;
     write_to_single_indirect_blocks(*baseOffset, buffer, *sIndirectPtrs);
     return buffer;
 }
@@ -353,9 +354,9 @@ static void *write_to_file_using_double_indirect_blocks(void *buffer, long long 
                                                         unsigned int *dIndirectPtrs) {
     // Allocate single Indirect blocks
     *sIndirectPtrs = S_INDIRECT_BLOCKS;
-    fsm->inode.sIndirect = aloc_single_indirect(*sIndirectPtrs);
+    inode.sIndirect = aloc_single_indirect(*sIndirectPtrs);
     // Write to single Indirect pointers
-    *baseOffset = fsm->inode.sIndirect;
+    *baseOffset = inode.sIndirect;
     write_to_single_indirect_blocks(*baseOffset, buffer, *sIndirectPtrs);
     buffer = (char *)buffer + BLOCK_SIZE * S_INDIRECT_BLOCKS;
     // Calculate Remaining filesize
@@ -366,8 +367,8 @@ static void *write_to_file_using_double_indirect_blocks(void *buffer, long long 
         *dIndirectPtrs += 1;
     }  // end if (fileSize % BLOCK_SIZE > 0)
     // Allocate double Indirect Pointers
-    fsm->inode.dIndirect = aloc_double_indirect(*dIndirectPtrs);
-    *baseOffset = fsm->inode.dIndirect;
+    inode.dIndirect = aloc_double_indirect(*dIndirectPtrs);
+    *baseOffset = inode.dIndirect;
     // Write to double Indirect Pointers
     write_to_double_indirect_blocks(*baseOffset, buffer, *dIndirectPtrs);
 
@@ -394,14 +395,14 @@ static void *write_to_file_using_triple_indirect_blocks(void *buffer, long long 
     *sIndirectPtrs = S_INDIRECT_BLOCKS;
     *dIndirectPtrs = D_INDIRECT_BLOCKS;
     // Allocate Single and double indirect pointers
-    fsm->inode.sIndirect = aloc_single_indirect(*sIndirectPtrs);
-    fsm->inode.dIndirect = aloc_double_indirect(*dIndirectPtrs);
+    inode.sIndirect = aloc_single_indirect(*sIndirectPtrs);
+    inode.dIndirect = aloc_double_indirect(*dIndirectPtrs);
     // Write to single indirect blocks
-    *baseOffset = fsm->inode.sIndirect;
+    *baseOffset = inode.sIndirect;
     write_to_single_indirect_blocks(*baseOffset, buffer, *sIndirectPtrs);
     buffer = (char *)buffer + BLOCK_SIZE * S_INDIRECT_BLOCKS;
     // Write to double indirect blocks
-    *baseOffset = fsm->inode.dIndirect;
+    *baseOffset = inode.dIndirect;
     write_to_double_indirect_blocks(*baseOffset, buffer, *dIndirectPtrs);
     buffer = (char *)buffer + BLOCK_SIZE * D_INDIRECT_BLOCKS;
     // Calculate remaining filesize
@@ -412,8 +413,8 @@ static void *write_to_file_using_triple_indirect_blocks(void *buffer, long long 
         *tIndirectPtrs += 1;
     }  // end if (fileSize % BLOCK_SIZE > 0)
     // Allocate triple Indirect Pointers
-    fsm->inode.tIndirect = aloc_triple_indirect(*tIndirectPtrs);
-    *baseOffset = fsm->inode.tIndirect;
+    inode.tIndirect = aloc_triple_indirect(*tIndirectPtrs);
+    *baseOffset = inode.tIndirect;
     // Write to tripleIndirectBlocks
     write_to_triple_indirect_blocks(*baseOffset, buffer, *tIndirectPtrs);
 
@@ -422,14 +423,13 @@ static void *write_to_file_using_triple_indirect_blocks(void *buffer, long long 
 
 Bool fs_write_to_file(unsigned int _inodeNum, void *_buffer, long long int _fileSize) {
     // return false if openFile fails
-    const Inode *success = fs_open_file(_inodeNum);
-    if (success == NULL) {
+    if (!fs_open_file(_inodeNum, &inode)) {
         return False;
     }  // end if (success == False)
     // set fileSize and inode fileSize
     long long int fileSize = _fileSize;
-    fsm->inode.fileSize = (unsigned int)_fileSize;
-    fsm->inode.dataBlocks = fsm->inode.fileSize / BLOCK_SIZE;
+    inode.fileSize = (unsigned int)_fileSize;
+    inode.dataBlocks = inode.fileSize / BLOCK_SIZE;
     unsigned int directPtrs = 0;
     // Calculate how many direct pointers needed
     for (unsigned int i = 0; i < INODE_DIRECT_PTRS; i++) {
@@ -470,7 +470,7 @@ Bool fs_write_to_file(unsigned int _inodeNum, void *_buffer, long long int _file
         }  // end else
     }  // end if (fileSize > 0)
     // Write created inode to disk
-    inode_write(&fsm->inode, _inodeNum, fsm->diskHandle);
+    inode_write(&inode, _inodeNum, fsm->diskHandle);
     fseek(fsm->diskHandle, 0, SEEK_SET);
     return True;
 }
@@ -486,16 +486,16 @@ Bool fs_write_to_file(unsigned int _inodeNum, void *_buffer, long long int _file
  */
 static Bool create_file_in_avail_indirect_loc(unsigned int _inodeNumF, unsigned int *_file_name,
                                               Bool _allocate) {
-    if (is_not_null(fsm->inode.sIndirect)) {
-        if (add_file_to_single_indirect(_inodeNumF, _file_name, fsm->inode.sIndirect, _allocate))
+    if (is_not_null(inode.sIndirect)) {
+        if (add_file_to_single_indirect(_inodeNumF, _file_name, inode.sIndirect, _allocate))
             return True;
     }
-    if (is_not_null(fsm->inode.dIndirect)) {
-        if (add_file_to_double_indirect(_inodeNumF, _file_name, fsm->inode.dIndirect, _allocate))
+    if (is_not_null(inode.dIndirect)) {
+        if (add_file_to_double_indirect(_inodeNumF, _file_name, inode.dIndirect, _allocate))
             return True;
     }
-    if (is_not_null(fsm->inode.tIndirect)) {
-        if (add_file_to_triple_indirect(_inodeNumF, _file_name, fsm->inode.tIndirect, _allocate))
+    if (is_not_null(inode.tIndirect)) {
+        if (add_file_to_triple_indirect(_inodeNumF, _file_name, inode.tIndirect, _allocate))
             return True;
     }
     return False;
@@ -523,13 +523,13 @@ static Bool create_file_in_unavail_indirect_loc(PointerType _type, unsigned int 
     WriteFunc write_func;
 
     if (_type == SINGLE) {
-        indirect = &fsm->inode.sIndirect;
+        indirect = &inode.sIndirect;
         write_func = add_file_to_single_indirect;
     } else if (_type == DOUBLE) {
-        indirect = &fsm->inode.dIndirect;
+        indirect = &inode.dIndirect;
         write_func = add_file_to_double_indirect;
     } else {
-        indirect = &fsm->inode.tIndirect;
+        indirect = &inode.tIndirect;
         write_func = add_file_to_triple_indirect;
     }
 
@@ -547,7 +547,7 @@ static Bool create_file_in_unavail_indirect_loc(PointerType _type, unsigned int 
             fsm->sampleCount =
                 fwrite(file_buffer, sizeof(unsigned int), BLOCK_SIZE / 4, fsm->diskHandle);
             fseek(fsm->diskHandle, 0, SEEK_SET);
-            inode_write(&fsm->inode, _inodeNumD, fsm->diskHandle);
+            inode_write(&inode, _inodeNumD, fsm->diskHandle);
         }
         // Write data to this indirect memory location on disk
         if (write_func(_inodeNumF, _file_name, *diskOffset, True)) {
@@ -572,8 +572,8 @@ static Bool create_file_in_avail_direct_loc(unsigned int _inodeNumF, unsigned in
     // Read file's direct pointers from disk
     unsigned int j;
     for (unsigned int i = 0; i < INODE_DIRECT_PTRS; i++) {
-        if (is_not_null(fsm->inode.directPtr[i])) {
-            *diskOffset = fsm->inode.directPtr[i];
+        if (is_not_null(inode.directPtr[i])) {
+            *diskOffset = inode.directPtr[i];
             fseek(fsm->diskHandle, *diskOffset, SEEK_SET);
             fsm->sampleCount =
                 fread(disk_buffer, sizeof(unsigned int), BLOCK_SIZE / 4, fsm->diskHandle);
@@ -583,7 +583,7 @@ static Bool create_file_in_avail_direct_loc(unsigned int _inodeNumF, unsigned in
                     disk_buffer[j] = _file_name[0];
                     disk_buffer[j + 1] = _file_name[1];
                     disk_buffer[j + 2] = _inodeNumF;
-                    fsm->inode.linkCount += 1;
+                    inode.linkCount += 1;
                     fseek(fsm->diskHandle, 0, SEEK_SET);
                     fseek(fsm->diskHandle, *diskOffset, SEEK_SET);
                     fsm->sampleCount =
@@ -615,14 +615,14 @@ static Bool create_file_in_unavail_direct_loc(unsigned int _inodeNumF, unsigned 
                                               unsigned int *disk_buffer) {
     unsigned int j;
     for (unsigned int i = 0; i < INODE_DIRECT_PTRS; i++) {
-        if (is_null(fsm->inode.directPtr[i])) {
+        if (is_null(inode.directPtr[i])) {
             // Get sectors for direct pointers
             *diskOffset = ssm_allocate_sectors(1);
             if (is_null(*diskOffset)) {
                 // If sectors can't be retrieved, return false
                 return False;
             } else {
-                fsm->inode.directPtr[i] = *diskOffset;
+                inode.directPtr[i] = *diskOffset;
                 fsm->sampleCount = fseek(fsm->diskHandle, *diskOffset, SEEK_SET);
                 // Clear disk_buffer
                 for (j = 0; j < BLOCK_SIZE / 4; j++) {
@@ -632,14 +632,14 @@ static Bool create_file_in_unavail_direct_loc(unsigned int _inodeNumF, unsigned 
                 disk_buffer[0] = _file_name[0];
                 disk_buffer[1] = _file_name[1];
                 disk_buffer[2] = _inodeNumF;
-                fsm->inode.linkCount += 1;
-                fsm->inode.fileSize += BLOCK_SIZE;
-                fsm->inode.dataBlocks = fsm->inode.fileSize / BLOCK_SIZE;
+                inode.linkCount += 1;
+                inode.fileSize += BLOCK_SIZE;
+                inode.dataBlocks = inode.fileSize / BLOCK_SIZE;
                 fsm->sampleCount =
                     fwrite(disk_buffer, sizeof(unsigned int), BLOCK_SIZE / 4, fsm->diskHandle);
                 // Write file to disk
                 fseek(fsm->diskHandle, 0, SEEK_SET);
-                inode_write(&fsm->inode, _inodeNumD, fsm->diskHandle);
+                inode_write(&inode, _inodeNumD, fsm->diskHandle);
                 Bool status = fs_close_file();
                 if (status == False) printf("Error closing file\n");
                 return True;
@@ -665,8 +665,7 @@ static Bool create_file(unsigned int _inodeNumF, unsigned int *_name,
     unsigned int buffer2[BLOCK_SIZE / 4];
 
     // Open the parent directory
-    const Inode *inode = fs_open_file(_inodeNumParentDir);
-    if (inode == NULL) {
+    if (!fs_open_file(_inodeNumParentDir, &inode)) {
         return False;
     }
     // Create file within the parent directory
@@ -854,7 +853,7 @@ static Bool add_file_to_single_indirect_no_alloc(unsigned int *buffer, unsigned 
                     buffer[j] = _name[0];
                     buffer[j + 1] = _name[1];
                     buffer[j + 2] = _inodeNumF;
-                    fsm->inode.linkCount += 1;
+                    inode.linkCount += 1;
                     fseek(fsm->diskHandle, 0, SEEK_SET);
                     fseek(fsm->diskHandle, *diskOffset, SEEK_SET);
                     fsm->sampleCount =
@@ -885,7 +884,7 @@ static Bool add_file_to_single_indirect(unsigned int _inodeNumF, unsigned int *_
     unsigned int indirectBlock[BLOCK_SIZE / 4];
     unsigned int diskOffset;
     unsigned int buffer[BLOCK_SIZE / 4];
-    diskOffset = _sIndirectOffset;  // fsm->inode.sIndirect;
+    diskOffset = _sIndirectOffset;  // inode.sIndirect;
     Bool status;
     // Read indirect block
     fseek(fsm->diskHandle, diskOffset, SEEK_SET);
@@ -911,9 +910,9 @@ static Bool add_file_to_single_indirect(unsigned int _inodeNumF, unsigned int *_
                     buffer[0] = _name[0];
                     buffer[1] = _name[1];
                     buffer[2] = _inodeNumF;
-                    fsm->inode.linkCount += 1;
-                    fsm->inode.fileSize += BLOCK_SIZE;
-                    fsm->inode.dataBlocks = fsm->inode.fileSize / BLOCK_SIZE;
+                    inode.linkCount += 1;
+                    inode.fileSize += BLOCK_SIZE;
+                    inode.dataBlocks = inode.fileSize / BLOCK_SIZE;
                     fseek(fsm->diskHandle, indirectBlock[i], SEEK_SET);
                     fsm->sampleCount =
                         fwrite(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, fsm->diskHandle);
@@ -938,24 +937,22 @@ static Bool add_file_to_single_indirect(unsigned int _inodeNumF, unsigned int *_
 static Bool remove_file_from_dir_indirect_pointers(unsigned int _inodeNumF) {
     // if the directory has files in it's sindirect pointer area, remove them
     Bool success = False;
-    if (is_not_null(fsm->inode.sIndirect)) {
-        success =
-            remove_file_from_single_indirect(_inodeNumF, (unsigned int)(-1), fsm->inode.sIndirect);
+    if (is_not_null(inode.sIndirect)) {
+        success = remove_file_from_single_indirect(_inodeNumF, (unsigned int)(-1), inode.sIndirect);
         if (success == True) {
             return True;
         }  // end if (success == True)
     }
     // if the directory has files in it's dindirect pointer area, remove them
-    if (is_not_null(fsm->inode.dIndirect)) {
-        success =
-            remove_file_from_double_indirect(_inodeNumF, (unsigned int)(-1), fsm->inode.dIndirect);
+    if (is_not_null(inode.dIndirect)) {
+        success = remove_file_from_double_indirect(_inodeNumF, (unsigned int)(-1), inode.dIndirect);
         if (success == True) {
             return True;
         }  // end if (success == True)
     }
     // if the directory has files in it's tindirect pointer area, remove them
-    if (is_not_null(fsm->inode.tIndirect)) {
-        success = remove_file_from_triple_indirect(_inodeNumF, fsm->inode.tIndirect);
+    if (is_not_null(inode.tIndirect)) {
+        success = remove_file_from_triple_indirect(_inodeNumF, inode.tIndirect);
         if (success == True) {
             return True;
         }  // end if (success == True)
@@ -967,12 +964,11 @@ Bool fs_remove_file_from_dir(unsigned int _inodeNumF, unsigned int _inodeNumD) {
     unsigned int j, k, diskOffset, sectorNum;
     unsigned int buffer[BLOCK_SIZE / 4];
     // open the parent directory inode
-    const Inode *inode = fs_open_file(_inodeNumD);
-    if (inode == NULL) return False;
-    if (fsm->inode.fileType == 2) {  // type 2 is directory
+    if (!fs_open_file(_inodeNumD, &inode)) return False;
+    if (inode.fileType == 2) {  // type 2 is directory
         for (unsigned int i = 0; i < INODE_DIRECT_PTRS; i++) {
-            if (is_not_null(fsm->inode.directPtr[i])) {
-                diskOffset = fsm->inode.directPtr[i];
+            if (is_not_null(inode.directPtr[i])) {
+                diskOffset = inode.directPtr[i];
                 // update sampleCount
                 fseek(fsm->diskHandle, diskOffset, SEEK_SET);
                 fsm->sampleCount =
@@ -981,11 +977,11 @@ Bool fs_remove_file_from_dir(unsigned int _inodeNumF, unsigned int _inodeNumD) {
                 for (j = 0; j < BLOCK_SIZE / 4; j += 4) {
                     if (buffer[j + 3] == 1 && buffer[j + 2] == _inodeNumF) {
                         memset(&buffer[j], 0, 4 * sizeof(unsigned int));
-                        fsm->inode.linkCount -= 1;
-                        if (fsm->inode.linkCount == 0) {
+                        inode.linkCount -= 1;
+                        if (inode.linkCount == 0) {
                             // if there is nothing in the directory, set size to 0
-                            fsm->inode.fileSize = 0;
-                            inode_init_ptrs(&fsm->inode);
+                            inode.fileSize = 0;
+                            inode_init_ptrs(&inode);
                         }
                         fseek(fsm->diskHandle, 0, SEEK_SET);
                         fseek(fsm->diskHandle, diskOffset, SEEK_SET);
@@ -997,11 +993,11 @@ Bool fs_remove_file_from_dir(unsigned int _inodeNumF, unsigned int _inodeNumD) {
                             }
                         }
                         if (k == BLOCK_SIZE / 4) {
-                            sectorNum = fsm->inode.directPtr[i] / BLOCK_SIZE;
+                            sectorNum = inode.directPtr[i] / BLOCK_SIZE;
                             ssm_deallocate_sectors(sectorNum);
-                            fsm->inode.directPtr[i] = (unsigned int)(-1);
-                            fsm->inode.dataBlocks -= 1;
-                            inode_write(&fsm->inode, fsm->inodeNum, fsm->diskHandle);
+                            inode.directPtr[i] = (unsigned int)(-1);
+                            inode.dataBlocks -= 1;
+                            inode_write(&inode, fsm->inodeNum, fsm->diskHandle);
                         }
                         return True;
                     }
@@ -1048,8 +1044,8 @@ static Bool remove_file_from_triple_indirect(unsigned int _inodeNumF,
                 if (k == BLOCK_SIZE / 4) {
                     sectorNum = _tIndirectOffset / BLOCK_SIZE;
                     ssm_deallocate_sectors(sectorNum);
-                    fsm->inode.tIndirect = (unsigned int)(-1);
-                    inode_write(&fsm->inode, fsm->inodeNum, fsm->diskHandle);
+                    inode.tIndirect = (unsigned int)(-1);
+                    inode_write(&inode, fsm->inodeNum, fsm->diskHandle);
                 }  // end if (k == BLOCK_SIZE/4)
                 return True;
             }  // if (success == True)
@@ -1105,8 +1101,8 @@ static Bool remove_file_from_double_indirect(unsigned int _inodeNumF, unsigned i
                         fseek(fsm->diskHandle, diskOffset, SEEK_SET);
                         fsm->sampleCount = fwrite(indirectBlock, BLOCK_SIZE, 1, fsm->diskHandle);
                     } else {
-                        fsm->inode.dIndirect = (unsigned int)(-1);
-                        inode_write(&fsm->inode, fsm->inodeNum, fsm->diskHandle);
+                        inode.dIndirect = (unsigned int)(-1);
+                        inode_write(&inode, fsm->inodeNum, fsm->diskHandle);
                     }  // end else
                 }  // if (k == BLOCK_SIZE/4)
                 return True;
@@ -1142,7 +1138,7 @@ static Bool remove_file_from_single_indirect(unsigned int _inodeNumF, unsigned i
             for (j = 0; j < BLOCK_SIZE / 4; j += 4) {
                 if (buffer[j + 3] == 1 && buffer[j + 2] == _inodeNumF) {
                     memset(&buffer[j], 0, 4 * sizeof(unsigned int));
-                    fsm->inode.linkCount -= 1;
+                    inode.linkCount -= 1;
                     fseek(fsm->diskHandle, 0, SEEK_SET);
                     fseek(fsm->diskHandle, diskOffset, SEEK_SET);
                     fsm->sampleCount =
@@ -1153,8 +1149,8 @@ static Bool remove_file_from_single_indirect(unsigned int _inodeNumF, unsigned i
                     if (k == BLOCK_SIZE / 4) {
                         sectorNum = indirectBlock[i] / BLOCK_SIZE;
                         ssm_deallocate_sectors(sectorNum);
-                        fsm->inode.dataBlocks -= 1;
-                        inode_write(&fsm->inode, fsm->inodeNum, fsm->diskHandle);
+                        inode.dataBlocks -= 1;
+                        inode_write(&inode, fsm->inodeNum, fsm->diskHandle);
                         indirectBlock[i] = (unsigned int)(-1);
                         diskOffset = _sIndirectOffset;
                         fseek(fsm->diskHandle, diskOffset, SEEK_SET);
@@ -1180,8 +1176,8 @@ static Bool remove_file_from_single_indirect(unsigned int _inodeNumF, unsigned i
                                 fsm->sampleCount =
                                     fwrite(indirectBlock, BLOCK_SIZE, 1, fsm->diskHandle);
                             } else {
-                                fsm->inode.sIndirect = (unsigned int)(-1);
-                                inode_write(&fsm->inode, fsm->inodeNum, fsm->diskHandle);
+                                inode.sIndirect = (unsigned int)(-1);
+                                inode_write(&inode, fsm->inodeNum, fsm->diskHandle);
                             }
                         }
                     }
@@ -1280,7 +1276,7 @@ static unsigned int aloc_triple_indirect(long long int _blockCount) {
     long long int blockCount = _blockCount;
     baseAddress = ssm_allocate_sectors(1);
     if (is_not_null(baseAddress)) {
-        diskOffset = baseAddress;  // fsm->inode.tIndirect;
+        diskOffset = baseAddress;  // inode.tIndirect;
         // Initialize the indirect block pointers to -1
         unsigned int base[BLOCK_SIZE / 4];
         memset(base, 0xFF, BLOCK_SIZE);
@@ -1322,7 +1318,7 @@ static unsigned int aloc_double_indirect(long long int _blockCount) {
     // calculate base address
     baseAddress = ssm_allocate_sectors(1);
     if (is_not_null(baseAddress)) {
-        diskOffset = baseAddress;  // fsm->inode.sIndirect;
+        diskOffset = baseAddress;  // inode.sIndirect;
         // Initialize the indirect block pointers to -1
         unsigned int base[BLOCK_SIZE / 4];
         memset(base, 0xFF, BLOCK_SIZE);
@@ -1362,7 +1358,7 @@ static unsigned int aloc_single_indirect(long long int _blockCount) {
     // calculate base address
     baseAddress = ssm_allocate_sectors(1);
     if (is_not_null(baseAddress)) {
-        diskOffset = baseAddress;  // fsm->inode.sIndirect;
+        diskOffset = baseAddress;  // inode.sIndirect;
         // Initialize the indirect block pointers to -1
         unsigned int base[BLOCK_SIZE / 4];
         memset(base, 0xFF, BLOCK_SIZE);
@@ -1518,18 +1514,17 @@ static void write_to_single_indirect_blocks(unsigned int _baseOffset, void *_buf
 
 Bool fs_remove_file(unsigned int _inodeNum, unsigned int _inodeNumD) {
     // Open file at Inode _inodeNum for reading
-    const Inode *inode = fs_open_file(_inodeNum);
-    if (inode == NULL) {
+    if (!fs_open_file(_inodeNum, &inode)) {
         return False;
     }  // end if (success == False)
     unsigned int directPtrs[INODE_DIRECT_PTRS];
-    unsigned int sIndirect = fsm->inode.sIndirect;
-    unsigned int dIndirect = fsm->inode.dIndirect;
-    unsigned int tIndirect = fsm->inode.tIndirect;
-    unsigned int fileType = fsm->inode.fileType;
+    unsigned int sIndirect = inode.sIndirect;
+    unsigned int dIndirect = inode.dIndirect;
+    unsigned int tIndirect = inode.tIndirect;
+    unsigned int fileType = inode.fileType;
     unsigned int buffer[BLOCK_SIZE / 4];
     unsigned int sectorNumber, j, diskOffset;
-    memcpy(directPtrs, fsm->inode.directPtr, INODE_DIRECT_PTRS * sizeof(unsigned int));
+    memcpy(directPtrs, inode.directPtr, INODE_DIRECT_PTRS * sizeof(unsigned int));
     // Read data from direct pointers into buffer _buffer
     for (unsigned int i = 0; i < INODE_DIRECT_PTRS; i++) {
         diskOffset = directPtrs[i];
@@ -1556,17 +1551,15 @@ Bool fs_remove_file(unsigned int _inodeNum, unsigned int _inodeNumD) {
     // Read data from triple indirect pointer into buffer _buffer
     remove_file_indirect_blocks(TRIPLE, tIndirect, fileType, _inodeNum, _inodeNumD);
 
-    // Open inode, assign to success whether opening worked
-    inode = fs_open_file(_inodeNum);
-    // If inode didn't open, return false
-    if (inode == NULL) {
+    // Open inode, assign to success whether opening worked. If inode didn't open, return false
+    if (!fs_open_file(_inodeNum, &inode)) {
         return False;
     }  // end if (success == False)
     // Clear the inode
-    inode_init(&fsm->inode);
+    inode_init(&inode);
     // Write over inode
     fseek(fsm->diskHandle, 0, SEEK_SET);
-    inode_write(&fsm->inode, _inodeNum, fsm->diskHandle);
+    inode_write(&inode, _inodeNum, fsm->diskHandle);
     deallocate_inode(_inodeNum);
     // Remove the file from its containing directory
     fs_remove_file_from_dir(_inodeNum, _inodeNumD);
@@ -1719,12 +1712,11 @@ Bool fs_rename_file(unsigned int _inodeNumF, unsigned int *_name, unsigned int _
     unsigned int j, diskOffset;
     unsigned int buffer[BLOCK_SIZE / 4];
     // Attempt to open directory
-    const Inode *inode = fs_open_file(_inodeNumD);
-    if (inode != NULL) {
-        if (fsm->inode.fileType == 2) {
+    if (fs_open_file(_inodeNumD, &inode)) {
+        if (inode.fileType == 2) {
             for (unsigned int i = 0; i < 10; i++) {
-                if (is_not_null(fsm->inode.directPtr[i])) {
-                    diskOffset = fsm->inode.directPtr[i];
+                if (is_not_null(inode.directPtr[i])) {
+                    diskOffset = inode.directPtr[i];
                     fseek(fsm->diskHandle, diskOffset, SEEK_SET);
                     fsm->sampleCount =
                         fread(buffer, sizeof(unsigned int), BLOCK_SIZE / 4, fsm->diskHandle);
@@ -1742,27 +1734,27 @@ Bool fs_rename_file(unsigned int _inodeNumF, unsigned int *_name, unsigned int _
                 }
             }  // end for (i = 0; i < 10; i++)
             // Rename all the Single Indirect blocks
-            if (is_not_null(fsm->inode.sIndirect)) {
-                success = rename_file_in_single_indirect(_inodeNumF, _name, fsm->inode.sIndirect);
+            if (is_not_null(inode.sIndirect)) {
+                success = rename_file_in_single_indirect(_inodeNumF, _name, inode.sIndirect);
                 if (success == True) {
                     return True;
                 }  // end if (success == True)
             }
             // Rename all Double Indirect block references
-            if (is_not_null(fsm->inode.dIndirect)) {
-                success = rename_file_in_double_indirect(_inodeNumF, _name, fsm->inode.dIndirect);
+            if (is_not_null(inode.dIndirect)) {
+                success = rename_file_in_double_indirect(_inodeNumF, _name, inode.dIndirect);
                 if (success == True) {
                     return True;
                 }  // end if (success == True)
             }
             // Rename all Triple Indirect block references
-            if (is_not_null(fsm->inode.tIndirect)) {
-                success = rename_file_in_triple_indirect(_inodeNumF, _name, fsm->inode.tIndirect);
+            if (is_not_null(inode.tIndirect)) {
+                success = rename_file_in_triple_indirect(_inodeNumF, _name, inode.tIndirect);
                 if (success == True) {
                     return True;
                 }  // end if (success == True)
             }
-        }  // end if (fsm->inode.fileType == 2)
+        }  // end if (inode.fileType == 2)
     }  // end if (success == True)
     // Returns false if none of the renames successful
     return False;
@@ -1895,16 +1887,16 @@ Bool fs_make(unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE, unsigned int _IN
     unsigned int name[2];
     // Set inode 0 for boot sector
     fs_create_file(0, name, (unsigned int)(-1));
-    const Inode *inode = fs_open_file(0);
-    if (inode == NULL) printf("Corruption during file system creation");  // Failed to open inode 0
-    fsm->inode.directPtr[0] = 0;
-    inode_write(&fsm->inode, 0, fsm->diskHandle);
+    if (!fs_open_file(0, &inode))
+        printf("Corruption during file system creation");  // Failed to open inode 0
+    inode.directPtr[0] = 0;
+    inode_write(&inode, 0, fsm->diskHandle);
     // Set inode 1 for super block
     fs_create_file(0, name, (unsigned int)(-1));
-    inode = fs_open_file(1);
-    if (inode == NULL) printf("Corruption during file system creation");  // Failed to open inode 0
-    fsm->inode.directPtr[0] = BLOCK_SIZE * (1);
-    inode_write(&fsm->inode, 1, fsm->diskHandle);
+    if (!fs_open_file(1, &inode))
+        printf("Corruption during file system creation");  // Failed to open inode 0
+    inode.directPtr[0] = BLOCK_SIZE * (1);
+    inode_write(&inode, 1, fsm->diskHandle);
     // make root directory with inode 2
     fs_create_file(1, name, (unsigned int)(-1));
     return True;
