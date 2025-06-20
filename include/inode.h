@@ -32,6 +32,8 @@ typedef struct Inode {
     unsigned int tIndirect;
 } Inode;
 
+extern Inode inode;
+
 /**
  * @brief Initializes the inode memory pointers.
  * @param[out] _inode Pointer to an Inode structure to store the result.

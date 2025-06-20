@@ -10,14 +10,13 @@
 
 #include "fsm.h"
 #include "global_constants.h"
+#include "inode.h"
 #include "logger.h"
 #include "ssm.h"
 #include "utils.h"
 
 // buffer for holding block information
 static unsigned int buffer[600 * (MAX_BLOCK_SIZE / 4)];
-// buffer for an inode
-static Inode inode;
 
 int init_command(int _argc, char** _argv, char* input, int i) {
     // vars for holding the disk, block, iNode, iNode-block, iNode-count sizes for the file system

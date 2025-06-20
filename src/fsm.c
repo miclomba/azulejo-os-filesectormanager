@@ -26,11 +26,8 @@ static FSM fsm_instance = {.badInode = {{0}},
                            .iMap = {0},
                            .iMapHandle = NULL,
                            .index = {0, 0},
-                           //.inode
                            .inodeNum = 0,
                            .sampleCount = 0};
-
-static Inode inode;
 
 FSM *fsm = &fsm_instance;
 

@@ -11,6 +11,18 @@
 #include "fsm_constants.h"
 #include "global_constants.h"
 
+Inode inode = {.dataBlocks = 0,
+               .dIndirect = 0,
+               .directPtr = {0},
+               .fileSize = 0,
+               .fileType = 0,
+               .linkCount = 0,
+               .owner = 0,
+               .permissions = 0,
+               .sIndirect = 0,
+               .status = 0,
+               .tIndirect = 0};
+
 void inode_init_ptrs(Inode *_inode) {
     typedef unsigned int UI;
     char *buffer = (char *)_inode;

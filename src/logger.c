@@ -9,14 +9,13 @@
 #include "config.h"
 #include "fsm.h"
 #include "global_constants.h"
+#include "inode.h"
 #include "ssm.h"
 #include "ssm_constants.h"
 
 enum { ALLOCATED = 9, FREE = 10 };
 enum { FIELD_WIDTH = 9 };
 static char MESSAGE_BUFFER[1024];
-
-static Inode inode;
 
 /**
  * @brief Prints INODE and FREE maps 8 bit sections.
