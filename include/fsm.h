@@ -16,10 +16,9 @@ typedef struct FSM {
     // pointers used for disk access
     FILE *iMapHandle;
     FILE *diskHandle;
-    unsigned int diskOffset;
-    unsigned int sampleCount;
     unsigned char iMap[MAX_INODE_BLOCKS];
     unsigned int index[2];
+    unsigned int diskOffset;
     unsigned int badInode[MAX_INPUT][2];
 } FSM;
 
