@@ -84,7 +84,7 @@ or Allocated. A lesser known, essential function is the maintenance of the physi
 int fs_make(unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE, unsigned int _INODE_SIZE, unsigned int _INODE_BLOCKS, unsigned int _INODE_COUNT, int _init_ssm_maps);
 int fs_remove(void);
 int fs_create_file(int _is_dir, unsigned int* _file_name, unsigned int _dir_inode_num);
-Inode* fs_open_file(unsigned int _file_inode_num);
+int fs_open_file(unsigned int _file_inode_num);
 int fs_close_file(void);
 int fs_remove_file_from_dir(unsigned int _file_inode_num, unsigned int _dir_inode_num);
 int fs_write_to_file(unsigned int _file_inode_num, void* _write_buffer, long long int _file_size);
