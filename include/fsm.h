@@ -15,7 +15,6 @@
 typedef struct FSM {
     // pointers used for disk access
     FILE *diskHandle;
-    unsigned int index[2];
 } FSM;
 
 extern FSM *fsm;

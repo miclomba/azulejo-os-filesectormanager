@@ -33,15 +33,15 @@ typedef struct Inode {
     unsigned int tIndirect;
 } Inode;
 
-typedef struct InodeMetadata {
-    unsigned int map_offset[2];
+typedef struct InodeMap {
+    unsigned int iMapOffset[2];
     FILE *iMapHandle;
     unsigned char iMap[MAX_INODE_BLOCKS];
     unsigned int id;
-} InodeMetadata;
+} InodeMap;
 
 extern Inode inode;
-extern InodeMetadata inode_meta;
+extern InodeMap inode_map;
 
 /**
  * @brief Initializes the inode memory pointers.

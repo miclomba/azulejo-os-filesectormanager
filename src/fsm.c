@@ -19,7 +19,7 @@
 // @todo revisit return status and exception handling
 // @todo replace literals with constants
 
-static FSM fsm_instance = {.diskHandle = NULL, .index = {0, 0}};
+static FSM fsm_instance = {.diskHandle = NULL};
 
 FSM *fsm = &fsm_instance;
 
@@ -134,19 +134,19 @@ static void init_file_sector_mgr(int _initSsmMaps) {
     // Initialize SEctor Space Manager
     ssm_init(_initSsmMaps);
     // Initialize FSM's variables
-    fsm->index[0] = -1;
-    fsm->index[1] = -1;
+    inode_map.iMapOffset[0] = -1;
+    inode_map.iMapOffset[1] = -1;
     // Initialize FSM's inode pointer to a blank inode
     inode_init(&inode);
 
-    inode_meta.id = (unsigned int)-1;
+    inode_map.id = (unsigned int)-1;
     // Open file stream for iMap
-    inode_meta.iMapHandle = fopen(FSM_INODE_MAP, "r+");
+    inode_map.iMapHandle = fopen(FSM_INODE_MAP, "r+");
     // Read in INODE_BLOCKS number of items from iMap to iMapHandle
-    fread(inode_meta.iMap, 1, INODE_BLOCKS, inode_meta.iMapHandle);
+    fread(inode_map.iMap, 1, INODE_BLOCKS, inode_map.iMapHandle);
     // Closes the iMapHandle
-    fclose(inode_meta.iMapHandle);
-    inode_meta.iMapHandle = Null;
+    fclose(inode_map.iMapHandle);
+    inode_map.iMapHandle = Null;
     // Open binary form of file for reading and writing
     fsm->diskHandle = fopen(HARD_DISK, "rb+");
 }
@@ -161,14 +161,14 @@ static void init_fsm_maps(void) {
     unsigned char map[INODE_BLOCKS];  // SECTOR_BYTES
     unsigned char disk[DISK_SIZE];
     // Load iMap from file and place in iMapHandle
-    inode_meta.iMapHandle = fopen(FSM_INODE_MAP, "r+");
+    inode_map.iMapHandle = fopen(FSM_INODE_MAP, "r+");
     // Initialize all map elements to 255
     memset(map, UINT8_MAX, INODE_BLOCKS);
     // Write map back to iMapHandle
-    fwrite(map, 1, INODE_BLOCKS, inode_meta.iMapHandle);
+    fwrite(map, 1, INODE_BLOCKS, inode_map.iMapHandle);
     // close the file
-    fclose(inode_meta.iMapHandle);
-    inode_meta.iMapHandle = Null;
+    fclose(inode_map.iMapHandle);
+    inode_map.iMapHandle = Null;
     fsm->diskHandle = fopen(HARD_DISK, "rb+");
     // Initialize all disk elements to 0
     memset(disk, 0, DISK_SIZE);
@@ -181,12 +181,12 @@ static void init_fsm_maps(void) {
 unsigned int fs_create_file(int _isDirectory, unsigned int *_name,
                             unsigned int _inodeNumParentDir) {
     get_inode(1);
-    if (is_null(fsm->index[0])) {
+    if (is_null(inode_map.iMapOffset[0])) {
         return (unsigned int)(-1);
     }
     // Create a default file. Will start with all pointers as -1
     unsigned int inodeNum;
-    inodeNum = BITS_PER_BYTE * fsm->index[0] + fsm->index[1];
+    inodeNum = BITS_PER_BYTE * inode_map.iMapOffset[0] + inode_map.iMapOffset[1];
     inode_read(&inode, inodeNum, fsm->diskHandle);
     // initialize inode metadata
     inode_init(&inode);
@@ -213,11 +213,11 @@ Bool fs_open_file(unsigned int _inodeNum, Inode *_inode) {
         return False;
     }
     inode_read(_inode, _inodeNum, fsm->diskHandle);
-    inode_meta.id = _inodeNum;
+    inode_map.id = _inodeNum;
     if (_inode->fileType <= 0) {
         // If file not loaded, create a default inode and return False
         inode_init(_inode);
-        inode_meta.id = (unsigned int)(-1);
+        inode_map.id = (unsigned int)(-1);
         // Return False if file did not open correctly
         return False;
     }
@@ -226,7 +226,7 @@ Bool fs_open_file(unsigned int _inodeNum, Inode *_inode) {
 
 Bool fs_close_file(void) {
     // Reset all FSM->Inode variables to defaults
-    inode_meta.id = (unsigned int)(-1);
+    inode_map.id = (unsigned int)(-1);
     inode_init(&inode);
     return True;
 }
@@ -1911,14 +1911,14 @@ Bool fs_remove(void) {
  * @date 2010-04-12 First implementation.
  */
 static Bool allocate_inode(void) {
-    if (is_not_null(fsm->index[0])) {
-        int bit = fsm->index[1];
-        int byte = fsm->index[0];
+    if (is_not_null(inode_map.iMapOffset[0])) {
+        int bit = inode_map.iMapOffset[1];
+        int byte = inode_map.iMapOffset[0];
         int n = 1;
         // Find contiguous sectors
         while (n > 0) {
             for (; bit < BITS_PER_BYTE; bit++) {
-                inode_meta.iMap[byte] -= pow(2, bit);
+                inode_map.iMap[byte] -= pow(2, bit);
                 n--;
                 if (n == 0) {
                     break;
@@ -1928,13 +1928,13 @@ static Bool allocate_inode(void) {
             bit = 0;
         }  // end while (n > 0)
     }
-    fsm->index[0] = (unsigned int)(-1);
-    fsm->index[1] = (unsigned int)(-1);
+    inode_map.iMapOffset[0] = (unsigned int)(-1);
+    inode_map.iMapOffset[1] = (unsigned int)(-1);
     // Write the newly allocated inode to the iMapHandler
-    inode_meta.iMapHandle = fopen(FSM_INODE_MAP, "r+");
-    fwrite(inode_meta.iMap, 1, INODE_BLOCKS, inode_meta.iMapHandle);
-    fclose(inode_meta.iMapHandle);
-    inode_meta.iMapHandle = Null;
+    inode_map.iMapHandle = fopen(FSM_INODE_MAP, "r+");
+    fwrite(inode_map.iMap, 1, INODE_BLOCKS, inode_map.iMapHandle);
+    fclose(inode_map.iMapHandle);
+    inode_map.iMapHandle = Null;
     return True;
 }
 
@@ -1946,16 +1946,16 @@ static Bool allocate_inode(void) {
  * @date 2010-04-12 First implementation.
  */
 static Bool deallocate_inode(unsigned int _inodeNum) {
-    fsm->index[0] = _inodeNum / BITS_PER_BYTE;
-    fsm->index[1] = _inodeNum % BITS_PER_BYTE;
+    inode_map.iMapOffset[0] = _inodeNum / BITS_PER_BYTE;
+    inode_map.iMapOffset[1] = _inodeNum % BITS_PER_BYTE;
     // Deallocate iMap at Inode's location
-    if (is_not_null(fsm->index[0])) {
-        int bit = fsm->index[1];
-        int byte = fsm->index[0];
+    if (is_not_null(inode_map.iMapOffset[0])) {
+        int bit = inode_map.iMapOffset[1];
+        int byte = inode_map.iMapOffset[0];
         int n = 1;
         while (n > 0) {
             for (; bit < BITS_PER_BYTE; bit++) {
-                inode_meta.iMap[byte] += pow(2, bit);
+                inode_map.iMap[byte] += pow(2, bit);
                 n--;
                 if (n == 0) {
                     break;
@@ -1965,13 +1965,13 @@ static Bool deallocate_inode(unsigned int _inodeNum) {
             bit = 0;
         }  // end while (n > 0)
     }
-    fsm->index[0] = (unsigned int)(-1);
-    fsm->index[1] = (unsigned int)(-1);
+    inode_map.iMapOffset[0] = (unsigned int)(-1);
+    inode_map.iMapOffset[1] = (unsigned int)(-1);
     // Write iMap to its Handler
-    inode_meta.iMapHandle = fopen(FSM_INODE_MAP, "r+");
-    fwrite(inode_meta.iMap, 1, INODE_BLOCKS, inode_meta.iMapHandle);
-    fclose(inode_meta.iMapHandle);
-    inode_meta.iMapHandle = Null;
+    inode_map.iMapHandle = fopen(FSM_INODE_MAP, "r+");
+    fwrite(inode_map.iMap, 1, INODE_BLOCKS, inode_map.iMapHandle);
+    fclose(inode_map.iMapHandle);
+    inode_map.iMapHandle = Null;
     return True;
 }
 
@@ -2000,9 +2000,9 @@ static Bool get_inode(int _n) {
         buff = mask;
         subsetMap[0] = 0;
         byteCount = 0;
-        iMap = inode_meta.iMap;
-        fsm->index[0] = -1;
-        fsm->index[1] = -1;
+        iMap = inode_map.iMap;
+        inode_map.iMapOffset[0] = -1;
+        inode_map.iMapOffset[1] = -1;
         while (byteCount < INODE_BLOCKS) {
             subsetMap[0] = *((unsigned long long int *)iMap);
             for (i = 0; i < 32; i++) {
@@ -2018,8 +2018,8 @@ static Bool get_inode(int _n) {
             }  // end for (i = 0; i < 32; i++)
             // Assign found inode to index
             if (found == True) {
-                fsm->index[0] = byteCount + (i / BITS_PER_BYTE);
-                fsm->index[1] = i % BITS_PER_BYTE;
+                inode_map.iMapOffset[0] = byteCount + (i / BITS_PER_BYTE);
+                inode_map.iMapOffset[1] = i % BITS_PER_BYTE;
                 return True;  // break;
             }  // end if (found == True)
             iMap += 4;
