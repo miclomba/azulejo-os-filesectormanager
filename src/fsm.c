@@ -19,12 +19,8 @@
 // @todo revisit return status and exception handling
 // @todo replace literals with constants
 
-static FSM fsm_instance = {.badInode = {{0}},
-                           .diskHandle = NULL,
-                           .diskOffset = 0,
-                           .iMap = {0},
-                           .iMapHandle = NULL,
-                           .index = {0, 0}};
+static FSM fsm_instance = {
+    .badInode = {{0}}, .diskHandle = NULL, .iMap = {0}, .iMapHandle = NULL, .index = {0, 0}};
 
 FSM *fsm = &fsm_instance;
 
@@ -1877,10 +1873,11 @@ Bool fs_make(unsigned int _DISK_SIZE, unsigned int _BLOCK_SIZE, unsigned int _IN
     int factorsOf_32 = INODE_BLOCKS / 32;
     // int remainder = INODE_BLOCKS % 32;
     // get 32 sectors at a time and make them inode sectors
+    unsigned int diskOffset;
     for (int i = 0; i < factorsOf_32; i++) {
-        fsm->diskOffset = ssm_allocate_sectors(32);
+        diskOffset = ssm_allocate_sectors(32);
         // take the 32 sectors and make inodes
-        inode_make(32, fsm->diskHandle, fsm->diskOffset);
+        inode_make(32, fsm->diskHandle, diskOffset);
     }  // end for (i = 0; i < factorsOf_32; i++)
     unsigned int name[2];
     // Set inode 0 for boot sector
