@@ -19,8 +19,6 @@ typedef struct FSM {
     unsigned int diskOffset;
     unsigned int sampleCount;
     unsigned char iMap[MAX_INODE_BLOCKS];
-    unsigned int inodeNum;
-    unsigned int contInodes;
     unsigned int index[2];
     unsigned int badInode[MAX_INPUT][2];
 } FSM;

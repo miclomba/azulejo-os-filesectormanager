@@ -109,10 +109,10 @@ static int get_sector_number(unsigned int index[2]) { return BITS_PER_BYTE * ind
  */
 static void print_inode(void) {
     printf("DEBUG_LEVEL > 0:\n");
-    printf("//Display Info of File (Inode %d)\n", inode_meta.number);
-    printf("//I:%d\n\n", inode_meta.number);
+    printf("//Display Info of File (Inode %d)\n", inode_meta.id);
+    printf("//I:%d\n\n", inode_meta.id);
 
-    fs_open_file(inode_meta.number, &inode);
+    fs_open_file(inode_meta.id, &inode);
 
     if (inode.fileType == 1) {
         printf("-> fileType = FILE\n");
@@ -233,22 +233,22 @@ static void log_fsm_file(LoggerFSMOption _case) {
         // Print opened file
         case FSM_FILE_OPEN:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Open a file\n//O:%d\n\nOpenned file at inode %d...\n", inode_meta.number,
-                     inode_meta.number);
+                     "//Open a file\n//O:%d\n\nOpenned file at inode %d...\n", inode_meta.id,
+                     inode_meta.id);
             print_message(MESSAGE_BUFFER);
             break;
         // Print write to file
         case FSM_FILE_WRITE:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Write to file\n//W:%d\n\nWrote to file at inode %d...", inode_meta.number,
-                     inode_meta.number);
+                     "//Write to file\n//W:%d\n\nWrote to file at inode %d...", inode_meta.id,
+                     inode_meta.id);
             print_message(MESSAGE_BUFFER);
             break;
         // Print read from file
         case FSM_FILE_READ:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "//Read from file\n//R:%d\n\nRead from file at inode %d..", inode_meta.number,
-                     inode_meta.number);
+                     "//Read from file\n//R:%d\n\nRead from file at inode %d..", inode_meta.id,
+                     inode_meta.id);
             print_message(MESSAGE_BUFFER);
             break;
         // Print create directory
@@ -293,7 +293,7 @@ static void log_fsm_inode(LoggerFSMOption _case, unsigned int _startByte) {
         // Print unable to find contiguous inodes message
         case FSM_INODE_NOT_FOUND:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER), "Could not find %d contiguous inodes.",
-                     fsm->contInodes);
+                     1);
             print_message(MESSAGE_BUFFER);
             break;
         // Print getting inodes message
@@ -301,8 +301,7 @@ static void log_fsm_inode(LoggerFSMOption _case, unsigned int _startByte) {
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Get %d contiguous inodes\n//G:%d\n\nThere are %d contiguous inodes at "
                      "sector %d.",
-                     fsm->contInodes, fsm->contInodes, fsm->contInodes,
-                     get_sector_number(fsm->index));
+                     1, 1, 1, get_sector_number(fsm->index));
             print_message(MESSAGE_BUFFER);
             break;
         // Print created a file
@@ -312,8 +311,8 @@ static void log_fsm_inode(LoggerFSMOption _case, unsigned int _startByte) {
         // Print variable information
         case FSM_INFO:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
-                     "Variable information:\ncontInodes = %d\nindex[0] = %d\nindex[1] = %d",
-                     fsm->contInodes, fsm->index[0], fsm->index[1]);
+                     "Variable information:\ncontInodes = %d\nindex[0] = %d\nindex[1] = %d", 1,
+                     fsm->index[0], fsm->index[1]);
             print_message(MESSAGE_BUFFER);
             break;
         default:
@@ -333,8 +332,7 @@ static void log_fsm_alloc(LoggerFSMOption _case) {
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Allocate %d contiguous inodes.\n//A:%d\n\nAllocating %d contiguous inodes "
                      "at sector %d",
-                     fsm->contInodes, fsm->contInodes, fsm->contInodes,
-                     get_sector_number(fsm->index));
+                     1, 1, 1, get_sector_number(fsm->index));
             print_message(MESSAGE_BUFFER);
             break;
         // Print Allocate Failure method
@@ -346,8 +344,8 @@ static void log_fsm_alloc(LoggerFSMOption _case) {
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
                      "//Deallocate %d contiguous inodes starting at sector "
                      "%d\n//D:%d:%d:%d\n\nDeallocating %d contiguous inodes at sector %d",
-                     fsm->contInodes, fsm->index[0] * 8 + fsm->index[1], fsm->contInodes,
-                     fsm->index[0], fsm->index[1], fsm->contInodes, get_sector_number(fsm->index));
+                     1, fsm->index[0] * 8 + fsm->index[1], 1, fsm->index[0], fsm->index[1], 1,
+                     get_sector_number(fsm->index));
             print_message(MESSAGE_BUFFER);
             break;
         // Print deallocation failure message

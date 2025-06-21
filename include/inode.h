@@ -33,7 +33,9 @@ typedef struct Inode {
 } Inode;
 
 typedef struct InodeMetadata {
-    unsigned int number;
+    unsigned int id;
+    unsigned int map_offset[2];
+    unsigned int count;
 } InodeMetadata;
 
 extern Inode inode;
