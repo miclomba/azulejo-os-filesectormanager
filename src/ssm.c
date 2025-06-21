@@ -21,7 +21,6 @@ static SSM ssm_instance = {
     .freeMapHandle = NULL,
     .alocMap = {0},  // initialize first element with 0 and the rest are implicitly initialized to 0
     .freeMap = {0},  // initialize first element with 0 and the rest are implicitly initialized to 0
-    .sampleCount = 0,
     .contSectors = 0,
     .index = {0, 0},
     .badSector = {{0}},  // The first inner array (badSector[0]) is initialized to {0, 0}. All other
@@ -51,8 +50,8 @@ void ssm_init(int _init_maps) {
     ssm->fragmented = 0;
     ssm->alocMapHandle = fopen(SSM_ALLOCATE_MAP, "r+");
     ssm->freeMapHandle = fopen(SSM_FREE_MAP, "r+");
-    ssm->sampleCount = fread(ssm->alocMap, 1, SECTOR_BYTES, ssm->alocMapHandle);
-    ssm->sampleCount = fread(ssm->freeMap, 1, SECTOR_BYTES, ssm->freeMapHandle);
+    fread(ssm->alocMap, 1, SECTOR_BYTES, ssm->alocMapHandle);
+    fread(ssm->freeMap, 1, SECTOR_BYTES, ssm->freeMapHandle);
     fclose(ssm->alocMapHandle);
     fclose(ssm->freeMapHandle);
     ssm->alocMapHandle = Null;
@@ -69,10 +68,10 @@ static void ssm_init_maps(void) {
     unsigned char map[SECTOR_BYTES];
     memset(map, 0, SECTOR_BYTES);
     ssm->alocMapHandle = fopen(SSM_ALLOCATE_MAP, "r+");
-    ssm->sampleCount = fwrite(map, 1, SECTOR_BYTES, ssm->alocMapHandle);
+    fwrite(map, 1, SECTOR_BYTES, ssm->alocMapHandle);
     memset(map, UINT8_MAX, SECTOR_BYTES);
     ssm->freeMapHandle = fopen(SSM_FREE_MAP, "r+");
-    ssm->sampleCount = fwrite(map, 1, SECTOR_BYTES, ssm->freeMapHandle);
+    fwrite(map, 1, SECTOR_BYTES, ssm->freeMapHandle);
     fclose(ssm->alocMapHandle);
     fclose(ssm->freeMapHandle);
     ssm->alocMapHandle = Null;
@@ -104,8 +103,8 @@ unsigned int ssm_allocate_sectors(int _n) {
     if (integrity == False) return -1;
     ssm->alocMapHandle = fopen(SSM_ALLOCATE_MAP, "r+");
     ssm->freeMapHandle = fopen(SSM_FREE_MAP, "r+");
-    ssm->sampleCount = fwrite(ssm->alocMap, 1, SECTOR_BYTES, ssm->alocMapHandle);
-    ssm->sampleCount = fwrite(ssm->freeMap, 1, SECTOR_BYTES, ssm->freeMapHandle);
+    fwrite(ssm->alocMap, 1, SECTOR_BYTES, ssm->alocMapHandle);
+    fwrite(ssm->freeMap, 1, SECTOR_BYTES, ssm->freeMapHandle);
     fclose(ssm->alocMapHandle);
     fclose(ssm->freeMapHandle);
     ssm->alocMapHandle = Null;
@@ -145,8 +144,8 @@ Bool ssm_deallocate_sectors(int _sectorNum) {
     ssm->contSectors = 0;
     ssm->alocMapHandle = fopen(SSM_ALLOCATE_MAP, "r+");
     ssm->freeMapHandle = fopen(SSM_FREE_MAP, "r+");
-    ssm->sampleCount = fwrite(ssm->alocMap, 1, SECTOR_BYTES, ssm->alocMapHandle);
-    ssm->sampleCount = fwrite(ssm->freeMap, 1, SECTOR_BYTES, ssm->freeMapHandle);
+    fwrite(ssm->alocMap, 1, SECTOR_BYTES, ssm->alocMapHandle);
+    fwrite(ssm->freeMap, 1, SECTOR_BYTES, ssm->freeMapHandle);
     fclose(ssm->alocMapHandle);
     fclose(ssm->freeMapHandle);
     ssm->alocMapHandle = Null;
@@ -293,8 +292,8 @@ static void set_aloc_sector(int _byte, int _bit) {
         ssm->alocMap[_byte] -= pow(2, _bit);
     ssm->alocMapHandle = fopen(SSM_ALLOCATE_MAP, "r+");
     ssm->freeMapHandle = fopen(SSM_FREE_MAP, "r+");
-    ssm->sampleCount = fwrite(ssm->alocMap, 1, SECTOR_BYTES, ssm->alocMapHandle);
-    ssm->sampleCount = fwrite(ssm->freeMap, 1, SECTOR_BYTES, ssm->freeMapHandle);
+    fwrite(ssm->alocMap, 1, SECTOR_BYTES, ssm->alocMapHandle);
+    fwrite(ssm->freeMap, 1, SECTOR_BYTES, ssm->freeMapHandle);
     fclose(ssm->alocMapHandle);
     fclose(ssm->freeMapHandle);
     ssm->alocMapHandle = Null;
@@ -319,8 +318,8 @@ static void set_free_sector(int _byte, int _bit) {
         ssm->freeMap[_byte] -= pow(2, _bit);
     ssm->alocMapHandle = fopen(SSM_ALLOCATE_MAP, "r+");
     ssm->freeMapHandle = fopen(SSM_FREE_MAP, "r+");
-    ssm->sampleCount = fwrite(ssm->alocMap, 1, SECTOR_BYTES, ssm->alocMapHandle);
-    ssm->sampleCount = fwrite(ssm->freeMap, 1, SECTOR_BYTES, ssm->freeMapHandle);
+    fwrite(ssm->alocMap, 1, SECTOR_BYTES, ssm->alocMapHandle);
+    fwrite(ssm->freeMap, 1, SECTOR_BYTES, ssm->freeMapHandle);
     fclose(ssm->alocMapHandle);
     fclose(ssm->freeMapHandle);
     ssm->alocMapHandle = Null;

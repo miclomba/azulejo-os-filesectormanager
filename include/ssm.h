@@ -23,8 +23,6 @@ typedef struct SSM {
     FILE *alocMapHandle;
     /** File handle for the free sector map. */
     FILE *freeMapHandle;
-    /** Total number of samples/sectors tracked. */
-    unsigned int sampleCount;
     /** Allocation bitmap per sector. */
     unsigned char alocMap[SECTOR_BYTES];
     /** Free sector bitmap. */
