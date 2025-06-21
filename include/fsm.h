@@ -18,7 +18,6 @@ typedef struct FSM {
     FILE *diskHandle;
     unsigned char iMap[MAX_INODE_BLOCKS];
     unsigned int index[2];
-    unsigned int badInode[MAX_INPUT][2];
 } FSM;
 
 extern FSM *fsm;

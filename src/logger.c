@@ -335,10 +335,6 @@ static void log_fsm_alloc(LoggerFSMOption _case) {
                      1, 1, 1, get_sector_number(fsm->index));
             print_message(MESSAGE_BUFFER);
             break;
-        // Print Allocate Failure method
-        case FSM_ALLOC_FAIL:
-            print_sector_failure(fsm->badInode, "Failed to allocate inodes at sector\n");
-            break;
         // Print deallocation message
         case FSM_DEALLOC_INODES:
             snprintf(MESSAGE_BUFFER, sizeof(MESSAGE_BUFFER),
@@ -347,10 +343,6 @@ static void log_fsm_alloc(LoggerFSMOption _case) {
                      1, fsm->index[0] * 8 + fsm->index[1], 1, fsm->index[0], fsm->index[1], 1,
                      get_sector_number(fsm->index));
             print_message(MESSAGE_BUFFER);
-            break;
-        // Print deallocation failure message
-        case FSM_DEALLOC_FAIL:
-            print_sector_failure(fsm->badInode, "Failed to deallocate inode\n");
             break;
         default:
             break;
@@ -365,10 +357,6 @@ static void log_fsm_alloc(LoggerFSMOption _case) {
  */
 static void log_fsm_integrity(LoggerFSMOption _case) {
     switch (_case) {
-        // Print integrity check failure message
-        case FSM_INTEG_FAIL:
-            print_sector_failure(fsm->badInode, "Failed integrity check at sector\n\n");
-            break;
         // Print integrity check pass message
         case FSM_INTEG_PASS:
             print_message("Passed integrity check.");

@@ -19,8 +19,7 @@
 // @todo revisit return status and exception handling
 // @todo replace literals with constants
 
-static FSM fsm_instance = {
-    .badInode = {{0}}, .diskHandle = NULL, .iMap = {0}, .iMapHandle = NULL, .index = {0, 0}};
+static FSM fsm_instance = {.diskHandle = NULL, .iMap = {0}, .iMapHandle = NULL, .index = {0, 0}};
 
 FSM *fsm = &fsm_instance;
 
