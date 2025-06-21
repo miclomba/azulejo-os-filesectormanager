@@ -8,6 +8,7 @@
 
 #include "config.h"
 #include "fsm_constants.h"
+#include "global_constants.h"
 
 typedef struct Inode {
     // struct location for fileType
@@ -89,5 +90,31 @@ void inode_read(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream);
  * @return void
  */
 void inode_write(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream);
+
+/**
+ * @brief Allocates a new inode.
+ * Searches for a free inode in the inode bitmap and marks it as allocated.
+ * @return True if inode allocation was successful, false otherwise.
+ * @date 2010-04-12 First implementation.
+ */
+Bool allocate_inode(void);
+
+/**
+ * @brief Deallocates an inode.
+ * Frees an inode previously marked as allocated in the inode bitmap.
+ * @param[in] _inodeNum the number/id of the inode.
+ * @return True if inode deallocation was successful, false otherwise.
+ * @date 2010-04-12 First implementation.
+ */
+Bool deallocate_inode(unsigned int _inodeNum);
+
+/**
+ * @brief Retrieves an inode from the inode map.
+ * Searches the inode map for a free inodes.
+ * @param[in] _n number of contiguous inodes to get.
+ * @return True if an inode was successfully retrieved, false otherwise.
+ * @date 2010-04-12 First implementation.
+ */
+Bool get_inode(int _n);
 
 #endif  // I_NODE_H
