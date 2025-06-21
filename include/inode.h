@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "config.h"
+#include "fsm_constants.h"
 
 typedef struct Inode {
     // struct location for fileType
@@ -33,9 +34,10 @@ typedef struct Inode {
 } Inode;
 
 typedef struct InodeMetadata {
-    unsigned int id;
     unsigned int map_offset[2];
-    unsigned int count;
+    FILE *iMapHandle;
+    unsigned char iMap[MAX_INODE_BLOCKS];
+    unsigned int id;
 } InodeMetadata;
 
 extern Inode inode;

@@ -23,7 +23,7 @@ Inode inode = {.dataBlocks = 0,
                .status = 0,
                .tIndirect = 0};
 
-InodeMetadata inode_meta = {.id = 0, .count = 0, .map_offset = {0}};
+InodeMetadata inode_meta = {.id = 0, .iMap = {0}, .iMapHandle = NULL, .map_offset = {0}};
 
 void inode_init_ptrs(Inode *_inode) {
     typedef unsigned int UI;

@@ -195,7 +195,7 @@ static void print_inode_map(unsigned int _startByte) {
     printf("===================================");
     printf("====================================\n\n");
     printf("INODE MAP\n");
-    print_128_bits(fsm->iMap, _startByte, INODE_BLOCKS);
+    print_128_bits(inode_meta.iMap, _startByte, INODE_BLOCKS);
     printf("\n");
     printf("===================================");
     printf("====================================\n\n");

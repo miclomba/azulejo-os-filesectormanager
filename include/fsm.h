@@ -14,9 +14,7 @@
 //======================== FSM TYPE DEFINITION ==============================//
 typedef struct FSM {
     // pointers used for disk access
-    FILE *iMapHandle;
     FILE *diskHandle;
-    unsigned char iMap[MAX_INODE_BLOCKS];
     unsigned int index[2];
 } FSM;
 
