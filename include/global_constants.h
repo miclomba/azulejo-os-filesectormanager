@@ -14,6 +14,14 @@ typedef int Bool;
 #define False (0)
 #endif
 
+#ifndef SUCCESS
+#define SUCCESS (0)
+#endif
+
+#ifndef FAILURE
+#define FAILURE (1)
+#endif
+
 #ifndef Null
 #define Null ((void *)0)
 #endif

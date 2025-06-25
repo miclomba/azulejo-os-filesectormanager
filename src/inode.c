@@ -38,7 +38,8 @@ static Bool is_not_null(unsigned int _ptr);
  */
 static inline Bool is_not_null(unsigned int _ptr) { return _ptr != (unsigned int)(-1); }
 
-void inode_init_ptrs(Inode *_inode) {
+int inode_init_ptrs(Inode *_inode) {
+    if (_inode == NULL) return FAILURE;
     typedef unsigned int UI;
     char *buffer = (char *)_inode;
     const int offset = 7;
@@ -47,14 +48,16 @@ void inode_init_ptrs(Inode *_inode) {
            (unsigned int[]){(UI)-1, (UI)-1, (UI)-1, (UI)-1, (UI)-1, (UI)-1, (UI)-1, (UI)-1, (UI)-1,
                             (UI)-1, (UI)-1, (UI)-1, (UI)-1},
            sizeof(unsigned int) * 13);
+    return SUCCESS;
 }
 
-void inode_init(Inode *_inode) {
+int inode_init(Inode *_inode) {
+    if (_inode == NULL) return FAILURE;
     char *buffer = (char *)_inode;
     const int offset = 7;
     // value loc for fileType, fileSize, permissions, linkCount, dataBlocks, tModified, status
     memcpy(buffer, (unsigned int[]){0, 0, 0, 0, 0, 0, 0}, sizeof(unsigned int) * offset);
-    inode_init_ptrs(_inode);
+    return inode_init_ptrs(_inode);
 }
 
 void inode_make(unsigned int _count, FILE *_fileStream, unsigned int _diskOffset) {
@@ -65,18 +68,27 @@ void inode_make(unsigned int _count, FILE *_fileStream, unsigned int _diskOffset
     // 0 for data, -1 for pointers
     for (unsigned int i = 0; i < _count; i++) {
         Inode *node = (Inode *)&buffer[i][0];
-        inode_init(node);
+        if (inode_init(node) == FAILURE) {
+            // @todo something here
+        }
         memcpy(&buffer[i][20],
                (unsigned int[]){(UI)-3, (UI)-3, (UI)-3, (UI)-3, (UI)-3, (UI)-3, (UI)-3, (UI)-3,
                                 (UI)-3, (UI)-3, (UI)-3, (UI)-3},
                sizeof(unsigned int) * 12);
     }  // end for (i = 0; i < _count; i++)
     // locate the requested offset within the disk file
-    fseek(_fileStream, _diskOffset, SEEK_SET);
+    if (fseek(_fileStream, _diskOffset, SEEK_SET) != SUCCESS) {
+        // @todo do something here
+    }
     // write the array of iNodes to the disk file
-    fwrite(buffer, sizeof(unsigned int), _count * 32, _fileStream);
+    unsigned int len = _count * 32;
+    if (fwrite(buffer, sizeof(unsigned int), len, _fileStream) != len) {
+        // @todo something here
+    }
     // move to the beginning of the disk file
-    fseek(_fileStream, 0, SEEK_SET);
+    if (fseek(_fileStream, 0, SEEK_SET) != SUCCESS) {
+        // @todo something here
+    }
 }
 
 void inode_read(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream) {
@@ -87,7 +99,9 @@ void inode_read(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream) {
     // and the iNode number in which we will read from
     int offset = (2 * BLOCK_SIZE) + (_inodeNum * INODE_SIZE);
     // move to the offset location of the filestream
-    fseek(_fileStream, offset, SEEK_SET);
+    if (fseek(_fileStream, offset, SEEK_SET) != SUCCESS) {
+        // @todo do something here
+    }
     // read the offset location in the filestream
     size_t res = fread(&buffer, sizeof(Inode), 1, _fileStream);
     if (res == 0) {
@@ -95,7 +109,9 @@ void inode_read(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream) {
         return;
     }
     // move to the start of the filestream
-    fseek(_fileStream, 0, SEEK_SET);
+    if (fseek(_fileStream, 0, SEEK_SET) != SUCCESS) {
+        // @todo do something here
+    }
     // store buffer for:
     // fileType, fileSize, permissions, linkCount, dataBlocks, owner,
     // status, directPtr[10], sIndirect, dIndirect, tIndirect
@@ -108,11 +124,18 @@ void inode_write(Inode *_inode, unsigned int _inodeNum, FILE *_fileStream) {
     // and the iNode number in which we will write to
     int offset = (2 * BLOCK_SIZE) + (_inodeNum * INODE_SIZE);
     // move to the offset location of the filestream
-    fseek(_fileStream, offset, SEEK_SET);
+    if (fseek(_fileStream, offset, SEEK_SET) != SUCCESS) {
+        // @todo do something here
+    }
     // write to the offset location in the filestream
-    fwrite(_inode, sizeof(Inode), 1, _fileStream);
+    unsigned int len = 1;
+    if (fwrite(_inode, sizeof(Inode), len, _fileStream) != len) {
+        // @todo do something here
+    }
     // move to the start of the filestream
-    fseek(_fileStream, 0, SEEK_SET);
+    if (fseek(_fileStream, 0, SEEK_SET) != SUCCESS) {
+        // @todo do something here
+    }
 }
 
 Bool allocate_inode(void) {
@@ -137,8 +160,12 @@ Bool allocate_inode(void) {
     inode_map.iMapOffset[1] = (unsigned int)(-1);
     // Write the newly allocated inode to the iMapHandler
     inode_map.iMapHandle = fopen(FSM_INODE_MAP, "r+");
-    fwrite(inode_map.iMap, 1, INODE_BLOCKS, inode_map.iMapHandle);
-    fclose(inode_map.iMapHandle);
+    if (fwrite(inode_map.iMap, 1, INODE_BLOCKS, inode_map.iMapHandle) != INODE_BLOCKS) {
+        // @todo do something here
+    }
+    if (fclose(inode_map.iMapHandle) != SUCCESS) {
+        // @todo do something here
+    }
     inode_map.iMapHandle = Null;
     return True;
 }
@@ -167,8 +194,12 @@ Bool deallocate_inode(unsigned int _inodeNum) {
     inode_map.iMapOffset[1] = (unsigned int)(-1);
     // Write iMap to its Handler
     inode_map.iMapHandle = fopen(FSM_INODE_MAP, "r+");
-    fwrite(inode_map.iMap, 1, INODE_BLOCKS, inode_map.iMapHandle);
-    fclose(inode_map.iMapHandle);
+    if (fwrite(inode_map.iMap, 1, INODE_BLOCKS, inode_map.iMapHandle) != INODE_BLOCKS) {
+        // @todo do something here
+    }
+    if (fclose(inode_map.iMapHandle) != SUCCESS) {
+        // @todo do something here
+    }
     inode_map.iMapHandle = Null;
     return True;
 }

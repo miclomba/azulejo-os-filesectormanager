@@ -47,16 +47,16 @@ extern InodeMap inode_map;
 /**
  * @brief Initializes the inode memory pointers.
  * @param[out] _inode Pointer to an Inode structure to store the result.
- * @return void
+ * @return status of the operation
  */
-void inode_init_ptrs(Inode *_inode);
+int inode_init_ptrs(Inode *_inode);
 
 /**
  * @brief Initializes the inode memory.
  * @param[out] _inode Pointer to an Inode structure to store the result.
- * @return void
+ * @return status of the operation
  */
-void inode_init(Inode *_inode);
+int inode_init(Inode *_inode);
 
 /**
  * @brief Constructs a block of inodes and initializes their fields.

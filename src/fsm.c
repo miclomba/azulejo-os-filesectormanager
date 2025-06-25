@@ -134,7 +134,9 @@ static void init_file_sector_mgr(int _initSsmMaps) {
     inode_map.iMapOffset[0] = -1;
     inode_map.iMapOffset[1] = -1;
     // Initialize FSM's inode pointer to a blank inode
-    inode_init(&inode);
+    if (inode_init(&inode) == FAILURE) {
+        // @todo do something here
+    }
 
     inode_map.id = (unsigned int)-1;
     // Open file stream for iMap
@@ -186,7 +188,9 @@ unsigned int fs_create_file(int _isDirectory, unsigned int *_name,
     inodeNum = BITS_PER_BYTE * inode_map.iMapOffset[0] + inode_map.iMapOffset[1];
     inode_read(&inode, inodeNum, fsm->diskHandle);
     // initialize inode metadata
-    inode_init(&inode);
+    if (inode_init(&inode) == FAILURE) {
+        // @todo do something here
+    }
     // Assign filetype
     inode.fileType = _isDirectory == 1 ? 2 : 1;
 
@@ -213,7 +217,9 @@ Bool fs_open_file(unsigned int _inodeNum, Inode *_inode) {
     inode_map.id = _inodeNum;
     if (_inode->fileType <= 0) {
         // If file not loaded, create a default inode and return False
-        inode_init(_inode);
+        if (inode_init(_inode) == FAILURE) {
+            // @todo do something here
+        }
         inode_map.id = (unsigned int)(-1);
         // Return False if file did not open correctly
         return False;
@@ -224,8 +230,7 @@ Bool fs_open_file(unsigned int _inodeNum, Inode *_inode) {
 Bool fs_close_file(void) {
     // Reset all FSM->Inode variables to defaults
     inode_map.id = (unsigned int)(-1);
-    inode_init(&inode);
-    return True;
+    return inode_init(&inode) == FAILURE ? False : True;
 }
 
 Bool fs_read_from_file(unsigned int _inodeNum, void *_buffer) {
@@ -969,7 +974,9 @@ Bool fs_remove_file_from_dir(unsigned int _inodeNumF, unsigned int _inodeNumD) {
                         if (inode.linkCount == 0) {
                             // if there is nothing in the directory, set size to 0
                             inode.fileSize = 0;
-                            inode_init_ptrs(&inode);
+                            if (inode_init_ptrs(&inode) == FAILURE) {
+                                // @todo do something here
+                            }
                         }
                         fseek(fsm->diskHandle, 0, SEEK_SET);
                         fseek(fsm->diskHandle, diskOffset, SEEK_SET);
@@ -1548,7 +1555,9 @@ Bool fs_remove_file(unsigned int _inodeNum, unsigned int _inodeNumD) {
         return False;
     }  // end if (success == False)
     // Clear the inode
-    inode_init(&inode);
+    if (inode_init(&inode) == FAILURE) {
+        //@todo do something here
+    }
     // Write over inode
     fseek(fsm->diskHandle, 0, SEEK_SET);
     inode_write(&inode, _inodeNum, fsm->diskHandle);
